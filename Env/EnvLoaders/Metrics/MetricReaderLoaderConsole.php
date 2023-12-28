@@ -18,7 +18,7 @@ final class MetricReaderLoaderConsole implements Loader {
     public function load(EnvResolver $env, LoaderRegistry $registry, Context $context): MetricReader {
         return new PeriodicExportingMetricReader(
             metricExporter: new OtlpStreamMetricExporter(getStdout(), $context->logger),
-            exportIntervalMillis: $env->numeric('OTEL_METRIC_EXPORT_INTERVAL') ?? 60000,
+            exportIntervalMillis: $env->numeric('OTEL_METRIC_EXPORT_INTERVAL') ?? 10000,
             exportTimeoutMillis: $env->numeric('OTEL_METRIC_EXPORT_TIMEOUT') ?? 30000,
             meterProvider: $context->meterProvider,
         );
