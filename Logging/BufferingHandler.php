@@ -14,7 +14,7 @@ final class BufferingHandler extends AbstractHandler {
 
     /** @var list<Context> */
     private array $contexts = [];
-    /** @var list<LogRecord> */
+    /** @var list<array|LogRecord> */
     private array $records = [];
 
     public function handle(array|LogRecord $record): bool {

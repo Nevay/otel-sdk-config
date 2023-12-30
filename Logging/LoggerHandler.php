@@ -9,6 +9,7 @@ use Monolog\Utils;
 use Nevay\OtelSDK\Common\StackTrace;
 use OpenTelemetry\API\Logs\LoggerProviderInterface;
 use OpenTelemetry\API\Logs\Map\Psr3;
+use Psr\Log\LogLevel;
 use Throwable;
 
 /**
@@ -18,7 +19,7 @@ final class LoggerHandler extends AbstractHandler {
 
     private readonly LoggerProviderInterface $loggerProvider;
 
-    public function __construct(LoggerProviderInterface $loggerProvider, int|string|Level $level = Level::Debug, bool $bubble = true) {
+    public function __construct(LoggerProviderInterface $loggerProvider, int|string|Level $level = LogLevel::DEBUG, bool $bubble = true) {
         parent::__construct($level, $bubble);
         $this->loggerProvider = $loggerProvider;
     }

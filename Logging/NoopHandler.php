@@ -9,7 +9,7 @@ use Monolog\LogRecord;
  */
 final class NoopHandler extends AbstractHandler {
 
-    public function handle(LogRecord $record): bool {
+    public function handle(array|LogRecord $record): bool {
         return !$this->bubble;
     }
 }
