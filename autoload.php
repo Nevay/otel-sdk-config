@@ -13,13 +13,12 @@ use Nevay\OtelSDK\Configuration\ConfigurationProcessor\DetectResource;
 use Nevay\OtelSDK\Configuration\Env\ArrayEnvSource;
 use Nevay\OtelSDK\Configuration\Env\EnvResolver;
 use Nevay\OtelSDK\Configuration\Env\PhpIniEnvSource;
+use Nevay\OtelSDK\Configuration\Logging\ApiLoggerHolderLogger;
 use Nevay\OtelSDK\Configuration\Logging\BufferingHandler;
 use Nevay\OtelSDK\Configuration\Logging\LoggerHandler;
 use Nevay\OtelSDK\Configuration\Logging\NoopHandler;
 use OpenTelemetry\API\Globals;
 use OpenTelemetry\API\Instrumentation\Configurator;
-use OpenTelemetry\API\LoggerHolder;
-use Psr\Log\NullLogger;
 use function Amp\async;
 use function Amp\ByteStream\getStderr;
 use function Amp\ByteStream\getStdout;
@@ -41,7 +40,7 @@ use function register_shutdown_function;
             'none' => new NoopHandler($logLevel),
             'stderr' => (new StreamHandler(getStderr(), $logLevel))->setFormatter(new ConsoleFormatter()),
             'stdout' => (new StreamHandler(getStdout(), $logLevel))->setFormatter(new ConsoleFormatter()),
-            'psr3' => new PsrHandler(LoggerHolder::get() ?? new NullLogger(), $logLevel),
+            'psr3' => new PsrHandler(new ApiLoggerHolderLogger(), $logLevel),
             'error_log' => new ErrorLogHandler(level: $logLevel),
         };
 
