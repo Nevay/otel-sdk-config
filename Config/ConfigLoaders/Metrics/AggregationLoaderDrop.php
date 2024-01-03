@@ -5,15 +5,11 @@ use Nevay\OtelSDK\Configuration\Config\Loader;
 use Nevay\OtelSDK\Configuration\Config\LoaderRegistry;
 use Nevay\OtelSDK\Configuration\Context;
 use Nevay\OtelSDK\Metrics\AggregationResolver;
-use Nevay\OtelSDK\Metrics\AggregationResolvers;
 
-/**
- * @implements Loader<AggregationResolver>
- */
 final class AggregationLoaderDrop implements Loader {
 
-    public function load(array $config, LoaderRegistry $registry, Context $context): AggregationResolver {
-        return AggregationResolvers::resolved(null);
+    public function load(array $config, LoaderRegistry $registry, Context $context): AggregationResolver|false {
+        return false;
     }
 
     public function type(): string {
