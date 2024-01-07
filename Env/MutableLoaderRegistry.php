@@ -6,9 +6,8 @@ use Composer\Semver\VersionParser;
 use Exception;
 use Nevay\OtelSDK\Configuration\Context;
 use Nevay\OtelSDK\Configuration\Exception\ConfigurationException;
-use Nevay\OtelSDK\Configuration\Exception\LoaderNotFoundException;
-use Nevay\OtelSDK\Configuration\Exception\UnhandledLoaderException;
-use Nevay\OtelSDK\Configuration\Exception\UnmetPackageDependencyException;
+use Nevay\OtelSDK\Configuration\Exception\InvalidConfigurationException;
+use Nevay\OtelSDK\Configuration\Exception\UnhandledPluginException;
 use function sprintf;
 
 /**
@@ -29,11 +28,11 @@ final class MutableLoaderRegistry implements LoaderRegistry {
 
     public function load(string $type, string $name, EnvResolver $env, Context $context): mixed {
         if (!$loader = $this->loaders[$type][$name] ?? null) {
-            throw new LoaderNotFoundException(sprintf('Loader for %s %s not found', $type, $name));
+            throw new InvalidConfigurationException(sprintf('Loader for %s %s not found', $type, $name));
         }
         foreach ($loader->dependencies() as $package => $constraint) {
             if (!InstalledVersions::isInstalled($package) || !InstalledVersions::satisfies(new VersionParser(), $package, $constraint)) {
-                throw new UnmetPackageDependencyException(sprintf('Loader for %s %s has unmet dependency requirement %s %s',
+                throw new InvalidConfigurationException(sprintf('Loader for %s %s has unmet dependency requirement %s %s',
                     $type, $name, $package, $constraint));
             }
         }
@@ -43,7 +42,7 @@ final class MutableLoaderRegistry implements LoaderRegistry {
         } catch (ConfigurationException $e) {
             throw $e;
         } catch (Exception $e) {
-            throw new UnhandledLoaderException($e->getMessage(), previous: $e);
+            throw new UnhandledPluginException($e->getMessage(), previous: $e);
         }
     }
 
