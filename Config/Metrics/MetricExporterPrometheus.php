@@ -8,13 +8,10 @@ use Nevay\OtelSDK\Configuration\Config\ComponentProvider;
 use Nevay\OtelSDK\Configuration\Config\ComponentProviderDependency;
 use Nevay\OtelSDK\Configuration\Config\ComponentProviderRegistry;
 use Nevay\OtelSDK\Configuration\Context;
-use Nevay\OtelSDK\Configuration\MetricExporterConfiguration;
-use Nevay\OtelSDK\Metrics\AggregationResolvers;
-use Nevay\OtelSDK\Metrics\TemporalityResolvers;
+use Nevay\OtelSDK\Metrics\MetricExporter;
 use Nevay\OtelSDK\Prometheus\PrometheusMetricExporter;
 use Psr\Log\NullLogger;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
-use function Amp\Dns;
 
 #[ComponentProviderDependency('tbachert/otel-sdk-prometheusexporter', '^0.1')]
 #[ComponentProviderDependency('amphp/http-server', '^3.0')]
@@ -31,7 +28,7 @@ final class MetricExporterPrometheus implements ComponentProvider {
      *     without_scope_info: bool,
      * } $properties
      */
-    public function createPlugin(array $properties, Context $context): MetricExporterConfiguration {
+    public function createPlugin(array $properties, Context $context): MetricExporter {
         $server = SocketHttpServer::createForDirectAccess($context->logger ?? new NullLogger(), allowedMethods: ['GET']);
 
         $host = $properties['host'];
@@ -43,17 +40,11 @@ final class MetricExporterPrometheus implements ComponentProvider {
             port: $port,
         ));
 
-        $exporter = new PrometheusMetricExporter(
+        return new PrometheusMetricExporter(
             server: $server,
             withoutUnits: $properties['without_units'],
             withoutTypeSuffix: $properties['without_type_suffix'],
             withoutScopeInfo: $properties['without_scope_info'],
-        );
-
-        return new MetricExporterConfiguration(
-            $exporter,
-            TemporalityResolvers::Cumulative,
-            AggregationResolvers::Default,
         );
     }
 

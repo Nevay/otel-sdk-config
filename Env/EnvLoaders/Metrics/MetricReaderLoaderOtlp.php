@@ -14,8 +14,10 @@ use Nevay\OtelSDK\Configuration\Env\Loader;
 use Nevay\OtelSDK\Configuration\Env\LoaderRegistry;
 use Nevay\OtelSDK\Metrics\MetricReader;
 use Nevay\OtelSDK\Metrics\MetricReader\PeriodicExportingMetricReader;
+use Nevay\OtelSDK\Metrics\TemporalityResolvers;
 use Nevay\OtelSDK\Otlp\OtlpHttpMetricExporter;
 use Nevay\OtelSDK\Otlp\ProtobufFormat;
+use function strtolower;
 
 /**
  * @implements Loader<MetricReader>
@@ -47,6 +49,11 @@ final class MetricReaderLoaderOtlp implements Loader {
                 compression: $env->string('OTEL_EXPORTER_OTLP_METRICS_COMPRESSION') ?? $env->string('OTEL_EXPORTER_OTLP_COMPRESSION'),
                 headers: $env->map('OTEL_EXPORTER_OTLP_METRICS_HEADERS') ?? $env->map('OTEL_EXPORTER_OTLP_HEADERS') ?? [],
                 timeout: $env->numeric('OTEL_EXPORTER_OTLP_METRICS_TIMEOUT') ?? $env->numeric('OTEL_EXPORTER_OTLP_TIMEOUT') ?? 10.,
+                temporalityResolver: match (strtolower($env->string('OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE') ?? 'cumulative')) {
+                    'cumulative' => TemporalityResolvers::Cumulative,
+                    'delta' => TemporalityResolvers::Delta,
+                    'lowmemory' => TemporalityResolvers::LowMemory,
+                },
                 logger: $context->logger,
             ),
             exportIntervalMillis: $env->numeric('OTEL_METRIC_EXPORT_INTERVAL') ?? 60000,

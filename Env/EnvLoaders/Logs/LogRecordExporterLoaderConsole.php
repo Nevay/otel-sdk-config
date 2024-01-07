@@ -15,7 +15,10 @@ use function Amp\ByteStream\getStdout;
 final class LogRecordExporterLoaderConsole implements Loader {
 
     public function load(EnvResolver $env, LoaderRegistry $registry, Context $context): LogRecordExporter {
-        return new OtlpStreamLogRecordExporter(getStdout(), $context->logger);
+        return new OtlpStreamLogRecordExporter(
+            stream: getStdout(),
+            logger: $context->logger,
+        );
     }
 
     public function type(): string {

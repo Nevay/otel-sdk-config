@@ -15,7 +15,10 @@ use function Amp\ByteStream\getStdout;
 final class SpanExporterLoaderConsole implements Loader {
 
     public function load(EnvResolver $env, LoaderRegistry $registry, Context $context): SpanExporter {
-        return new OtlpStreamSpanExporter(getStdout(), $context->logger);
+        return new OtlpStreamSpanExporter(
+            stream: getStdout(),
+            logger: $context->logger,
+        );
     }
 
     public function type(): string {

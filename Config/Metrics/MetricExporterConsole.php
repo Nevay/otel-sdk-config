@@ -5,9 +5,7 @@ use Nevay\OtelSDK\Configuration\Config\ComponentProvider;
 use Nevay\OtelSDK\Configuration\Config\ComponentProviderDependency;
 use Nevay\OtelSDK\Configuration\Config\ComponentProviderRegistry;
 use Nevay\OtelSDK\Configuration\Context;
-use Nevay\OtelSDK\Configuration\MetricExporterConfiguration;
-use Nevay\OtelSDK\Metrics\AggregationResolvers;
-use Nevay\OtelSDK\Metrics\TemporalityResolvers;
+use Nevay\OtelSDK\Metrics\MetricExporter;
 use Nevay\OtelSDK\Otlp\OtlpStreamMetricExporter;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use function Amp\ByteStream\getStdout;
@@ -19,13 +17,10 @@ final class MetricExporterConsole implements ComponentProvider {
     /**
      * @param array{} $properties
      */
-    public function createPlugin(array $properties, Context $context): MetricExporterConfiguration {
-        $exporter = new OtlpStreamMetricExporter(getStdout(), $context->logger);
-
-        return new MetricExporterConfiguration(
-            $exporter,
-            TemporalityResolvers::LowMemory,
-            AggregationResolvers::Default,
+    public function createPlugin(array $properties, Context $context): MetricExporter {
+        return new OtlpStreamMetricExporter(
+            stream: getStdout(),
+            logger: $context->logger,
         );
     }
 

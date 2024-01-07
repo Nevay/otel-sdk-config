@@ -5,11 +5,11 @@ use Nevay\OtelSDK\Configuration\Config\ComponentPlugin;
 use Nevay\OtelSDK\Configuration\Config\ComponentProvider;
 use Nevay\OtelSDK\Configuration\Config\ComponentProviderRegistry;
 use Nevay\OtelSDK\Configuration\Context;
-use Nevay\OtelSDK\Configuration\MetricReaderConfiguration;
 use Nevay\OtelSDK\Metrics\AggregationResolver;
 use Nevay\OtelSDK\Metrics\AttributeProcessor\FilteredAttributeProcessor;
 use Nevay\OtelSDK\Metrics\InstrumentType;
 use Nevay\OtelSDK\Metrics\MeterProviderBuilder;
+use Nevay\OtelSDK\Metrics\MetricReader;
 use Nevay\OtelSDK\Metrics\View;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
@@ -36,7 +36,7 @@ final class MeterProviderBuilderMeterProvider implements ComponentProvider {
      *             meter_schema_url: ?string,
      *         },
      *     }>,
-     *     readers: list<ComponentPlugin<MetricReaderConfiguration>>,
+     *     readers: list<ComponentPlugin<MetricReader>>,
      * } $properties
      */
     public function createPlugin(array $properties, Context $context): MeterProviderBuilder {
@@ -71,12 +71,7 @@ final class MeterProviderBuilderMeterProvider implements ComponentProvider {
             );
         }
         foreach ($properties['readers'] as $reader) {
-            $reader = $reader->create($context);
-            $meterProviderBuilder->addMetricReader(
-                $reader->metricReader,
-                $reader->temporalityResolver,
-                $reader->aggregationResolver,
-            );
+            $meterProviderBuilder->addMetricReader($reader->create($context));
         }
 
         return $meterProviderBuilder;
@@ -125,7 +120,7 @@ final class MeterProviderBuilderMeterProvider implements ComponentProvider {
                         ->end()
                     ->end()
                 ->end()
-                ->append(ComponentPlugin::providerList('readers', MetricReaderConfiguration::class, $registry))
+                ->append(ComponentPlugin::providerList('readers', MetricReader::class, $registry))
             ->end()
         ;
 

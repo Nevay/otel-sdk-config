@@ -18,7 +18,10 @@ final class SpanExporterConsole implements ComponentProvider {
      * @param array{} $properties
      */
     public function createPlugin(array $properties, Context $context): SpanExporter {
-        return new OtlpStreamSpanExporter(getStdout(), $context->logger);
+        return new OtlpStreamSpanExporter(
+            stream: getStdout(),
+            logger: $context->logger,
+        );
     }
 
     public function getConfig(ComponentProviderRegistry $registry): ArrayNodeDefinition {

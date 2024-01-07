@@ -16,10 +16,6 @@ use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Metrics\MetricReaderLoaderConsole
 use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Metrics\MetricReaderLoaderNone;
 use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Metrics\MetricReaderLoaderOtlp;
 use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Metrics\MetricReaderLoaderPrometheus;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Metrics\TemporalityResolverLoaderConsole;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Metrics\TemporalityResolverLoaderNone;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Metrics\TemporalityResolverLoaderOtlp;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Metrics\TemporalityResolverLoaderPrometheus;
 use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Propagator\TextMapPropagatorLoaderB3;
 use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Propagator\TextMapPropagatorLoaderB3Multi;
 use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Propagator\TextMapPropagatorLoaderBaggage;
@@ -48,7 +44,6 @@ use Nevay\OtelSDK\Logs\LogRecordProcessor;
 use Nevay\OtelSDK\Metrics\ExemplarReservoirResolver;
 use Nevay\OtelSDK\Metrics\MeterProviderBuilder;
 use Nevay\OtelSDK\Metrics\MetricReader;
-use Nevay\OtelSDK\Metrics\TemporalityResolver;
 use Nevay\OtelSDK\Trace\Sampler;
 use Nevay\OtelSDK\Trace\SpanProcessor;
 use Nevay\OtelSDK\Trace\TracerProviderBuilder;
@@ -143,11 +138,8 @@ final class Env {
     }
 
     private static function meterProvider(MeterProviderBuilder $meterProviderBuilder, EnvResolver $env, LoaderRegistry $registry, Context $context): void {
-        $meterProviderBuilder->addMetricReader(
-            $registry->load(MetricReader::class, $env->string('OTEL_METRICS_EXPORTER') ?? 'otlp', $env, $context),
-            $registry->load(TemporalityResolver::class, $env->string('OTEL_METRICS_EXPORTER') ?? 'otlp', $env, $context),
-            exemplarReservoirResolver: $registry->load(ExemplarReservoirResolver::class, $env->string('OTEL_METRICS_EXEMPLAR_FILTER') ?? 'trace_based', $env, $context),
-        );
+        $meterProviderBuilder->setExemplarReservoirResolver($registry->load(ExemplarReservoirResolver::class, $env->string('OTEL_METRICS_EXEMPLAR_FILTER') ?? 'trace_based', $env, $context));
+        $meterProviderBuilder->addMetricReader($registry->load(MetricReader::class, $env->string('OTEL_METRICS_EXPORTER') ?? 'otlp', $env, $context));
     }
 
     private static function loggerProvider(LoggerProviderBuilder $loggerProviderBuilder, EnvResolver $env, LoaderRegistry $registry, Context $context): void {
@@ -191,10 +183,6 @@ final class Env {
         $registry->register(new MetricReaderLoaderNone());
         $registry->register(new MetricReaderLoaderOtlp());
         $registry->register(new MetricReaderLoaderPrometheus());
-        $registry->register(new TemporalityResolverLoaderConsole());
-        $registry->register(new TemporalityResolverLoaderNone());
-        $registry->register(new TemporalityResolverLoaderOtlp());
-        $registry->register(new TemporalityResolverLoaderPrometheus());
 
         // logs
         $registry->register(new LogRecordExporterLoaderConsole());

@@ -12,8 +12,8 @@ use Nevay\OtelSDK\Configuration\Config\ComponentProvider;
 use Nevay\OtelSDK\Configuration\Config\ComponentProviderDependency;
 use Nevay\OtelSDK\Configuration\Config\ComponentProviderRegistry;
 use Nevay\OtelSDK\Configuration\Context;
-use Nevay\OtelSDK\Configuration\MetricExporterConfiguration;
 use Nevay\OtelSDK\Metrics\AggregationResolvers;
+use Nevay\OtelSDK\Metrics\MetricExporter;
 use Nevay\OtelSDK\Metrics\TemporalityResolvers;
 use Nevay\OtelSDK\Otlp\OtlpHttpMetricExporter;
 use Nevay\OtelSDK\Otlp\ProtobufFormat;
@@ -39,7 +39,7 @@ final class MetricExporterOtlp implements ComponentProvider {
      *     default_histogram_aggregation: 'explicit_bucket_histogram',
      * } $properties
      */
-    public function createPlugin(array $properties, Context $context): MetricExporterConfiguration {
+    public function createPlugin(array $properties, Context $context): MetricExporter {
         $tlsContext = new ClientTlsContext();
         if ($clientCertificate = $properties['client_certificate']) {
             $tlsContext = $tlsContext->withCertificate(new Certificate($clientCertificate, $properties['client_key']));
@@ -53,7 +53,7 @@ final class MetricExporterOtlp implements ComponentProvider {
             ->usingPool(new UnlimitedConnectionPool(new DefaultConnectionFactory(connectContext: (new ConnectContext())->withTlsContext($tlsContext))))
             ->build();
 
-        $exporter = new OtlpHttpMetricExporter(
+        return new OtlpHttpMetricExporter(
             client: $client,
             endpoint: Uri\Http::new($properties['endpoint'] . '/v1/metrics'),
             format: match ($properties['protocol']) {
@@ -63,22 +63,15 @@ final class MetricExporterOtlp implements ComponentProvider {
             compression: $properties['compression'],
             headers: $properties['headers'],
             timeout: $properties['timeout'],
+            temporalityResolver: match ($properties['temporality_preference']) {
+                'cumulative' => TemporalityResolvers::Cumulative,
+                'delta' => TemporalityResolvers::Delta,
+                'lowmemory' => TemporalityResolvers::LowMemory,
+            },
+            aggregationResolver: match ($properties['default_histogram_aggregation']) {
+                'explicit_bucket_histogram' => AggregationResolvers::Default,
+            },
             logger: $context->logger,
-        );
-
-        $temporalityResolver = match ($properties['temporality_preference']) {
-            'cumulative' => TemporalityResolvers::Cumulative,
-            'delta' => TemporalityResolvers::Delta,
-            'lowmemory' => TemporalityResolvers::LowMemory,
-        };
-        $aggregationResolver = match ($properties['default_histogram_aggregation']) {
-            'explicit_bucket_histogram' => AggregationResolvers::Default,
-        };
-
-        return new MetricExporterConfiguration(
-            $exporter,
-            $temporalityResolver,
-            $aggregationResolver,
         );
     }
 
