@@ -7,11 +7,12 @@ use Nevay\OtelSDK\Configuration\Config\ComponentProviderRegistry;
 use Nevay\OtelSDK\Configuration\Context;
 use Nevay\OtelSDK\Otlp\OtlpStreamSpanExporter;
 use Nevay\OtelSDK\Trace\SpanExporter;
+use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use function Amp\ByteStream\getStdout;
 
-#[ComponentProviderDependency('tbachert/otel-sdk-otlpexporter', '^0.1')]
-#[ComponentProviderDependency('amphp/byte-stream', '^2.0')]
+#[PackageDependency('tbachert/otel-sdk-otlpexporter', '^0.1')]
+#[PackageDependency('amphp/byte-stream', '^2.0')]
 final class SpanExporterConsole implements ComponentProvider {
 
     /**

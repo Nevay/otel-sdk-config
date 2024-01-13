@@ -17,15 +17,7 @@ final class TextMapPropagatorLoaderBaggage implements Loader {
         return BaggagePropagator::getInstance();
     }
 
-    public function type(): string {
-        return TextMapPropagatorInterface::class;
-    }
-
     public function name(): string {
         return 'baggage';
-    }
-
-    public function dependencies(): array {
-        return [];
     }
 }

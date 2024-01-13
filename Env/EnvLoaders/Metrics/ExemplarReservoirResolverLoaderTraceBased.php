@@ -17,15 +17,7 @@ final class ExemplarReservoirResolverLoaderTraceBased implements Loader {
         return ExemplarReservoirResolvers::WithSampledTrace;
     }
 
-    public function type(): string {
-        return ExemplarReservoirResolver::class;
-    }
-
     public function name(): string {
         return 'trace_based';
-    }
-
-    public function dependencies(): array {
-        return [];
     }
 }

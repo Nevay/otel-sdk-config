@@ -17,15 +17,7 @@ final class ExemplarReservoirResolverLoaderAlwaysOff implements Loader {
         return ExemplarReservoirResolvers::None;
     }
 
-    public function type(): string {
-        return ExemplarReservoirResolver::class;
-    }
-
     public function name(): string {
         return 'always_off';
-    }
-
-    public function dependencies(): array {
-        return [];
     }
 }

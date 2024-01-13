@@ -7,11 +7,14 @@ use Nevay\OtelSDK\Configuration\Env\Loader;
 use Nevay\OtelSDK\Configuration\Env\LoaderRegistry;
 use Nevay\OtelSDK\Logs\LogRecordExporter;
 use Nevay\OtelSDK\Otlp\OtlpStreamLogRecordExporter;
+use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use function Amp\ByteStream\getStdout;
 
 /**
  * @implements Loader<LogRecordExporter>
  */
+#[PackageDependency('tbachert/otel-sdk-otlpexporter', '^0.1')]
+#[PackageDependency('amphp/byte-stream', '^2.0')]
 final class LogRecordExporterLoaderConsole implements Loader {
 
     public function load(EnvResolver $env, LoaderRegistry $registry, Context $context): LogRecordExporter {
@@ -21,18 +24,7 @@ final class LogRecordExporterLoaderConsole implements Loader {
         );
     }
 
-    public function type(): string {
-        return LogRecordExporter::class;
-    }
-
     public function name(): string {
         return 'console';
-    }
-
-    public function dependencies(): array {
-        return [
-            'tbachert/otel-sdk-otlpexporter' => '^0.1',
-            'amphp/byte-stream' => '^2.0',
-        ];
     }
 }

@@ -17,15 +17,7 @@ final class TextMapPropagatorLoaderTraceContext implements Loader {
         return TraceContextPropagator::getInstance();
     }
 
-    public function type(): string {
-        return TextMapPropagatorInterface::class;
-    }
-
     public function name(): string {
         return 'tracecontext';
-    }
-
-    public function dependencies(): array {
-        return [];
     }
 }

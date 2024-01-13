@@ -17,12 +17,13 @@ use Nevay\OtelSDK\Metrics\MetricExporter;
 use Nevay\OtelSDK\Metrics\TemporalityResolvers;
 use Nevay\OtelSDK\Otlp\OtlpHttpMetricExporter;
 use Nevay\OtelSDK\Otlp\ProtobufFormat;
+use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
-#[ComponentProviderDependency('tbachert/otel-sdk-otlpexporter', '^0.1')]
-#[ComponentProviderDependency('amphp/http-client', '^5.0')]
-#[ComponentProviderDependency('amphp/socket', '^2.0')]
-#[ComponentProviderDependency('league/uri', '^7.0')]
+#[PackageDependency('tbachert/otel-sdk-otlpexporter', '^0.1')]
+#[PackageDependency('amphp/http-client', '^5.0')]
+#[PackageDependency('amphp/socket', '^2.0')]
+#[PackageDependency('league/uri', '^7.0')]
 final class MetricExporterOtlp implements ComponentProvider {
 
     /**

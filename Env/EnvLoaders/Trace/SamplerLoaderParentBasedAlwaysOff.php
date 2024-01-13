@@ -18,15 +18,7 @@ final class SamplerLoaderParentBasedAlwaysOff implements Loader {
         return new ParentBasedSampler(new AlwaysOffSampler());
     }
 
-    public function type(): string {
-        return Sampler::class;
-    }
-
     public function name(): string {
         return 'parentbased_always_off';
-    }
-
-    public function dependencies(): array {
-        return [];
     }
 }

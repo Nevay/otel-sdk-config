@@ -1,13 +1,19 @@
 <?php declare(strict_types=1);
 namespace Nevay\OtelSDK\Configuration\Env;
 
-use Composer\InstalledVersions;
-use Composer\Semver\VersionParser;
 use Exception;
+use LogicException;
 use Nevay\OtelSDK\Configuration\Context;
 use Nevay\OtelSDK\Configuration\Exception\ConfigurationException;
 use Nevay\OtelSDK\Configuration\Exception\InvalidConfigurationException;
 use Nevay\OtelSDK\Configuration\Exception\UnhandledPluginException;
+use ReflectionClass;
+use ReflectionIntersectionType;
+use ReflectionNamedType;
+use ReflectionType;
+use ReflectionUnionType;
+use function array_map;
+use function implode;
 use function sprintf;
 
 /**
@@ -21,7 +27,13 @@ final class MutableLoaderRegistry implements LoaderRegistry {
     private array $loaders = [];
 
     public function register(Loader $loader): LoaderRegistry {
-        $this->loaders[$loader->type()][$loader->name()] ??= $loader;
+        $name = $loader->name();
+        $type = self::loadType($loader);
+        if (isset($this->loaders[$type][$name])) {
+            throw new LogicException(sprintf('Duplicate environment loader registered for "%s" "%s"', $type, $name));
+        }
+
+        $this->loaders[$type][$name] ??= $loader;
 
         return $this;
     }
@@ -29,12 +41,6 @@ final class MutableLoaderRegistry implements LoaderRegistry {
     public function load(string $type, string $name, EnvResolver $env, Context $context): mixed {
         if (!$loader = $this->loaders[$type][$name] ?? null) {
             throw new InvalidConfigurationException(sprintf('Loader for %s %s not found', $type, $name));
-        }
-        foreach ($loader->dependencies() as $package => $constraint) {
-            if (!InstalledVersions::isInstalled($package) || !InstalledVersions::satisfies(new VersionParser(), $package, $constraint)) {
-                throw new InvalidConfigurationException(sprintf('Loader for %s %s has unmet dependency requirement %s %s',
-                    $type, $name, $package, $constraint));
-            }
         }
 
         try {
@@ -50,5 +56,21 @@ final class MutableLoaderRegistry implements LoaderRegistry {
         return $name !== null
             ? $this->load($type, $name, $env, $context)
             : null;
+    }
+
+    private static function loadType(Loader $loader): string {
+        if ($returnType = (new ReflectionClass($loader))->getMethod('load')->getReturnType()) {
+            return self::typeToString($returnType);
+        }
+
+        return 'mixed';
+    }
+
+    private static function typeToString(ReflectionType $type): string {
+        return match ($type::class) {
+            ReflectionNamedType::class => $type->getName(),
+            ReflectionUnionType::class => implode('|', array_map(self::typeToString(...), $type->getTypes())),
+            ReflectionIntersectionType::class => implode('&', array_map(self::typeToString(...), $type->getTypes())),
+        };
     }
 }

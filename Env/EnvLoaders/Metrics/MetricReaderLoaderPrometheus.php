@@ -11,11 +11,16 @@ use Nevay\OtelSDK\Configuration\Env\LoaderRegistry;
 use Nevay\OtelSDK\Metrics\MetricReader;
 use Nevay\OtelSDK\Metrics\MetricReader\PullMetricReader;
 use Nevay\OtelSDK\Prometheus\PrometheusMetricExporter;
+use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use Psr\Log\NullLogger;
 
 /**
  * @implements Loader<MetricReader>
  */
+#[PackageDependency('tbachert/otel-sdk-prometheusexporter', '^0.1')]
+#[PackageDependency('amphp/http-server', '^3.0')]
+#[PackageDependency('amphp/socket', '^2.0')]
+#[PackageDependency('amphp/dns', '^2.0')]
 final class MetricReaderLoaderPrometheus implements Loader {
 
     public function load(EnvResolver $env, LoaderRegistry $registry, Context $context): MetricReader {
@@ -37,20 +42,7 @@ final class MetricReaderLoaderPrometheus implements Loader {
         );
     }
 
-    public function type(): string {
-        return MetricReader::class;
-    }
-
     public function name(): string {
         return 'prometheus';
-    }
-
-    public function dependencies(): array {
-        return [
-            'tbachert/otel-sdk-prometheusexporter' => '^0.1',
-            'amphp/http-server' => '^3.0',
-            'amphp/socket' => '^2.0',
-            'amphp/dns' => '^2.0',
-        ];
     }
 }

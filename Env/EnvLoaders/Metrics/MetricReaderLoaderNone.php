@@ -17,15 +17,7 @@ final class MetricReaderLoaderNone implements Loader {
         return new NoopMetricReader();
     }
 
-    public function type(): string {
-        return MetricReader::class;
-    }
-
     public function name(): string {
         return 'none';
-    }
-
-    public function dependencies(): array {
-        return [];
     }
 }

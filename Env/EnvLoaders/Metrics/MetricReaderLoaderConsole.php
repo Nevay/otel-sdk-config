@@ -8,11 +8,14 @@ use Nevay\OtelSDK\Configuration\Env\LoaderRegistry;
 use Nevay\OtelSDK\Metrics\MetricReader;
 use Nevay\OtelSDK\Metrics\MetricReader\PeriodicExportingMetricReader;
 use Nevay\OtelSDK\Otlp\OtlpStreamMetricExporter;
+use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use function Amp\ByteStream\getStdout;
 
 /**
  * @implements Loader<MetricReader>
  */
+#[PackageDependency('tbachert/otel-sdk-otlpexporter', '^0.1')]
+#[PackageDependency('amphp/byte-stream', '^2.0')]
 final class MetricReaderLoaderConsole implements Loader {
 
     public function load(EnvResolver $env, LoaderRegistry $registry, Context $context): MetricReader {
@@ -27,18 +30,7 @@ final class MetricReaderLoaderConsole implements Loader {
         );
     }
 
-    public function type(): string {
-        return MetricReader::class;
-    }
-
     public function name(): string {
         return 'console';
-    }
-
-    public function dependencies(): array {
-        return [
-            'tbachert/otel-sdk-otlpexporter' => '^0.1',
-            'amphp/byte-stream' => '^2.0',
-        ];
     }
 }

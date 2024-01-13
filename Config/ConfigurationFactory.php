@@ -28,8 +28,7 @@ final class ConfigurationFactory {
      * @see ServiceLoader::register()
      */
     public static function create(): ConfigurationFactory {
-        $registry = self::createDefaultRegistry();
-
+        $registry = new MutableComponentProviderRegistry();
         foreach (ServiceLoader::load(ComponentProvider::class) as $provider) {
             $registry->register($provider);
         }
@@ -70,47 +69,5 @@ final class ConfigurationFactory {
 
     public function __toString(): string {
         return (new YamlReferenceDumper())->dumpNode($this->node);
-    }
-
-    private static function createDefaultRegistry(): MutableComponentProviderRegistry {
-        $registry = new MutableComponentProviderRegistry();
-
-        // propagators
-        $registry->register(new Propagator\TextMapPropagatorB3());
-        $registry->register(new Propagator\TextMapPropagatorB3Multi());
-        $registry->register(new Propagator\TextMapPropagatorBaggage());
-        $registry->register(new Propagator\TextMapPropagatorComposite());
-        $registry->register(new Propagator\TextMapPropagatorJaeger());
-        $registry->register(new Propagator\TextMapPropagatorTraceContext());
-
-        // trace
-        $registry->register(new Trace\SamplerAlwaysOff());
-        $registry->register(new Trace\SamplerAlwaysOn());
-        $registry->register(new Trace\SamplerParentBased());
-        $registry->register(new Trace\SamplerTraceIdRatioBased());
-        $registry->register(new Trace\SpanExporterConsole());
-        $registry->register(new Trace\SpanExporterOtlp());
-        $registry->register(new Trace\SpanProcessorBatch());
-        $registry->register(new Trace\SpanProcessorSimple());
-
-        // metrics
-        $registry->register(new Metrics\AggregationResolverDefault());
-        $registry->register(new Metrics\AggregationResolverDrop());
-        $registry->register(new Metrics\AggregationResolverExplicitBucketHistogram());
-        $registry->register(new Metrics\AggregationResolverLastValue());
-        $registry->register(new Metrics\AggregationResolverSum());
-        $registry->register(new Metrics\MetricExporterConsole());
-        $registry->register(new Metrics\MetricExporterOtlp());
-        $registry->register(new Metrics\MetricExporterPrometheus());
-        $registry->register(new Metrics\MetricReaderPeriodic());
-        $registry->register(new Metrics\MetricReaderPull());
-
-        // logs
-        $registry->register(new Logs\LogRecordExporterConsole());
-        $registry->register(new Logs\LogRecordExporterOtlp());
-        $registry->register(new Logs\LogRecordProcessorBatch());
-        $registry->register(new Logs\LogRecordProcessorSimple());
-
-        return $registry;
     }
 }

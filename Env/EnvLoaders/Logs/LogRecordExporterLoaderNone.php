@@ -17,15 +17,7 @@ final class LogRecordExporterLoaderNone implements Loader {
         return new NoopLogRecordExporter();
     }
 
-    public function type(): string {
-        return LogRecordExporter::class;
-    }
-
     public function name(): string {
         return 'none';
-    }
-
-    public function dependencies(): array {
-        return [];
     }
 }

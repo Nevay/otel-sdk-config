@@ -25,15 +25,7 @@ final class LogRecordProcessorLoaderBatch implements Loader {
         );
     }
 
-    public function type(): string {
-        return LogRecordProcessor::class;
-    }
-
     public function name(): string {
         return 'batch';
-    }
-
-    public function dependencies(): array {
-        return [];
     }
 }

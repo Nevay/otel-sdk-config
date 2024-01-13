@@ -17,11 +17,16 @@ use Nevay\OtelSDK\Metrics\MetricReader\PeriodicExportingMetricReader;
 use Nevay\OtelSDK\Metrics\TemporalityResolvers;
 use Nevay\OtelSDK\Otlp\OtlpHttpMetricExporter;
 use Nevay\OtelSDK\Otlp\ProtobufFormat;
+use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use function strtolower;
 
 /**
  * @implements Loader<MetricReader>
  */
+#[PackageDependency('tbachert/otel-sdk-otlpexporter', '^0.1')]
+#[PackageDependency('amphp/http-client', '^5.0')]
+#[PackageDependency('amphp/socket', '^2.0')]
+#[PackageDependency('league/uri', '^7.0')]
 final class MetricReaderLoaderOtlp implements Loader {
 
     public function load(EnvResolver $env, LoaderRegistry $registry, Context $context): MetricReader {
@@ -62,20 +67,7 @@ final class MetricReaderLoaderOtlp implements Loader {
         );
     }
 
-    public function type(): string {
-        return MetricReader::class;
-    }
-
     public function name(): string {
         return 'otlp';
-    }
-
-    public function dependencies(): array {
-        return [
-            'tbachert/otel-sdk-otlpexporter' => '^0.1',
-            'amphp/http-client' => '^5.0',
-            'amphp/socket' => '^2.0',
-            'league/uri' => '^7',
-        ];
     }
 }

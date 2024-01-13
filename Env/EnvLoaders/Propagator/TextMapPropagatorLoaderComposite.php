@@ -12,7 +12,7 @@ use function array_unique;
 /**
  * @implements Loader<TextMapPropagatorInterface>
  */
-final class TextMapPropagatorLoaderPropagators implements Loader {
+final class TextMapPropagatorLoaderComposite implements Loader {
 
     public function load(EnvResolver $env, LoaderRegistry $registry, Context $context): TextMapPropagatorInterface {
         $propagators = [];
@@ -23,15 +23,7 @@ final class TextMapPropagatorLoaderPropagators implements Loader {
         return new MultiTextMapPropagator($propagators);
     }
 
-    public function type(): string {
-        return TextMapPropagatorInterface::class;
-    }
-
     public function name(): string {
-        return 'propagators';
-    }
-
-    public function dependencies(): array {
-        return [];
+        return 'composite';
     }
 }

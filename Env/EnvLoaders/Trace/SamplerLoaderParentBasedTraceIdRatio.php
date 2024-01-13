@@ -18,15 +18,7 @@ final class SamplerLoaderParentBasedTraceIdRatio implements Loader {
         return new ParentBasedSampler(new TraceIdRatioBasedSampler($env->numeric('OTEL_TRACES_SAMPLER_ARG') ?? 1.));
     }
 
-    public function type(): string {
-        return Sampler::class;
-    }
-
     public function name(): string {
         return 'parentbased_traceidratio';
-    }
-
-    public function dependencies(): array {
-        return [];
     }
 }

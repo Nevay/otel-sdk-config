@@ -5,33 +5,6 @@ use Nevay\OtelSDK\Common\Provider\MultiProvider;
 use Nevay\OtelSDK\Common\Provider\NoopProvider;
 use Nevay\OtelSDK\Common\Resource;
 use Nevay\OtelSDK\Configuration\Env\ArrayEnvSource;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Logs\LogRecordExporterLoaderConsole;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Logs\LogRecordExporterLoaderNone;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Logs\LogRecordExporterLoaderOtlp;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Logs\LogRecordProcessorLoaderBatch;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Metrics\ExemplarReservoirResolverLoaderAlwaysOff;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Metrics\ExemplarReservoirResolverLoaderAlwaysOn;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Metrics\ExemplarReservoirResolverLoaderTraceBased;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Metrics\MetricReaderLoaderConsole;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Metrics\MetricReaderLoaderNone;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Metrics\MetricReaderLoaderOtlp;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Metrics\MetricReaderLoaderPrometheus;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Propagator\TextMapPropagatorLoaderB3;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Propagator\TextMapPropagatorLoaderB3Multi;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Propagator\TextMapPropagatorLoaderBaggage;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Propagator\TextMapPropagatorLoaderJaeger;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Propagator\TextMapPropagatorLoaderPropagators;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Propagator\TextMapPropagatorLoaderTraceContext;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Trace\SamplerLoaderAlwaysOff;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Trace\SamplerLoaderAlwaysOn;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Trace\SamplerLoaderParentBasedAlwaysOff;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Trace\SamplerLoaderParentBasedAlwaysOn;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Trace\SamplerLoaderParentBasedTraceIdRatio;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Trace\SamplerLoaderTraceIdRatio;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Trace\SpanExporterLoaderConsole;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Trace\SpanExporterLoaderNone;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Trace\SpanExporterLoaderOtlp;
-use Nevay\OtelSDK\Configuration\Env\EnvLoaders\Trace\SpanProcessorLoaderBatch;
 use Nevay\OtelSDK\Configuration\Env\EnvResolver;
 use Nevay\OtelSDK\Configuration\Env\EnvSource;
 use Nevay\OtelSDK\Configuration\Env\Loader;
@@ -62,13 +35,16 @@ final class Env {
         Context $context = new Context(),
         EnvSource ...$envSources,
     ): ConfigurationResult {
-        $registry = self::registry();
+        $registry = new MutableLoaderRegistry();
+        foreach (ServiceLoader::load(Loader::class) as $loader) {
+            $registry->register($loader);
+        }
         $env = new EnvResolver($envSources ?: [
             new ArrayEnvSource($_SERVER),
             new PhpIniEnvSource(),
         ]);
 
-        $textMapPropagator = $registry->load(TextMapPropagatorInterface::class, 'propagators', $env, $context);
+        $textMapPropagator = $registry->load(TextMapPropagatorInterface::class, 'composite', $env, $context);
 
         if ($env->bool('OTEL_SDK_DISABLED') ?? false) {
             return new ConfigurationResult(
@@ -145,55 +121,5 @@ final class Env {
     private static function loggerProvider(LoggerProviderBuilder $loggerProviderBuilder, EnvResolver $env, LoaderRegistry $registry, Context $context): void {
         $loggerProviderBuilder->setLogRecordAttributeLimits($env->numeric('OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT'), $env->numeric('OTEL_LOGRECORD_ATTRIBUTE_VALUE_LENGTH_LIMIT'));
         $loggerProviderBuilder->addLogRecordProcessor($registry->load(LogRecordProcessor::class, $env->string('OTEL_PHP_LOGS_PROCESSOR') ?? 'batch', $env, $context));
-    }
-
-    private static function registry(): LoaderRegistry {
-        static $registry;
-        if ($registry) {
-            return $registry;
-        }
-
-        $registry = new MutableLoaderRegistry();
-
-        // propagators
-        $registry->register(new TextMapPropagatorLoaderB3());
-        $registry->register(new TextMapPropagatorLoaderB3Multi());
-        $registry->register(new TextMapPropagatorLoaderBaggage());
-        $registry->register(new TextMapPropagatorLoaderJaeger());
-        $registry->register(new TextMapPropagatorLoaderPropagators());
-        $registry->register(new TextMapPropagatorLoaderTraceContext());
-
-        // trace
-        $registry->register(new SamplerLoaderAlwaysOff());
-        $registry->register(new SamplerLoaderAlwaysOn());
-        $registry->register(new SamplerLoaderParentBasedAlwaysOff());
-        $registry->register(new SamplerLoaderParentBasedAlwaysOn());
-        $registry->register(new SamplerLoaderParentBasedTraceIdRatio());
-        $registry->register(new SamplerLoaderTraceIdRatio());
-        $registry->register(new SpanExporterLoaderConsole());
-        $registry->register(new SpanExporterLoaderNone());
-        $registry->register(new SpanExporterLoaderOtlp());
-        $registry->register(new SpanProcessorLoaderBatch());
-
-        // metrics
-        $registry->register(new ExemplarReservoirResolverLoaderAlwaysOff());
-        $registry->register(new ExemplarReservoirResolverLoaderAlwaysOn());
-        $registry->register(new ExemplarReservoirResolverLoaderTraceBased());
-        $registry->register(new MetricReaderLoaderConsole());
-        $registry->register(new MetricReaderLoaderNone());
-        $registry->register(new MetricReaderLoaderOtlp());
-        $registry->register(new MetricReaderLoaderPrometheus());
-
-        // logs
-        $registry->register(new LogRecordExporterLoaderConsole());
-        $registry->register(new LogRecordExporterLoaderNone());
-        $registry->register(new LogRecordExporterLoaderOtlp());
-        $registry->register(new LogRecordProcessorLoaderBatch());
-
-        foreach (ServiceLoader::load(Loader::class) as $loader) {
-            $registry->register($loader);
-        }
-
-        return $registry;
     }
 }

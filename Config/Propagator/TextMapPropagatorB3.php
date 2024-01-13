@@ -5,11 +5,12 @@ use Nevay\OtelSDK\Configuration\Config\ComponentProvider;
 use Nevay\OtelSDK\Configuration\Config\ComponentProviderDependency;
 use Nevay\OtelSDK\Configuration\Config\ComponentProviderRegistry;
 use Nevay\OtelSDK\Configuration\Context;
+use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
 use OpenTelemetry\Extension\Propagator\B3\B3Propagator;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
-#[ComponentProviderDependency('open-telemetry/extension-propagator-b3', '^1.0.1')]
+#[PackageDependency('open-telemetry/extension-propagator-b3', '^1.0.1')]
 final class TextMapPropagatorB3 implements ComponentProvider {
 
     /**

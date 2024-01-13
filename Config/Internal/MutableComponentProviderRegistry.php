@@ -3,9 +3,7 @@ namespace Nevay\OtelSDK\Configuration\Config\Internal;
 
 use LogicException;
 use Nevay\OtelSDK\Configuration\Config\ComponentProvider;
-use Nevay\OtelSDK\Configuration\Config\ComponentProviderDependency;
 use Nevay\OtelSDK\Configuration\Config\ComponentProviderRegistry;
-use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionIntersectionType;
 use ReflectionNamedType;
@@ -24,17 +22,8 @@ final class MutableComponentProviderRegistry implements ComponentProviderRegistr
     private array $providers = [];
 
     public function register(ComponentProvider $provider): void {
-        $reflection = new ReflectionClass($provider);
-
-        /** @var ReflectionAttribute<ComponentProviderDependency> $attribute */
-        foreach ($reflection->getAttributes(ComponentProviderDependency::class) as $attribute) {
-            if (!$attribute->newInstance()->isSatisfied()) {
-                return;
-            }
-        }
-
         $name = $provider->getConfig(new MutableComponentProviderRegistry())->getNode(true)->getName();
-        $type = self::loadType($reflection);
+        $type = self::loadType($provider);
         if (isset($this->providers[$type][$name])) {
             throw new LogicException(sprintf('Duplicate component provider registered for "%s" "%s"', $type, $name));
         }
@@ -46,8 +35,8 @@ final class MutableComponentProviderRegistry implements ComponentProviderRegistr
         return $this->providers[$type] ?? [];
     }
 
-    private static function loadType(ReflectionClass $reflection): string {
-        if ($returnType = $reflection->getMethod('createPlugin')->getReturnType()) {
+    private static function loadType(ComponentProvider $provider): string {
+        if ($returnType = (new ReflectionClass($provider))->getMethod('createPlugin')->getReturnType()) {
             return self::typeToString($returnType);
         }
 

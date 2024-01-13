@@ -17,15 +17,7 @@ final class SamplerLoaderAlwaysOff implements Loader {
         return new AlwaysOffSampler();
     }
 
-    public function type(): string {
-        return Sampler::class;
-    }
-
     public function name(): string {
         return 'always_off';
-    }
-
-    public function dependencies(): array {
-        return [];
     }
 }

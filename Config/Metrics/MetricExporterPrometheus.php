@@ -10,13 +10,14 @@ use Nevay\OtelSDK\Configuration\Config\ComponentProviderRegistry;
 use Nevay\OtelSDK\Configuration\Context;
 use Nevay\OtelSDK\Metrics\MetricExporter;
 use Nevay\OtelSDK\Prometheus\PrometheusMetricExporter;
+use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use Psr\Log\NullLogger;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
-#[ComponentProviderDependency('tbachert/otel-sdk-prometheusexporter', '^0.1')]
-#[ComponentProviderDependency('amphp/http-server', '^3.0')]
-#[ComponentProviderDependency('amphp/socket', '^2.0')]
-#[ComponentProviderDependency('amphp/dns', '^2.0')]
+#[PackageDependency('tbachert/otel-sdk-prometheusexporter', '^0.1')]
+#[PackageDependency('amphp/http-server', '^3.0')]
+#[PackageDependency('amphp/socket', '^2.0')]
+#[PackageDependency('amphp/dns', '^2.0')]
 final class MetricExporterPrometheus implements ComponentProvider {
 
     /**

@@ -25,15 +25,7 @@ final class SpanProcessorLoaderBatch implements Loader {
         );
     }
 
-    public function type(): string {
-        return SpanProcessor::class;
-    }
-
     public function name(): string {
         return 'batch';
-    }
-
-    public function dependencies(): array {
-        return [];
     }
 }

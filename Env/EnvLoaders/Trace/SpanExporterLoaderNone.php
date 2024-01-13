@@ -17,15 +17,7 @@ final class SpanExporterLoaderNone implements Loader {
         return new NoopSpanExporter();
     }
 
-    public function type(): string {
-        return SpanExporter::class;
-    }
-
     public function name(): string {
         return 'none';
-    }
-
-    public function dependencies(): array {
-        return [];
     }
 }

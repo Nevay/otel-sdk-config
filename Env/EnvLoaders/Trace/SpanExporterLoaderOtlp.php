@@ -15,10 +15,15 @@ use Nevay\OtelSDK\Configuration\Env\LoaderRegistry;
 use Nevay\OtelSDK\Otlp\OtlpHttpSpanExporter;
 use Nevay\OtelSDK\Otlp\ProtobufFormat;
 use Nevay\OtelSDK\Trace\SpanExporter;
+use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 
 /**
  * @implements Loader<SpanExporter>
  */
+#[PackageDependency('tbachert/otel-sdk-otlpexporter', '^0.1')]
+#[PackageDependency('amphp/http-client', '^5.0')]
+#[PackageDependency('amphp/socket', '^2.0')]
+#[PackageDependency('league/uri', '^7.0')]
 final class SpanExporterLoaderOtlp implements Loader {
 
     public function load(EnvResolver $env, LoaderRegistry $registry, Context $context): SpanExporter {
@@ -49,20 +54,7 @@ final class SpanExporterLoaderOtlp implements Loader {
         );
     }
 
-    public function type(): string {
-        return SpanExporter::class;
-    }
-
     public function name(): string {
         return 'otlp';
-    }
-
-    public function dependencies(): array {
-        return [
-            'tbachert/otel-sdk-otlpexporter' => '^0.1',
-            'amphp/http-client' => '^5.0',
-            'amphp/socket' => '^2.0',
-            'league/uri' => '^7',
-        ];
     }
 }
