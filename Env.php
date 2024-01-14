@@ -5,6 +5,7 @@ use Nevay\OtelSDK\Common\Provider\MultiProvider;
 use Nevay\OtelSDK\Common\Provider\NoopProvider;
 use Nevay\OtelSDK\Common\Resource;
 use Nevay\OtelSDK\Configuration\Env\ArrayEnvSource;
+use Nevay\OtelSDK\Configuration\Env\EnvSourceReader;
 use Nevay\OtelSDK\Configuration\Env\EnvResolver;
 use Nevay\OtelSDK\Configuration\Env\EnvSource;
 use Nevay\OtelSDK\Configuration\Env\Loader;
@@ -39,10 +40,10 @@ final class Env {
         foreach (ServiceLoader::load(Loader::class) as $loader) {
             $registry->register($loader);
         }
-        $env = new EnvResolver($envSources ?: [
+        $env = new EnvResolver(new EnvSourceReader($envSources ?: [
             new ArrayEnvSource($_SERVER),
             new PhpIniEnvSource(),
-        ]);
+        ]));
 
         $textMapPropagator = $registry->load(TextMapPropagatorInterface::class, 'composite', $env, $context);
 

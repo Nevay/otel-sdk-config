@@ -9,25 +9,16 @@ use function trim;
 
 final class EnvResolver {
 
-    /**
-     * @param iterable<EnvSource> $envs
-     */
     public function __construct(
-        private readonly iterable $envs,
+        private readonly EnvReader $envReader,
     ) {}
 
     public function string(string $name): ?string {
-        foreach ($this->envs as $env) {
-            if (($value = $env->raw($name)) !== null && ($value = trim($value, " \t")) !== '') {
-                return $value;
-            }
-        }
-
-        return null;
+        return $this->envReader->read($name);
     }
 
     public function bool(string $name): ?bool {
-        if (($value = $this->string($name)) === null) {
+        if (($value = $this->envReader->read($name)) === null) {
             return null;
         }
 
@@ -35,7 +26,7 @@ final class EnvResolver {
     }
 
     public function numeric(string $name): float|int|null {
-        if (($value = $this->string($name)) === null) {
+        if (($value = $this->envReader->read($name)) === null) {
             return null;
         }
 
@@ -43,7 +34,7 @@ final class EnvResolver {
     }
 
     public function list(string $name): ?array {
-        if (($value = $this->string($name)) === null) {
+        if (($value = $this->envReader->read($name)) === null) {
             return null;
         }
 
@@ -56,7 +47,7 @@ final class EnvResolver {
     }
 
     public function map(string $name): ?array {
-        if (($value = $this->string($name)) === null) {
+        if (($value = $this->envReader->read($name)) === null) {
             return null;
         }
 

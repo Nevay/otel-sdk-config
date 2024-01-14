@@ -8,9 +8,9 @@ use Amp\Log\StreamHandler;
 use Monolog\Handler\ErrorLogHandler;
 use Monolog\Handler\PsrHandler;
 use Monolog\Logger;
-use Nevay\OtelSDK\Common\Provider;
 use Nevay\OtelSDK\Configuration\ConfigurationProcessor\DetectResource;
 use Nevay\OtelSDK\Configuration\Env\ArrayEnvSource;
+use Nevay\OtelSDK\Configuration\Env\EnvSourceReader;
 use Nevay\OtelSDK\Configuration\Env\EnvResolver;
 use Nevay\OtelSDK\Configuration\Env\PhpIniEnvSource;
 use Nevay\OtelSDK\Configuration\Logging\ApiLoggerHolderLogger;
@@ -27,7 +27,10 @@ use function register_shutdown_function;
 (static function(): void {
     /** @var Future<ConfigurationResult|null> $config */
     $config = async(static function(): ?ConfigurationResult {
-        $env = new EnvResolver([new ArrayEnvSource($_SERVER), new PhpIniEnvSource()]);
+        $env = new EnvResolver(new EnvSourceReader([
+            new ArrayEnvSource($_SERVER),
+            new PhpIniEnvSource(),
+        ]));
         if (!$env->bool('OTEL_PHP_AUTOLOAD_ENABLED')) {
             return null;
         }
@@ -76,8 +79,8 @@ use function register_shutdown_function;
 
         // Re-register to trigger after normal shutdown functions
         register_shutdown_function(
-            static fn(Provider $provider) => register_shutdown_function($provider->shutdown(...)),
-            $config->provider,
+            register_shutdown_function(...),
+            $config->provider->shutdown(...),
         );
 
         return $config;

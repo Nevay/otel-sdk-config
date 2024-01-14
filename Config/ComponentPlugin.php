@@ -8,6 +8,8 @@ use Nevay\OtelSDK\Configuration\Config\Internal\RecursionProtectedComponentProvi
 use Nevay\OtelSDK\Configuration\Context;
 use Nevay\OtelSDK\Configuration\Exception\UnhandledPluginException;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeDefinition;
+use Symfony\Component\Config\Definition\Builder\VariableNodeDefinition;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use function array_key_first;
 use function array_keys;
@@ -67,7 +69,16 @@ final class ComponentPlugin {
      * @param string $type type of the component plugin
      * @param ComponentProviderRegistry $registry registry containing all available component providers
      */
-    public static function provider(string $name, string $type, ComponentProviderRegistry $registry): ArrayNodeDefinition {
+    public static function provider(string $name, string $type, ComponentProviderRegistry $registry): NodeDefinition {
+        if (!$registry->getProviders($type)) {
+            return (new VariableNodeDefinition($name))
+                ->defaultNull()
+                ->validate()
+                    ->always()
+                    ->thenInvalid(sprintf('Component "%s" cannot be configured, it does not have any associated provider', $type))
+                ->end();
+        }
+
         $node = new ArrayNodePluginDefinition($name);
         self::applyToArrayNode($node, $type, $registry);
 
@@ -159,7 +170,7 @@ final class ComponentPlugin {
      *
      * @internal
      */
-    public static function toPlugin(ComponentProvider $provider, ComponentProviderRegistry $registry): ArrayNodeDefinition {
+    public static function toPlugin(ComponentProvider $provider, ComponentProviderRegistry $registry): NodeDefinition {
         $node = ArrayNodePluginDefinition::fromNodeDefinition($provider->getConfig($registry));
         $node->validate()->always(static fn(array $value): ComponentPlugin => new ComponentPlugin($value, $provider));
 

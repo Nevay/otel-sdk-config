@@ -1,69 +1,113 @@
 <?php declare(strict_types=1);
 namespace Nevay\OtelSDK\Configuration\Config;
 
+use Nevay\OtelSDK\Configuration\Cache\EnvResource;
+use Nevay\OtelSDK\Configuration\Cache\ResourceCollection;
 use Nevay\OtelSDK\Configuration\Config\Internal\ConfigurationResultOpentelemetryConfiguration;
 use Nevay\OtelSDK\Configuration\Config\Internal\MutableComponentProviderRegistry;
-use Nevay\OtelSDK\Configuration\ConfigurationResult;
-use Nevay\OtelSDK\Configuration\Context;
+use Nevay\OtelSDK\Configuration\Config\Internal\TracingEnvReader;
+use Nevay\OtelSDK\Configuration\Env\EnvReader;
 use Nevay\OtelSDK\Configuration\Exception\InvalidConfigurationException;
-use Nevay\OtelSDK\Configuration\Exception\UnhandledPluginException;
 use Nevay\SPI\ServiceLoader;
+use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\BooleanNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\FloatNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\IntegerNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeDefinition;
+use Symfony\Component\Config\Definition\Builder\ScalarNodeDefinition;
 use Symfony\Component\Config\Definition\Dumper\YamlReferenceDumper;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException as SymfonyInvalidConfigurationException;
 use Symfony\Component\Config\Definition\NodeInterface;
+use function filter_var;
+use function preg_replace_callback;
+use const FILTER_DEFAULT;
+use const FILTER_NULL_ON_FAILURE;
+use const FILTER_VALIDATE_BOOLEAN;
+use const FILTER_VALIDATE_FLOAT;
+use const FILTER_VALIDATE_INT;
 
 final class ConfigurationFactory {
 
     private function __construct(
         private readonly NodeInterface $node,
+        private readonly TracingEnvReader $envReader,
     ) {}
 
     /**
-     * Creates a configuration factory that supports all registered component
-     * providers.
+     * Creates a configuration factory that supports all registered component providers.
      *
+     * @param EnvReader $envReader env reader to use for environment variable substitution
      * @return ConfigurationFactory configuration factory
      *
      * @see ComponentProvider
      * @see ServiceLoader::register()
      */
-    public static function create(): ConfigurationFactory {
+    public static function create(EnvReader $envReader): ConfigurationFactory {
         $registry = new MutableComponentProviderRegistry();
         foreach (ServiceLoader::load(ComponentProvider::class) as $provider) {
             $registry->register($provider);
         }
 
-        $root = ComponentPlugin::toPlugin(new ConfigurationResultOpentelemetryConfiguration(), $registry)
-            ->getNode(forceRootNode: true);
+        $node = ComponentPlugin::toPlugin(new ConfigurationResultOpentelemetryConfiguration(), $registry);
 
-        return new self($root);
+        $envReader = new TracingEnvReader($envReader);
+        self::applyEnvSubstitution($node, $envReader);
+
+        return new self($node->getNode(forceRootNode: true), $envReader);
     }
 
     /**
-     * @param Context $context context to use for component creation
-     * @param array $config config to process
-     * @param array ...$configs additional configs to process
-     * @return ConfigurationResult resolved configuration
+     * @param iterable<array> $configs configs to process
+     * @param ResourceCollection|null $resources resource collection used for cache invalidation
+     * @return Configuration resolved configuration
      * @throws InvalidConfigurationException if the provided configuration is invalid
-     * @throws UnhandledPluginException if a plugin throws an exception
      */
-    public function load(Context $context, array $config, array ...$configs): ConfigurationResult {
-        return $this->process([$config, ...$configs])->create($context);
-    }
-
-    /**
-     * @return ComponentPlugin<ConfigurationResult>
-     */
-    private function process(array $configs): ComponentPlugin {
+    public function process(iterable $configs, ?ResourceCollection $resources = null): Configuration {
         try {
             $properties = [];
             foreach ($configs as $config) {
                 $properties = $this->node->merge($properties, $this->node->normalize($config));
             }
 
-            return $this->node->finalize($properties);
+            return new Configuration($this->node->finalize($properties));
         } catch (SymfonyInvalidConfigurationException $e) {
             throw new InvalidConfigurationException($e->getMessage(), $e->getCode(), $e);
+        } finally {
+            foreach ($this->envReader->collect() as $name => $value) {
+                $resources?->add(new EnvResource($name, $value));
+            }
+        }
+    }
+
+    private static function applyEnvSubstitution(NodeDefinition $node, EnvReader $envReader): void {
+        if ($node instanceof ScalarNodeDefinition) {
+            $filter = match (true) {
+                $node instanceof BooleanNodeDefinition => FILTER_VALIDATE_BOOLEAN,
+                $node instanceof IntegerNodeDefinition => FILTER_VALIDATE_INT,
+                $node instanceof FloatNodeDefinition => FILTER_VALIDATE_FLOAT,
+                default => FILTER_DEFAULT,
+            };
+            $node->beforeNormalization()->ifString()->then(static function (string $value) use ($filter, $envReader): mixed {
+                $replaced = preg_replace_callback(
+                    '/\$\{(?<ENV_NAME>[a-zA-Z_][a-zA-Z0-9_]*)}/',
+                    static fn(array $matches): string => $envReader->read($matches['ENV_NAME']) ?? '',
+                    $value,
+                    -1,
+                    $count,
+                );
+
+                if (!$count) {
+                    return $value;
+                }
+
+                return filter_var($replaced, $filter, FILTER_NULL_ON_FAILURE) ?? $replaced;
+            });
+        }
+
+        if ($node instanceof ArrayNodeDefinition) {
+            foreach ($node->getChildNodeDefinitions() as $nodeDefinition) {
+                self::applyEnvSubstitution($nodeDefinition, $envReader);
+            }
         }
     }
 
