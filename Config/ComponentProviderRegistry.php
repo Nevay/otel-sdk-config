@@ -1,5 +1,5 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Config;
+namespace Nevay\OTelSDK\Configuration\Config;
 
 /**
  * A registry of component providers.

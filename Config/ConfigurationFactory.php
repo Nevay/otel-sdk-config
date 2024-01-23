@@ -1,13 +1,13 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Config;
+namespace Nevay\OTelSDK\Configuration\Config;
 
-use Nevay\OtelSDK\Configuration\Cache\EnvResource;
-use Nevay\OtelSDK\Configuration\Cache\ResourceCollection;
-use Nevay\OtelSDK\Configuration\Config\Internal\ConfigurationResultOpentelemetryConfiguration;
-use Nevay\OtelSDK\Configuration\Config\Internal\MutableComponentProviderRegistry;
-use Nevay\OtelSDK\Configuration\Config\Internal\TracingEnvReader;
-use Nevay\OtelSDK\Configuration\Env\EnvReader;
-use Nevay\OtelSDK\Configuration\Exception\InvalidConfigurationException;
+use Nevay\OTelSDK\Configuration\Cache\EnvResource;
+use Nevay\OTelSDK\Configuration\Cache\ResourceCollection;
+use Nevay\OTelSDK\Configuration\Config\Internal\ConfigurationResultOpentelemetryConfiguration;
+use Nevay\OTelSDK\Configuration\Config\Internal\MutableComponentProviderRegistry;
+use Nevay\OTelSDK\Configuration\Config\Internal\TracingEnvReader;
+use Nevay\OTelSDK\Configuration\Env\EnvReader;
+use Nevay\OTelSDK\Configuration\Exception\InvalidConfigurationException;
 use Nevay\SPI\ServiceLoader;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\BooleanNodeDefinition;

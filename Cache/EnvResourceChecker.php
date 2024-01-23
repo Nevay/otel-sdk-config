@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Cache;
+namespace Nevay\OTelSDK\Configuration\Cache;
 
-use Nevay\OtelSDK\Configuration\Env\EnvReader;
+use Nevay\OTelSDK\Configuration\Env\EnvReader;
 use Symfony\Component\Config\Resource\ResourceInterface;
 use Symfony\Component\Config\ResourceCheckerInterface;
 use function assert;

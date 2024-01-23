@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Config\Internal;
+namespace Nevay\OTelSDK\Configuration\Config\Internal;
 
-use Nevay\OtelSDK\Configuration\Env\EnvReader;
+use Nevay\OTelSDK\Configuration\Env\EnvReader;
 
 /**
  * @internal

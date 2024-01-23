@@ -1,5 +1,5 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Env;
+namespace Nevay\OTelSDK\Configuration\Env;
 
 use function trim;
 

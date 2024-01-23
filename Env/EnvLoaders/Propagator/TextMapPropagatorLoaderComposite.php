@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Env\EnvLoaders\Propagator;
+namespace Nevay\OTelSDK\Configuration\Env\EnvLoaders\Propagator;
 
-use Nevay\OtelSDK\Configuration\Context;
-use Nevay\OtelSDK\Configuration\Env\EnvResolver;
-use Nevay\OtelSDK\Configuration\Env\Loader;
-use Nevay\OtelSDK\Configuration\Env\LoaderRegistry;
+use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Configuration\Env\EnvResolver;
+use Nevay\OTelSDK\Configuration\Env\Loader;
+use Nevay\OTelSDK\Configuration\Env\LoaderRegistry;
 use OpenTelemetry\Context\Propagation\MultiTextMapPropagator;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
 use function array_unique;

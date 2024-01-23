@@ -1,18 +1,18 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration;
+namespace Nevay\OTelSDK\Configuration;
 
 use Amp\Future;
 use Amp\Log\ConsoleFormatter;
 use Amp\Log\StreamHandler;
 use Monolog\Handler\ErrorLogHandler;
 use Monolog\Handler\PsrHandler;
-use Nevay\OtelSDK\Configuration\ConfigurationProcessor\DetectResource;
-use Nevay\OtelSDK\Configuration\Env\ArrayEnvSource;
-use Nevay\OtelSDK\Configuration\Env\EnvResolver;
-use Nevay\OtelSDK\Configuration\Env\EnvSourceReader;
-use Nevay\OtelSDK\Configuration\Env\PhpIniEnvSource;
-use Nevay\OtelSDK\Configuration\Logging\ApiLoggerHolderLogger;
-use Nevay\OtelSDK\Configuration\Logging\NoopHandler;
+use Nevay\OTelSDK\Configuration\ConfigurationProcessor\DetectResource;
+use Nevay\OTelSDK\Configuration\Env\ArrayEnvSource;
+use Nevay\OTelSDK\Configuration\Env\EnvResolver;
+use Nevay\OTelSDK\Configuration\Env\EnvSourceReader;
+use Nevay\OTelSDK\Configuration\Env\PhpIniEnvSource;
+use Nevay\OTelSDK\Configuration\Logging\ApiLoggerHolderLogger;
+use Nevay\OTelSDK\Configuration\Logging\NoopHandler;
 use OpenTelemetry\API\Globals;
 use OpenTelemetry\API\Instrumentation\Configurator;
 use function Amp\async;

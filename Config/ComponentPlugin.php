@@ -1,12 +1,12 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Config;
+namespace Nevay\OTelSDK\Configuration\Config;
 
 use Exception;
-use Nevay\OtelSDK\Configuration\Config\Internal\ArrayNodePluginDefinition;
-use Nevay\OtelSDK\Configuration\Config\Internal\MutableComponentProviderRegistry;
-use Nevay\OtelSDK\Configuration\Config\Internal\RecursionProtectedComponentProviderRegistry;
-use Nevay\OtelSDK\Configuration\Context;
-use Nevay\OtelSDK\Configuration\Exception\UnhandledPluginException;
+use Nevay\OTelSDK\Configuration\Config\Internal\ArrayNodePluginDefinition;
+use Nevay\OTelSDK\Configuration\Config\Internal\MutableComponentProviderRegistry;
+use Nevay\OTelSDK\Configuration\Config\Internal\RecursionProtectedComponentProviderRegistry;
+use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Configuration\Exception\UnhandledPluginException;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\Config\Definition\Builder\VariableNodeDefinition;

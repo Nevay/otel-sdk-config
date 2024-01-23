@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Config\Propagator;
+namespace Nevay\OTelSDK\Configuration\Config\Propagator;
 
-use Nevay\OtelSDK\Configuration\Config\ComponentPlugin;
-use Nevay\OtelSDK\Configuration\Config\ComponentProvider;
-use Nevay\OtelSDK\Configuration\Config\ComponentProviderRegistry;
-use Nevay\OtelSDK\Configuration\Context;
+use Nevay\OTelSDK\Configuration\Config\ComponentPlugin;
+use Nevay\OTelSDK\Configuration\Config\ComponentProvider;
+use Nevay\OTelSDK\Configuration\Config\ComponentProviderRegistry;
+use Nevay\OTelSDK\Configuration\Context;
 use OpenTelemetry\Context\Propagation\MultiTextMapPropagator;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;

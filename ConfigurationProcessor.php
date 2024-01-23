@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration;
+namespace Nevay\OTelSDK\Configuration;
 
-use Nevay\OtelSDK\Logs\LoggerProviderBuilder;
-use Nevay\OtelSDK\Metrics\MeterProviderBuilder;
-use Nevay\OtelSDK\Trace\TracerProviderBuilder;
+use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
+use Nevay\OTelSDK\Metrics\MeterProviderBuilder;
+use Nevay\OTelSDK\Trace\TracerProviderBuilder;
 
 interface ConfigurationProcessor {
 

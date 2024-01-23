@@ -1,13 +1,13 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration;
+namespace Nevay\OTelSDK\Configuration;
 
 use Amp\DeferredFuture;
 use Monolog\Handler\HandlerInterface;
 use Monolog\Level;
 use Monolog\Logger;
-use Nevay\OtelSDK\Configuration\Logging\BufferingHandler;
-use Nevay\OtelSDK\Configuration\Logging\LoggerHandler;
-use Nevay\OtelSDK\Metrics\Internal\MeterProvider;
+use Nevay\OTelSDK\Configuration\Logging\BufferingHandler;
+use Nevay\OTelSDK\Configuration\Logging\LoggerHandler;
+use Nevay\OTelSDK\Metrics\Internal\MeterProvider;
 use Psr\Log\LogLevel;
 use WeakMap;
 

@@ -1,13 +1,13 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Config\Metrics;
+namespace Nevay\OTelSDK\Configuration\Config\Metrics;
 
-use Nevay\OtelSDK\Configuration\Config\ComponentPlugin;
-use Nevay\OtelSDK\Configuration\Config\ComponentProvider;
-use Nevay\OtelSDK\Configuration\Config\ComponentProviderRegistry;
-use Nevay\OtelSDK\Configuration\Context;
-use Nevay\OtelSDK\Metrics\MetricExporter;
-use Nevay\OtelSDK\Metrics\MetricReader;
-use Nevay\OtelSDK\Metrics\MetricReader\PeriodicExportingMetricReader;
+use Nevay\OTelSDK\Configuration\Config\ComponentPlugin;
+use Nevay\OTelSDK\Configuration\Config\ComponentProvider;
+use Nevay\OTelSDK\Configuration\Config\ComponentProviderRegistry;
+use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Metrics\MetricExporter;
+use Nevay\OTelSDK\Metrics\MetricReader;
+use Nevay\OTelSDK\Metrics\MetricReader\PeriodicExportingMetricReader;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
 final class MetricReaderPull implements ComponentProvider {

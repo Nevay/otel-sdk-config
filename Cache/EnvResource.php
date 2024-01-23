@@ -1,5 +1,5 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Cache;
+namespace Nevay\OTelSDK\Configuration\Cache;
 
 use Symfony\Component\Config\Resource\ResourceInterface;
 

@@ -1,5 +1,5 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Exception;
+namespace Nevay\OTelSDK\Configuration\Exception;
 
 use Exception;
 

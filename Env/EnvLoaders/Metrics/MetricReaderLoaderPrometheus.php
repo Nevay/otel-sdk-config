@@ -1,16 +1,16 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Env\EnvLoaders\Metrics;
+namespace Nevay\OTelSDK\Configuration\Env\EnvLoaders\Metrics;
 
 use Amp\Dns;
 use Amp\Http\Server\SocketHttpServer;
 use Amp\Socket\InternetAddress;
-use Nevay\OtelSDK\Configuration\Context;
-use Nevay\OtelSDK\Configuration\Env\EnvResolver;
-use Nevay\OtelSDK\Configuration\Env\Loader;
-use Nevay\OtelSDK\Configuration\Env\LoaderRegistry;
-use Nevay\OtelSDK\Metrics\MetricReader;
-use Nevay\OtelSDK\Metrics\MetricReader\PullMetricReader;
-use Nevay\OtelSDK\Prometheus\PrometheusMetricExporter;
+use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Configuration\Env\EnvResolver;
+use Nevay\OTelSDK\Configuration\Env\Loader;
+use Nevay\OTelSDK\Configuration\Env\LoaderRegistry;
+use Nevay\OTelSDK\Metrics\MetricReader;
+use Nevay\OTelSDK\Metrics\MetricReader\PullMetricReader;
+use Nevay\OTelSDK\Prometheus\PrometheusMetricExporter;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use Psr\Log\NullLogger;
 

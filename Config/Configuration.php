@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Config;
+namespace Nevay\OTelSDK\Configuration\Config;
 
-use Nevay\OtelSDK\Configuration\ConfigurationResult;
-use Nevay\OtelSDK\Configuration\Context;
+use Nevay\OTelSDK\Configuration\ConfigurationResult;
+use Nevay\OTelSDK\Configuration\Context;
 
 final class Configuration {
 

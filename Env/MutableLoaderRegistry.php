@@ -1,12 +1,12 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Env;
+namespace Nevay\OTelSDK\Configuration\Env;
 
 use Exception;
 use LogicException;
-use Nevay\OtelSDK\Configuration\Context;
-use Nevay\OtelSDK\Configuration\Exception\ConfigurationException;
-use Nevay\OtelSDK\Configuration\Exception\InvalidConfigurationException;
-use Nevay\OtelSDK\Configuration\Exception\UnhandledPluginException;
+use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Configuration\Exception\ConfigurationException;
+use Nevay\OTelSDK\Configuration\Exception\InvalidConfigurationException;
+use Nevay\OTelSDK\Configuration\Exception\UnhandledPluginException;
 use ReflectionClass;
 use ReflectionIntersectionType;
 use ReflectionNamedType;

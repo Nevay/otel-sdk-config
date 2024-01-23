@@ -1,12 +1,12 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Config\Trace;
+namespace Nevay\OTelSDK\Configuration\Config\Trace;
 
-use Nevay\OtelSDK\Configuration\Config\ComponentProvider;
-use Nevay\OtelSDK\Configuration\Config\ComponentProviderDependency;
-use Nevay\OtelSDK\Configuration\Config\ComponentProviderRegistry;
-use Nevay\OtelSDK\Configuration\Context;
-use Nevay\OtelSDK\Otlp\OtlpStreamSpanExporter;
-use Nevay\OtelSDK\Trace\SpanExporter;
+use Nevay\OTelSDK\Configuration\Config\ComponentProvider;
+use Nevay\OTelSDK\Configuration\Config\ComponentProviderDependency;
+use Nevay\OTelSDK\Configuration\Config\ComponentProviderRegistry;
+use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Otlp\OtlpStreamSpanExporter;
+use Nevay\OTelSDK\Trace\SpanExporter;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use function Amp\ByteStream\getStdout;

@@ -1,5 +1,5 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Config\Trace;
+namespace Nevay\OTelSDK\Configuration\Config\Trace;
 
 use Amp\Http\Client\Connection\DefaultConnectionFactory;
 use Amp\Http\Client\Connection\UnlimitedConnectionPool;
@@ -8,13 +8,13 @@ use Amp\Socket\Certificate;
 use Amp\Socket\ClientTlsContext;
 use Amp\Socket\ConnectContext;
 use League\Uri;
-use Nevay\OtelSDK\Configuration\Config\ComponentProvider;
-use Nevay\OtelSDK\Configuration\Config\ComponentProviderDependency;
-use Nevay\OtelSDK\Configuration\Config\ComponentProviderRegistry;
-use Nevay\OtelSDK\Configuration\Context;
-use Nevay\OtelSDK\Otlp\OtlpHttpSpanExporter;
-use Nevay\OtelSDK\Otlp\ProtobufFormat;
-use Nevay\OtelSDK\Trace\SpanExporter;
+use Nevay\OTelSDK\Configuration\Config\ComponentProvider;
+use Nevay\OTelSDK\Configuration\Config\ComponentProviderDependency;
+use Nevay\OTelSDK\Configuration\Config\ComponentProviderRegistry;
+use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Otlp\OtlpHttpSpanExporter;
+use Nevay\OTelSDK\Otlp\ProtobufFormat;
+use Nevay\OTelSDK\Trace\SpanExporter;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 

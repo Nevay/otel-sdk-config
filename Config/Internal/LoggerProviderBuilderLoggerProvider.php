@@ -1,12 +1,12 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Config\Internal;
+namespace Nevay\OTelSDK\Configuration\Config\Internal;
 
-use Nevay\OtelSDK\Configuration\Config\ComponentPlugin;
-use Nevay\OtelSDK\Configuration\Config\ComponentProvider;
-use Nevay\OtelSDK\Configuration\Config\ComponentProviderRegistry;
-use Nevay\OtelSDK\Configuration\Context;
-use Nevay\OtelSDK\Logs\LoggerProviderBuilder;
-use Nevay\OtelSDK\Logs\LogRecordProcessor;
+use Nevay\OTelSDK\Configuration\Config\ComponentPlugin;
+use Nevay\OTelSDK\Configuration\Config\ComponentProvider;
+use Nevay\OTelSDK\Configuration\Config\ComponentProviderRegistry;
+use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
+use Nevay\OTelSDK\Logs\LogRecordProcessor;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
 /**

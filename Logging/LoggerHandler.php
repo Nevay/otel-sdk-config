@@ -1,12 +1,12 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Logging;
+namespace Nevay\OTelSDK\Configuration\Logging;
 
 use Monolog\Formatter\NormalizerFormatter;
 use Monolog\Handler\AbstractHandler;
 use Monolog\Level;
 use Monolog\LogRecord;
 use Monolog\Utils;
-use Nevay\OtelSDK\Common\StackTrace;
+use Nevay\OTelSDK\Common\StackTrace;
 use OpenTelemetry\API\Logs\LoggerProviderInterface;
 use OpenTelemetry\API\Logs\Map\Psr3;
 use Psr\Log\LogLevel;

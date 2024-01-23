@@ -1,11 +1,11 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Config\Metrics;
+namespace Nevay\OTelSDK\Configuration\Config\Metrics;
 
-use Nevay\OtelSDK\Configuration\Config\ComponentProvider;
-use Nevay\OtelSDK\Configuration\Config\ComponentProviderRegistry;
-use Nevay\OtelSDK\Configuration\Context;
-use Nevay\OtelSDK\Metrics\Aggregation\LastValueAggregationResolver;
-use Nevay\OtelSDK\Metrics\AggregationResolver;
+use Nevay\OTelSDK\Configuration\Config\ComponentProvider;
+use Nevay\OTelSDK\Configuration\Config\ComponentProviderRegistry;
+use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Metrics\Aggregation\LastValueAggregationResolver;
+use Nevay\OTelSDK\Metrics\AggregationResolver;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
 final class AggregationResolverLastValue implements ComponentProvider {

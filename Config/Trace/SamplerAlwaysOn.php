@@ -1,11 +1,11 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Config\Trace;
+namespace Nevay\OTelSDK\Configuration\Config\Trace;
 
-use Nevay\OtelSDK\Configuration\Config\ComponentProvider;
-use Nevay\OtelSDK\Configuration\Config\ComponentProviderRegistry;
-use Nevay\OtelSDK\Configuration\Context;
-use Nevay\OtelSDK\Trace\Sampler;
-use Nevay\OtelSDK\Trace\Sampler\AlwaysOnSampler;
+use Nevay\OTelSDK\Configuration\Config\ComponentProvider;
+use Nevay\OTelSDK\Configuration\Config\ComponentProviderRegistry;
+use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Trace\Sampler;
+use Nevay\OTelSDK\Trace\Sampler\AlwaysOnSampler;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
 final class SamplerAlwaysOn implements ComponentProvider {

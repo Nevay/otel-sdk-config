@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Env;
+namespace Nevay\OTelSDK\Configuration\Env;
 
-use Nevay\OtelSDK\Configuration\Context;
+use Nevay\OTelSDK\Configuration\Context;
 
 /**
  * @template T

@@ -1,13 +1,13 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Env\EnvLoaders\Trace;
+namespace Nevay\OTelSDK\Configuration\Env\EnvLoaders\Trace;
 
-use Nevay\OtelSDK\Configuration\Context;
-use Nevay\OtelSDK\Configuration\Env\EnvResolver;
-use Nevay\OtelSDK\Configuration\Env\Loader;
-use Nevay\OtelSDK\Configuration\Env\LoaderRegistry;
-use Nevay\OtelSDK\Trace\Sampler;
-use Nevay\OtelSDK\Trace\Sampler\ParentBasedSampler;
-use Nevay\OtelSDK\Trace\Sampler\TraceIdRatioBasedSampler;
+use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Configuration\Env\EnvResolver;
+use Nevay\OTelSDK\Configuration\Env\Loader;
+use Nevay\OTelSDK\Configuration\Env\LoaderRegistry;
+use Nevay\OTelSDK\Trace\Sampler;
+use Nevay\OTelSDK\Trace\Sampler\ParentBasedSampler;
+use Nevay\OTelSDK\Trace\Sampler\TraceIdRatioBasedSampler;
 
 /**
  * @implements Loader<Sampler>

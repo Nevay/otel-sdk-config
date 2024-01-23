@@ -1,5 +1,5 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Logging;
+namespace Nevay\OTelSDK\Configuration\Logging;
 
 use Monolog\Handler\AbstractHandler;
 use Monolog\Handler\HandlerInterface;

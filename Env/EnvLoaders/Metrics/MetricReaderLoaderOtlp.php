@@ -1,5 +1,5 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Env\EnvLoaders\Metrics;
+namespace Nevay\OTelSDK\Configuration\Env\EnvLoaders\Metrics;
 
 use Amp\Http\Client\Connection\DefaultConnectionFactory;
 use Amp\Http\Client\Connection\UnlimitedConnectionPool;
@@ -8,15 +8,15 @@ use Amp\Socket\Certificate;
 use Amp\Socket\ClientTlsContext;
 use Amp\Socket\ConnectContext;
 use League\Uri;
-use Nevay\OtelSDK\Configuration\Context;
-use Nevay\OtelSDK\Configuration\Env\EnvResolver;
-use Nevay\OtelSDK\Configuration\Env\Loader;
-use Nevay\OtelSDK\Configuration\Env\LoaderRegistry;
-use Nevay\OtelSDK\Metrics\MetricReader;
-use Nevay\OtelSDK\Metrics\MetricReader\PeriodicExportingMetricReader;
-use Nevay\OtelSDK\Metrics\TemporalityResolvers;
-use Nevay\OtelSDK\Otlp\OtlpHttpMetricExporter;
-use Nevay\OtelSDK\Otlp\ProtobufFormat;
+use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Configuration\Env\EnvResolver;
+use Nevay\OTelSDK\Configuration\Env\Loader;
+use Nevay\OTelSDK\Configuration\Env\LoaderRegistry;
+use Nevay\OTelSDK\Metrics\MetricReader;
+use Nevay\OTelSDK\Metrics\MetricReader\PeriodicExportingMetricReader;
+use Nevay\OTelSDK\Metrics\TemporalityResolvers;
+use Nevay\OTelSDK\Otlp\OtlpHttpMetricExporter;
+use Nevay\OTelSDK\Otlp\ProtobufFormat;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use function strtolower;
 

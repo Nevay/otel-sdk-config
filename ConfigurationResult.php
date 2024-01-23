@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration;
+namespace Nevay\OTelSDK\Configuration;
 
-use Nevay\OtelSDK\Common\Provider;
+use Nevay\OTelSDK\Common\Provider;
 use OpenTelemetry\API\Logs\LoggerProviderInterface;
 use OpenTelemetry\API\Metrics\MeterProviderInterface;
 use OpenTelemetry\API\Trace\TracerProviderInterface;

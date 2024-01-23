@@ -1,11 +1,11 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\ConfigurationProcessor;
+namespace Nevay\OTelSDK\Configuration\ConfigurationProcessor;
 
-use Nevay\OtelSDK\Common\Resource;
-use Nevay\OtelSDK\Configuration\ConfigurationProcessor;
-use Nevay\OtelSDK\Logs\LoggerProviderBuilder;
-use Nevay\OtelSDK\Metrics\MeterProviderBuilder;
-use Nevay\OtelSDK\Trace\TracerProviderBuilder;
+use Nevay\OTelSDK\Common\Resource;
+use Nevay\OTelSDK\Configuration\ConfigurationProcessor;
+use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
+use Nevay\OTelSDK\Metrics\MeterProviderBuilder;
+use Nevay\OTelSDK\Trace\TracerProviderBuilder;
 
 final class DetectResource implements ConfigurationProcessor {
 

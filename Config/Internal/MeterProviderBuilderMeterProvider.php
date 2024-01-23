@@ -1,16 +1,16 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Config\Internal;
+namespace Nevay\OTelSDK\Configuration\Config\Internal;
 
-use Nevay\OtelSDK\Configuration\Config\ComponentPlugin;
-use Nevay\OtelSDK\Configuration\Config\ComponentProvider;
-use Nevay\OtelSDK\Configuration\Config\ComponentProviderRegistry;
-use Nevay\OtelSDK\Configuration\Context;
-use Nevay\OtelSDK\Metrics\AggregationResolver;
-use Nevay\OtelSDK\Metrics\AttributeProcessor\FilteredAttributeProcessor;
-use Nevay\OtelSDK\Metrics\InstrumentType;
-use Nevay\OtelSDK\Metrics\MeterProviderBuilder;
-use Nevay\OtelSDK\Metrics\MetricReader;
-use Nevay\OtelSDK\Metrics\View;
+use Nevay\OTelSDK\Configuration\Config\ComponentPlugin;
+use Nevay\OTelSDK\Configuration\Config\ComponentProvider;
+use Nevay\OTelSDK\Configuration\Config\ComponentProviderRegistry;
+use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Metrics\AggregationResolver;
+use Nevay\OTelSDK\Metrics\AttributeProcessor\FilteredAttributeProcessor;
+use Nevay\OTelSDK\Metrics\InstrumentType;
+use Nevay\OTelSDK\Metrics\MeterProviderBuilder;
+use Nevay\OTelSDK\Metrics\MetricReader;
+use Nevay\OTelSDK\Metrics\View;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
 /**

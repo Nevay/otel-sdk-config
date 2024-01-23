@@ -1,15 +1,15 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Config\Metrics;
+namespace Nevay\OTelSDK\Configuration\Config\Metrics;
 
 use Amp\Dns;
 use Amp\Http\Server\SocketHttpServer;
 use Amp\Socket\InternetAddress;
-use Nevay\OtelSDK\Configuration\Config\ComponentProvider;
-use Nevay\OtelSDK\Configuration\Config\ComponentProviderDependency;
-use Nevay\OtelSDK\Configuration\Config\ComponentProviderRegistry;
-use Nevay\OtelSDK\Configuration\Context;
-use Nevay\OtelSDK\Metrics\MetricExporter;
-use Nevay\OtelSDK\Prometheus\PrometheusMetricExporter;
+use Nevay\OTelSDK\Configuration\Config\ComponentProvider;
+use Nevay\OTelSDK\Configuration\Config\ComponentProviderDependency;
+use Nevay\OTelSDK\Configuration\Config\ComponentProviderRegistry;
+use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Metrics\MetricExporter;
+use Nevay\OTelSDK\Prometheus\PrometheusMetricExporter;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use Psr\Log\NullLogger;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;

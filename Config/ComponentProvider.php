@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Config;
+namespace Nevay\OTelSDK\Configuration\Config;
 
-use Nevay\OtelSDK\Configuration\Context;
+use Nevay\OTelSDK\Configuration\Context;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
 /**

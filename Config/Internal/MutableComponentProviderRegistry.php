@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Config\Internal;
+namespace Nevay\OTelSDK\Configuration\Config\Internal;
 
 use LogicException;
-use Nevay\OtelSDK\Configuration\Config\ComponentProvider;
-use Nevay\OtelSDK\Configuration\Config\ComponentProviderRegistry;
+use Nevay\OTelSDK\Configuration\Config\ComponentProvider;
+use Nevay\OTelSDK\Configuration\Config\ComponentProviderRegistry;
 use ReflectionClass;
 use ReflectionIntersectionType;
 use ReflectionNamedType;

@@ -1,13 +1,13 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Env\EnvLoaders\Logs;
+namespace Nevay\OTelSDK\Configuration\Env\EnvLoaders\Logs;
 
-use Nevay\OtelSDK\Configuration\Context;
-use Nevay\OtelSDK\Configuration\Env\EnvResolver;
-use Nevay\OtelSDK\Configuration\Env\Loader;
-use Nevay\OtelSDK\Configuration\Env\LoaderRegistry;
-use Nevay\OtelSDK\Logs\LogRecordExporter;
-use Nevay\OtelSDK\Logs\LogRecordProcessor;
-use Nevay\OtelSDK\Logs\LogRecordProcessor\BatchLogRecordProcessor;
+use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Configuration\Env\EnvResolver;
+use Nevay\OTelSDK\Configuration\Env\Loader;
+use Nevay\OTelSDK\Configuration\Env\LoaderRegistry;
+use Nevay\OTelSDK\Logs\LogRecordExporter;
+use Nevay\OTelSDK\Logs\LogRecordProcessor;
+use Nevay\OTelSDK\Logs\LogRecordProcessor\BatchLogRecordProcessor;
 
 /**
  * @implements Loader<LogRecordProcessor>

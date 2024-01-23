@@ -1,13 +1,13 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Config\Logs;
+namespace Nevay\OTelSDK\Configuration\Config\Logs;
 
-use Nevay\OtelSDK\Configuration\Config\ComponentPlugin;
-use Nevay\OtelSDK\Configuration\Config\ComponentProvider;
-use Nevay\OtelSDK\Configuration\Config\ComponentProviderRegistry;
-use Nevay\OtelSDK\Configuration\Context;
-use Nevay\OtelSDK\Logs\LogRecordExporter;
-use Nevay\OtelSDK\Logs\LogRecordProcessor;
-use Nevay\OtelSDK\Logs\LogRecordProcessor\BatchLogRecordProcessor;
+use Nevay\OTelSDK\Configuration\Config\ComponentPlugin;
+use Nevay\OTelSDK\Configuration\Config\ComponentProvider;
+use Nevay\OTelSDK\Configuration\Config\ComponentProviderRegistry;
+use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Logs\LogRecordExporter;
+use Nevay\OTelSDK\Logs\LogRecordProcessor;
+use Nevay\OTelSDK\Logs\LogRecordProcessor\BatchLogRecordProcessor;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
 final class LogRecordProcessorBatch implements ComponentProvider {

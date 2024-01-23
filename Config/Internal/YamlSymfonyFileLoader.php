@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
-namespace Nevay\OtelSDK\Configuration\Config\Internal;
+namespace Nevay\OTelSDK\Configuration\Config\Internal;
 
 use InvalidArgumentException;
-use Nevay\OtelSDK\Configuration\Cache\ResourceCollection;
+use Nevay\OTelSDK\Configuration\Cache\ResourceCollection;
 use Symfony\Component\Config\FileLocatorInterface;
 use Symfony\Component\Config\Loader\FileLoader;
 use Symfony\Component\Config\Resource\FileResource;
