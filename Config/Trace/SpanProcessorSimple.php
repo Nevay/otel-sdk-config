@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\Config\Trace;
 
-use Nevay\OTelSDK\Configuration\Config\ComponentPlugin;
-use Nevay\OTelSDK\Configuration\Config\ComponentProvider;
-use Nevay\OTelSDK\Configuration\Config\ComponentProviderRegistry;
+use Nevay\OTelSDK\Configuration\ComponentPlugin;
+use Nevay\OTelSDK\Configuration\ComponentProvider;
+use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
 use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Trace\SpanExporter;
 use Nevay\OTelSDK\Trace\SpanProcessor;
@@ -20,7 +20,9 @@ final class SpanProcessorSimple implements ComponentProvider {
     public function createPlugin(array $properties, Context $context): SpanProcessor {
         return new SimpleSpanProcessor(
             spanExporter: $properties['exporter']->create($context),
+            tracerProvider: $context->tracerProvider,
             meterProvider: $context->meterProvider,
+            logger: $context->logger,
         );
     }
 
@@ -28,7 +30,7 @@ final class SpanProcessorSimple implements ComponentProvider {
         $node = new ArrayNodeDefinition('simple');
         $node
             ->children()
-                ->append(ComponentPlugin::provider('exporter', SpanExporter::class, $registry)->isRequired())
+                ->append($registry->component('exporter', SpanExporter::class)->isRequired())
             ->end()
         ;
 

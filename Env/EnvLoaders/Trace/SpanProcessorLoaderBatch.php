@@ -21,7 +21,9 @@ final class SpanProcessorLoaderBatch implements Loader {
             scheduledDelayMillis: $env->numeric('OTEL_BSP_SCHEDULE_DELAY') ?? 5000,
             exportTimeoutMillis: $env->numeric('OTEL_BSP_EXPORT_TIMEOUT') ?? 30000,
             maxExportBatchSize: $env->numeric('OTEL_BSP_MAX_EXPORT_BATCH_SIZE') ?? 512,
+            tracerProvider: $context->tracerProvider,
             meterProvider: $context->meterProvider,
+            logger: $context->logger,
         );
     }
 

@@ -1,8 +1,9 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\Config\Metrics;
 
-use Nevay\OTelSDK\Configuration\Config\ComponentProvider;
-use Nevay\OTelSDK\Configuration\Config\ComponentProviderRegistry;
+use InvalidArgumentException;
+use Nevay\OTelSDK\Configuration\ComponentProvider;
+use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
 use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Metrics\Aggregation\ExplicitBucketHistogramAggregationResolver;
 use Nevay\OTelSDK\Metrics\AggregationResolver;
@@ -29,6 +30,21 @@ final class AggregationResolverExplicitBucketHistogram implements ComponentProvi
             ->children()
                 ->arrayNode('boundaries')
                     ->floatPrototype()->end()
+                    ->validate()
+                        ->ifArray()
+                        ->then(static function(array $boundaries): array {
+                            $last = -INF;
+                            foreach ($boundaries as $boundary) {
+                                if ($boundary <= $last) {
+                                    throw new InvalidArgumentException('histogram boundaries must be strictly ascending');
+                                }
+
+                                $last = $boundary;
+                            }
+
+                            return $boundaries;
+                        })
+                    ->end()
                 ->end()
                 ->booleanNode('record_min_max')->defaultTrue()->end()
             ->end()

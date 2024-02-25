@@ -1,5 +1,5 @@
 {
-    "name": "tbachert/otel-sdk-configuration",
+    "name": "tbachert/otel-sdk-configuration-implementation",
     "description": "OpenTelemetry SDK configuration",
     "keywords": ["opentelemetry", "otel", "sdk"],
     "license": "Apache-2.0",
@@ -14,11 +14,13 @@
         "open-telemetry/api": "^1.0",
         "psr/log": "^1 || ^2 || ^3",
         "symfony/config": "^5.4 || ^6.4 || ^7.0",
-        "tbachert/spi": "^0.2",
         "tbachert/otel-sdk-common": "^0.1",
+        "tbachert/otel-sdk-configuration": "^0.1",
+        "tbachert/otel-sdk-deferred-providers": "^0.1",
         "tbachert/otel-sdk-logs": "^0.1",
         "tbachert/otel-sdk-metrics": "^0.1",
-        "tbachert/otel-sdk-trace": "^0.1"
+        "tbachert/otel-sdk-trace": "^0.1",
+        "tbachert/spi": "^0.2"
     },
     "autoload": {
         "psr-4": {
@@ -33,7 +35,7 @@
             "dev-main": "0.1.x-dev"
         },
         "spi": {
-            "Nevay\\OTelSDK\\Configuration\\Config\\ComponentProvider": [
+            "Nevay\\OTelSDK\\Configuration\\ComponentProvider": [
                 "Nevay\\OTelSDK\\Configuration\\Config\\Propagator\\TextMapPropagatorB3",
                 "Nevay\\OTelSDK\\Configuration\\Config\\Propagator\\TextMapPropagatorB3Multi",
                 "Nevay\\OTelSDK\\Configuration\\Config\\Propagator\\TextMapPropagatorBaggage",

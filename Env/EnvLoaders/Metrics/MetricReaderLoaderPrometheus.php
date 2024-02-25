@@ -12,7 +12,6 @@ use Nevay\OTelSDK\Metrics\MetricReader;
 use Nevay\OTelSDK\Metrics\MetricReader\PullMetricReader;
 use Nevay\OTelSDK\Prometheus\PrometheusMetricExporter;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
-use Psr\Log\NullLogger;
 
 /**
  * @implements Loader<MetricReader>
@@ -24,7 +23,7 @@ use Psr\Log\NullLogger;
 final class MetricReaderLoaderPrometheus implements Loader {
 
     public function load(EnvResolver $env, LoaderRegistry $registry, Context $context): MetricReader {
-        $server = SocketHttpServer::createForDirectAccess($context->logger ?? new NullLogger(), allowedMethods: ['GET']);
+        $server = SocketHttpServer::createForDirectAccess($context->logger, allowedMethods: ['GET']);
 
         $host = $env->string('OTEL_EXPORTER_PROMETHEUS_HOST') ?? 'localhost';
         $port = $env->numeric('OTEL_EXPORTER_PROMETHEUS_PORT') ?? 9464;

@@ -8,10 +8,10 @@ use Amp\Socket\Certificate;
 use Amp\Socket\ClientTlsContext;
 use Amp\Socket\ConnectContext;
 use League\Uri;
-use Nevay\OTelSDK\Configuration\Config\ComponentProvider;
-use Nevay\OTelSDK\Configuration\Config\ComponentProviderDependency;
-use Nevay\OTelSDK\Configuration\Config\ComponentProviderRegistry;
+use Nevay\OTelSDK\Configuration\ComponentProvider;
+use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
 use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Configuration\Validation;
 use Nevay\OTelSDK\Logs\LogRecordExporter;
 use Nevay\OTelSDK\Otlp\OtlpHttpLogRecordExporter;
 use Nevay\OTelSDK\Otlp\ProtobufFormat;
@@ -69,10 +69,10 @@ q     */
         $node
             ->children()
                 ->enumNode('protocol')->isRequired()->values(['http/protobuf', 'http/json'])->end()
-                ->scalarNode('endpoint')->isRequired()->end()
-                ->scalarNode('certificate')->defaultNull()->end()
-                ->scalarNode('client_key')->defaultNull()->end()
-                ->scalarNode('client_certificate')->defaultNull()->end()
+                ->scalarNode('endpoint')->isRequired()->validate()->always(Validation::ensureString())->end()->end()
+                ->scalarNode('certificate')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
+                ->scalarNode('client_key')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
+                ->scalarNode('client_certificate')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
                 ->arrayNode('headers')
                     ->scalarPrototype()->end()
                 ->end()

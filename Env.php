@@ -4,15 +4,13 @@ namespace Nevay\OTelSDK\Configuration;
 use Nevay\OTelSDK\Common\Provider\MultiProvider;
 use Nevay\OTelSDK\Common\Provider\NoopProvider;
 use Nevay\OTelSDK\Common\Resource;
-use Nevay\OTelSDK\Configuration\Env\ArrayEnvSource;
-use Nevay\OTelSDK\Configuration\Env\EnvSourceReader;
 use Nevay\OTelSDK\Configuration\Env\EnvResolver;
-use Nevay\OTelSDK\Configuration\Env\EnvSource;
 use Nevay\OTelSDK\Configuration\Env\Loader;
 use Nevay\OTelSDK\Configuration\Env\LoaderRegistry;
 use Nevay\OTelSDK\Configuration\Env\MutableLoaderRegistry;
-use Nevay\OTelSDK\Configuration\Env\PhpIniEnvSource;
-use Nevay\OTelSDK\Configuration\Exception\ConfigurationException;
+use Nevay\OTelSDK\Configuration\Environment\ArrayEnvSource;
+use Nevay\OTelSDK\Configuration\Environment\EnvSourceReader;
+use Nevay\OTelSDK\Configuration\Environment\PhpIniEnvSource;
 use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
 use Nevay\OTelSDK\Logs\LogRecordProcessor;
 use Nevay\OTelSDK\Metrics\ExemplarReservoirResolver;
@@ -29,18 +27,14 @@ use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
 
 final class Env {
 
-    /**
-     * @throws ConfigurationException
-     */
     public static function load(
         Context $context = new Context(),
-        EnvSource ...$envSources,
     ): ConfigurationResult {
         $registry = new MutableLoaderRegistry();
         foreach (ServiceLoader::load(Loader::class) as $loader) {
             $registry->register($loader);
         }
-        $env = new EnvResolver(new EnvSourceReader($envSources ?: [
+        $env = new EnvResolver(new EnvSourceReader([
             new ArrayEnvSource($_SERVER),
             new PhpIniEnvSource(),
         ]));
@@ -56,7 +50,6 @@ final class Env {
                 new NoopProvider(),
             );
         }
-
 
         $tracerProviderBuilder = new TracerProviderBuilder();
         $meterProviderBuilder = new MeterProviderBuilder();
@@ -80,9 +73,7 @@ final class Env {
         self::meterProvider($meterProviderBuilder, $env, $registry, $context);
         self::loggerProvider($loggerProviderBuilder, $env, $registry, $context);
 
-        $context->processor?->process($tracerProviderBuilder, $meterProviderBuilder, $loggerProviderBuilder);
-
-        $resource = Resource::default();
+        $resource = Resource::detect();
         $tracerProviderBuilder->addResource($resource);
         $meterProviderBuilder->addResource($resource);
         $loggerProviderBuilder->addResource($resource);

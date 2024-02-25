@@ -4,14 +4,13 @@ namespace Nevay\OTelSDK\Configuration\Config\Metrics;
 use Amp\Dns;
 use Amp\Http\Server\SocketHttpServer;
 use Amp\Socket\InternetAddress;
-use Nevay\OTelSDK\Configuration\Config\ComponentProvider;
-use Nevay\OTelSDK\Configuration\Config\ComponentProviderDependency;
-use Nevay\OTelSDK\Configuration\Config\ComponentProviderRegistry;
+use Nevay\OTelSDK\Configuration\ComponentProvider;
+use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
 use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Configuration\Validation;
 use Nevay\OTelSDK\Metrics\MetricExporter;
 use Nevay\OTelSDK\Prometheus\PrometheusMetricExporter;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
-use Psr\Log\NullLogger;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
 #[PackageDependency('tbachert/otel-sdk-prometheusexporter', '^0.1')]
@@ -30,7 +29,7 @@ final class MetricExporterPrometheus implements ComponentProvider {
      * } $properties
      */
     public function createPlugin(array $properties, Context $context): MetricExporter {
-        $server = SocketHttpServer::createForDirectAccess($context->logger ?? new NullLogger(), allowedMethods: ['GET']);
+        $server = SocketHttpServer::createForDirectAccess($context->logger, allowedMethods: ['GET']);
 
         $host = $properties['host'];
         $port = $properties['port'];
@@ -53,7 +52,7 @@ final class MetricExporterPrometheus implements ComponentProvider {
         $node = new ArrayNodeDefinition('prometheus');
         $node
             ->children()
-                ->scalarNode('host')->defaultValue('localhost')->end()
+                ->scalarNode('host')->defaultValue('localhost')->validate()->always(Validation::ensureString())->end()->end()
                 ->integerNode('port')->defaultValue(9464)->end()
                 ->booleanNode('without_units')->defaultFalse()->end()
                 ->booleanNode('without_type_suffix')->defaultFalse()->end()

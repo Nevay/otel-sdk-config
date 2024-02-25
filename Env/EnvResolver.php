@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\Env;
 
+use Nevay\OTelSDK\Configuration\Environment\EnvReader;
 use function count;
 use function explode;
 use function rawurldecode;

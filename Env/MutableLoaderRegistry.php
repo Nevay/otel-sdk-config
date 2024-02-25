@@ -1,12 +1,9 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\Env;
 
-use Exception;
+use InvalidArgumentException;
 use LogicException;
 use Nevay\OTelSDK\Configuration\Context;
-use Nevay\OTelSDK\Configuration\Exception\ConfigurationException;
-use Nevay\OTelSDK\Configuration\Exception\InvalidConfigurationException;
-use Nevay\OTelSDK\Configuration\Exception\UnhandledPluginException;
 use ReflectionClass;
 use ReflectionIntersectionType;
 use ReflectionNamedType;
@@ -40,16 +37,10 @@ final class MutableLoaderRegistry implements LoaderRegistry {
 
     public function load(string $type, string $name, EnvResolver $env, Context $context): mixed {
         if (!$loader = $this->loaders[$type][$name] ?? null) {
-            throw new InvalidConfigurationException(sprintf('Loader for %s %s not found', $type, $name));
+            throw new InvalidArgumentException(sprintf('Loader for %s %s not found', $type, $name));
         }
 
-        try {
-            return $loader->load($env, $this, $context);
-        } catch (ConfigurationException $e) {
-            throw $e;
-        } catch (Exception $e) {
-            throw new UnhandledPluginException($e->getMessage(), previous: $e);
-        }
+        return $loader->load($env, $this, $context);
     }
 
     public function loadNullable(string $type, ?string $name, EnvResolver $env, Context $context): mixed {

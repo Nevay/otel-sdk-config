@@ -1,9 +1,8 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\Config\Trace;
 
-use Nevay\OTelSDK\Configuration\Config\ComponentProvider;
-use Nevay\OTelSDK\Configuration\Config\ComponentProviderDependency;
-use Nevay\OTelSDK\Configuration\Config\ComponentProviderRegistry;
+use Nevay\OTelSDK\Configuration\ComponentProvider;
+use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
 use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Otlp\OtlpStreamSpanExporter;
 use Nevay\OTelSDK\Trace\SpanExporter;

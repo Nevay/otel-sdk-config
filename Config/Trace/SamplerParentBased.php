@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\Config\Trace;
 
-use Nevay\OTelSDK\Configuration\Config\ComponentPlugin;
-use Nevay\OTelSDK\Configuration\Config\ComponentProvider;
-use Nevay\OTelSDK\Configuration\Config\ComponentProviderRegistry;
+use Nevay\OTelSDK\Configuration\ComponentPlugin;
+use Nevay\OTelSDK\Configuration\ComponentProvider;
+use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
 use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Trace\Sampler;
 use Nevay\OTelSDK\Trace\Sampler\AlwaysOffSampler;
@@ -36,11 +36,11 @@ final class SamplerParentBased implements ComponentProvider {
         $node = new ArrayNodeDefinition('parent_based');
         $node
             ->children()
-                ->append(ComponentPlugin::provider('root', Sampler::class, $registry)->isRequired())
-                ->append(ComponentPlugin::provider('remote_parent_sampled', Sampler::class, $registry))
-                ->append(ComponentPlugin::provider('remote_parent_not_sampled', Sampler::class, $registry))
-                ->append(ComponentPlugin::provider('local_parent_sampled', Sampler::class, $registry))
-                ->append(ComponentPlugin::provider('local_parent_not_sampled', Sampler::class, $registry))
+                ->append($registry->component('root', Sampler::class)->isRequired())
+                ->append($registry->component('remote_parent_sampled', Sampler::class))
+                ->append($registry->component('remote_parent_not_sampled', Sampler::class))
+                ->append($registry->component('local_parent_sampled', Sampler::class))
+                ->append($registry->component('local_parent_not_sampled', Sampler::class))
             ->end()
         ;
 

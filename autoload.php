@@ -1,18 +1,23 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration;
 
+use Amp\DeferredFuture;
 use Amp\Future;
 use Amp\Log\ConsoleFormatter;
 use Amp\Log\StreamHandler;
 use Monolog\Handler\ErrorLogHandler;
 use Monolog\Handler\PsrHandler;
-use Nevay\OTelSDK\Configuration\ConfigurationProcessor\DetectResource;
-use Nevay\OTelSDK\Configuration\Env\ArrayEnvSource;
+use Monolog\Logger;
 use Nevay\OTelSDK\Configuration\Env\EnvResolver;
-use Nevay\OTelSDK\Configuration\Env\EnvSourceReader;
-use Nevay\OTelSDK\Configuration\Env\PhpIniEnvSource;
+use Nevay\OTelSDK\Configuration\Environment\ArrayEnvSource;
+use Nevay\OTelSDK\Configuration\Environment\EnvSourceReader;
+use Nevay\OTelSDK\Configuration\Environment\PhpIniEnvSource;
 use Nevay\OTelSDK\Configuration\Logging\ApiLoggerHolderLogger;
+use Nevay\OTelSDK\Configuration\Logging\LoggerHandler;
 use Nevay\OTelSDK\Configuration\Logging\NoopHandler;
+use Nevay\OTelSDK\Deferred\DeferredLoggerProvider;
+use Nevay\OTelSDK\Deferred\DeferredMeterProvider;
+use Nevay\OTelSDK\Deferred\DeferredTracerProvider;
 use OpenTelemetry\API\Globals;
 use OpenTelemetry\API\Instrumentation\Configurator;
 use function Amp\async;
@@ -43,21 +48,39 @@ use function register_shutdown_function;
             'error_log' => new ErrorLogHandler(level: $logLevel),
         };
 
-        $contextBuilder = ContextBuilder::create()
-            ->pushLogHandler($handler)
-            ->pushConfigurationProcessor(new DetectResource());
-        $context = $selfDiagnostics
-            ? $contextBuilder->createSelfDiagnosticsContext(logLevel: $logLevel)
-            : $contextBuilder->createContext();
+        $logger = new Logger('otel');
+        $logger->pushHandler($handler);
 
-        if (($detectors = $env->list('OTEL_PHP_DETECTORS')) !== null && $detectors !== ['all']) {
-            $context->logger->notice('Not supported environment variable OTEL_PHP_DETECTORS, using all available detectors', [
-                'requested_detectors' => $detectors,
-            ]);
+        $deferredTracerProvider = null;
+        $deferredMeterProvider = null;
+        $deferredLoggerProvider = null;
+        $context = new Context(logger: $logger);
+        if ($selfDiagnostics) {
+            $deferredTracerProvider = new DeferredFuture();
+            $deferredMeterProvider = new DeferredFuture();
+            $deferredLoggerProvider = new DeferredFuture();
+            $context = new Context(
+                tracerProvider: new DeferredTracerProvider($deferredTracerProvider->getFuture()),
+                meterProvider: new DeferredMeterProvider($deferredMeterProvider->getFuture()),
+                logger: $logger->pushHandler(new LoggerHandler(new DeferredLoggerProvider($deferredLoggerProvider->getFuture()), $logLevel)),
+            );
         }
 
-        $config = Env::load($context);
-        $contextBuilder->resolve($context, $config);
+        if (($configFile = $env->string('OTEL_CONFIG_FILE')) !== null) {
+            $config = Config::loadFile($configFile, context: $context);
+        } else {
+            if (($detectors = $env->list('OTEL_PHP_DETECTORS')) !== null && $detectors !== ['all']) {
+                $context->logger->notice('Not supported environment variable OTEL_PHP_DETECTORS, using all available detectors', [
+                    'requested_detectors' => $detectors,
+                ]);
+            }
+
+            $config = Env::load($context);
+        }
+
+        $deferredTracerProvider?->complete($config->tracerProvider);
+        $deferredMeterProvider?->complete($config->meterProvider);
+        $deferredLoggerProvider?->complete($config->loggerProvider);
 
         // Re-register to trigger after normal shutdown functions
         register_shutdown_function(

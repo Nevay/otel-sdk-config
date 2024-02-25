@@ -21,7 +21,9 @@ final class LogRecordProcessorLoaderBatch implements Loader {
             scheduledDelayMillis: $env->numeric('OTEL_BLRP_SCHEDULE_DELAY') ?? 5000,
             exportTimeoutMillis: $env->numeric('OTEL_BLRP_EXPORT_TIMEOUT') ?? 30000,
             maxExportBatchSize: $env->numeric('OTEL_BLRP_MAX_EXPORT_BATCH_SIZE') ?? 512,
+            tracerProvider: $context->tracerProvider,
             meterProvider: $context->meterProvider,
+            logger: $context->logger,
         );
     }
 

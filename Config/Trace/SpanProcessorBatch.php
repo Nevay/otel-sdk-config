@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\Config\Trace;
 
-use Nevay\OTelSDK\Configuration\Config\ComponentPlugin;
-use Nevay\OTelSDK\Configuration\Config\ComponentProvider;
-use Nevay\OTelSDK\Configuration\Config\ComponentProviderRegistry;
+use Nevay\OTelSDK\Configuration\ComponentPlugin;
+use Nevay\OTelSDK\Configuration\ComponentProvider;
+use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
 use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Trace\SpanExporter;
 use Nevay\OTelSDK\Trace\SpanProcessor;
@@ -28,7 +28,9 @@ final class SpanProcessorBatch implements ComponentProvider {
             scheduledDelayMillis: $properties['schedule_delay'],
             exportTimeoutMillis: $properties['export_timeout'],
             maxExportBatchSize: $properties['max_export_batch_size'],
+            tracerProvider: $context->tracerProvider,
             meterProvider: $context->meterProvider,
+            logger: $context->logger,
         );
     }
 
@@ -40,7 +42,7 @@ final class SpanProcessorBatch implements ComponentProvider {
                 ->integerNode('export_timeout')->min(0)->defaultValue(30000)->end()
                 ->integerNode('max_queue_size')->min(0)->defaultValue(2048)->end()
                 ->integerNode('max_export_batch_size')->min(0)->defaultValue(512)->end()
-                ->append(ComponentPlugin::provider('exporter', SpanExporter::class, $registry)->isRequired())
+                ->append($registry->component('exporter', SpanExporter::class)->isRequired())
             ->end()
         ;
 
