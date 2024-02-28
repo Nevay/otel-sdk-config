@@ -16,7 +16,6 @@
         "symfony/config": "^5.4 || ^6.4 || ^7.0",
         "tbachert/otel-sdk-common": "^0.1",
         "tbachert/otel-sdk-configuration": "^0.1",
-        "tbachert/otel-sdk-deferred-providers": "^0.1",
         "tbachert/otel-sdk-logs": "^0.1",
         "tbachert/otel-sdk-metrics": "^0.1",
         "tbachert/otel-sdk-trace": "^0.1",

@@ -15,6 +15,7 @@ use Nevay\OTelSDK\Configuration\Environment\PhpIniEnvSource;
 use Nevay\OTelSDK\Configuration\Logging\ApiLoggerHolderLogger;
 use Nevay\OTelSDK\Configuration\Logging\LoggerHandler;
 use Nevay\OTelSDK\Configuration\Logging\NoopHandler;
+use Nevay\OTelSDK\Deferred\Deferred;
 use Nevay\OTelSDK\Deferred\DeferredLoggerProvider;
 use Nevay\OTelSDK\Deferred\DeferredMeterProvider;
 use Nevay\OTelSDK\Deferred\DeferredTracerProvider;
@@ -23,6 +24,7 @@ use OpenTelemetry\API\Instrumentation\Configurator;
 use function Amp\async;
 use function Amp\ByteStream\getStderr;
 use function Amp\ByteStream\getStdout;
+use function class_exists;
 use function register_shutdown_function;
 
 (static function(): void {
@@ -55,7 +57,7 @@ use function register_shutdown_function;
         $deferredMeterProvider = null;
         $deferredLoggerProvider = null;
         $context = new Context(logger: $logger);
-        if ($selfDiagnostics) {
+        if ($selfDiagnostics && class_exists(Deferred::class)) {
             $deferredTracerProvider = new DeferredFuture();
             $deferredMeterProvider = new DeferredFuture();
             $deferredLoggerProvider = new DeferredFuture();
