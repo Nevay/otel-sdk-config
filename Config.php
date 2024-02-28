@@ -2,7 +2,6 @@
 namespace Nevay\OTelSDK\Configuration;
 
 use Exception;
-use Nevay\OTelSDK\Configuration\Config\Internal\ConfigurationResultOpentelemetryConfiguration;
 use Nevay\OTelSDK\Configuration\Config\OpenTelemetryConfiguration;
 use Nevay\OTelSDK\Configuration\ConfigurationProcessor\DetectResource;
 use Nevay\OTelSDK\Configuration\Environment\ArrayEnvSource;
