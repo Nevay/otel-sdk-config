@@ -40,7 +40,7 @@ final class Config {
         Context $context = new Context(),
     ): ConfigurationResult {
         return self::factory()
-            ->process($config)
+            ->process([$config])
             ->create($context);
     }
 
