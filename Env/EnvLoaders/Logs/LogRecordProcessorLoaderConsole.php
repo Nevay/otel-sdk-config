@@ -5,21 +5,27 @@ use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Configuration\Env\EnvResolver;
 use Nevay\OTelSDK\Configuration\Env\Loader;
 use Nevay\OTelSDK\Configuration\Env\LoaderRegistry;
-use Nevay\OTelSDK\Logs\LogRecordExporter;
+use Nevay\OTelSDK\Logs\LogRecordProcessor;
+use Nevay\OTelSDK\Logs\LogRecordProcessor\SimpleLogRecordProcessor;
 use Nevay\OTelSDK\Otlp\OtlpStreamLogRecordExporter;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use function Amp\ByteStream\getStdout;
 
 /**
- * @implements Loader<LogRecordExporter>
+ * @implements Loader<LogRecordProcessor>
  */
 #[PackageDependency('tbachert/otel-sdk-otlpexporter', '^0.1')]
 #[PackageDependency('amphp/byte-stream', '^2.0')]
-final class LogRecordExporterLoaderConsole implements Loader {
+final class LogRecordProcessorLoaderConsole implements Loader {
 
-    public function load(EnvResolver $env, LoaderRegistry $registry, Context $context): LogRecordExporter {
-        return new OtlpStreamLogRecordExporter(
-            stream: getStdout(),
+    public function load(EnvResolver $env, LoaderRegistry $registry, Context $context): LogRecordProcessor {
+        return new SimpleLogRecordProcessor(
+            logRecordExporter: new OtlpStreamLogRecordExporter(
+                stream: getStdout(),
+                logger: $context->logger,
+            ),
+            tracerProvider: $context->tracerProvider,
+            meterProvider: $context->meterProvider,
             logger: $context->logger,
         );
     }

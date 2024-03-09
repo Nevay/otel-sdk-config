@@ -102,7 +102,7 @@ final class Env {
         $tracerProviderBuilder->setEventAttributeLimits($env->numeric('OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT'));
         $tracerProviderBuilder->setLinkAttributeLimits($env->numeric('OTEL_LINK_ATTRIBUTE_COUNT_LIMIT'));
         $tracerProviderBuilder->setSampler($registry->load(Sampler::class, $env->string('OTEL_TRACES_SAMPLER') ?? 'parentbased_always_on', $env, $context));
-        $tracerProviderBuilder->addSpanProcessor($registry->load(SpanProcessor::class, $env->string('OTEL_PHP_TRACES_PROCESSOR') ?? 'batch', $env, $context));
+        $tracerProviderBuilder->addSpanProcessor($registry->load(SpanProcessor::class, $env->string('OTEL_TRACES_EXPORTER') ?? 'otlp', $env, $context));
     }
 
     private static function meterProvider(MeterProviderBuilder $meterProviderBuilder, EnvResolver $env, LoaderRegistry $registry, Context $context): void {
@@ -112,6 +112,6 @@ final class Env {
 
     private static function loggerProvider(LoggerProviderBuilder $loggerProviderBuilder, EnvResolver $env, LoaderRegistry $registry, Context $context): void {
         $loggerProviderBuilder->setLogRecordAttributeLimits($env->numeric('OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT'), $env->numeric('OTEL_LOGRECORD_ATTRIBUTE_VALUE_LENGTH_LIMIT'));
-        $loggerProviderBuilder->addLogRecordProcessor($registry->load(LogRecordProcessor::class, $env->string('OTEL_PHP_LOGS_PROCESSOR') ?? 'batch', $env, $context));
+        $loggerProviderBuilder->addLogRecordProcessor($registry->load(LogRecordProcessor::class, $env->string('OTEL_LOGS_EXPORTER') ?? 'otlp', $env, $context));
     }
 }

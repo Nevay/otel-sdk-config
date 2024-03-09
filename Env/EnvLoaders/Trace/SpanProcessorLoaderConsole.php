@@ -6,20 +6,26 @@ use Nevay\OTelSDK\Configuration\Env\EnvResolver;
 use Nevay\OTelSDK\Configuration\Env\Loader;
 use Nevay\OTelSDK\Configuration\Env\LoaderRegistry;
 use Nevay\OTelSDK\Otlp\OtlpStreamSpanExporter;
-use Nevay\OTelSDK\Trace\SpanExporter;
+use Nevay\OTelSDK\Trace\SpanProcessor;
+use Nevay\OTelSDK\Trace\SpanProcessor\SimpleSpanProcessor;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use function Amp\ByteStream\getStdout;
 
 /**
- * @implements Loader<SpanExporter>
+ * @implements Loader<SpanProcessor>
  */
 #[PackageDependency('tbachert/otel-sdk-otlpexporter', '^0.1')]
 #[PackageDependency('amphp/byte-stream', '^2.0')]
-final class SpanExporterLoaderConsole implements Loader {
+final class SpanProcessorLoaderConsole implements Loader {
 
-    public function load(EnvResolver $env, LoaderRegistry $registry, Context $context): SpanExporter {
-        return new OtlpStreamSpanExporter(
-            stream: getStdout(),
+    public function load(EnvResolver $env, LoaderRegistry $registry, Context $context): SpanProcessor {
+        return new SimpleSpanProcessor(
+            spanExporter: new OtlpStreamSpanExporter(
+                stream: getStdout(),
+                logger: $context->logger,
+            ),
+            tracerProvider: $context->tracerProvider,
+            meterProvider: $context->meterProvider,
             logger: $context->logger,
         );
     }

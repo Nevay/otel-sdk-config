@@ -77,10 +77,9 @@
                 "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Trace\\SamplerLoaderParentBasedAlwaysOn",
                 "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Trace\\SamplerLoaderParentBasedTraceIdRatio",
                 "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Trace\\SamplerLoaderTraceIdRatio",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Trace\\SpanExporterLoaderConsole",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Trace\\SpanExporterLoaderNone",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Trace\\SpanExporterLoaderOtlp",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Trace\\SpanProcessorLoaderBatch",
+                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Trace\\SpanProcessorLoaderConsole",
+                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Trace\\SpanProcessorLoaderNone",
+                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Trace\\SpanProcessorLoaderOtlp",
                 "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Metrics\\ExemplarReservoirResolverLoaderAlwaysOff",
                 "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Metrics\\ExemplarReservoirResolverLoaderAlwaysOn",
                 "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Metrics\\ExemplarReservoirResolverLoaderTraceBased",
@@ -88,10 +87,9 @@
                 "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Metrics\\MetricReaderLoaderNone",
                 "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Metrics\\MetricReaderLoaderOtlp",
                 "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Metrics\\MetricReaderLoaderPrometheus",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Logs\\LogRecordExporterLoaderConsole",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Logs\\LogRecordExporterLoaderNone",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Logs\\LogRecordExporterLoaderOtlp",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Logs\\LogRecordProcessorLoaderBatch"
+                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Logs\\LogRecordProcessorLoaderConsole",
+                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Logs\\LogRecordProcessorLoaderNone",
+                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Logs\\LogRecordProcessorLoaderOtlp"
             ]
         }
     }
