@@ -26,7 +26,9 @@ final class MetricReaderLoaderConsole implements Loader {
             ),
             exportIntervalMillis: $env->numeric('OTEL_METRIC_EXPORT_INTERVAL') ?? 10000,
             exportTimeoutMillis: $env->numeric('OTEL_METRIC_EXPORT_TIMEOUT') ?? 30000,
+            tracerProvider: $context->tracerProvider,
             meterProvider: $context->meterProvider,
+            logger: $context->logger,
         );
     }
 

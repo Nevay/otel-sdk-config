@@ -37,7 +37,9 @@ final class MetricReaderLoaderPrometheus implements Loader {
         return new PullMetricReader(
             metricExporter: new PrometheusMetricExporter($server),
             exportTimeoutMillis: $env->numeric('OTEL_METRIC_EXPORT_TIMEOUT') ?? 30000,
+            tracerProvider: $context->tracerProvider,
             meterProvider: $context->meterProvider,
+            logger: $context->logger,
         );
     }
 
