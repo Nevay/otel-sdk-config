@@ -23,7 +23,9 @@ use Nevay\SPI\ServiceLoader;
 use OpenTelemetry\API\Logs\NoopLoggerProvider;
 use OpenTelemetry\API\Metrics\Noop\NoopMeterProvider;
 use OpenTelemetry\API\Trace\NoopTracerProvider;
+use OpenTelemetry\Context\Propagation\MultiTextMapPropagator;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
+use function array_unique;
 
 final class Env {
 
@@ -39,7 +41,11 @@ final class Env {
             new PhpIniEnvSource(),
         ]));
 
-        $textMapPropagator = $registry->load(TextMapPropagatorInterface::class, 'composite', $env, $context);
+        $propagators = [];
+        foreach (array_unique($env->list('OTEL_PROPAGATORS') ?? ['tracecontext', 'baggage']) as $name) {
+            $propagators[] = $registry->load(TextMapPropagatorInterface::class, $name, $env, $context);
+        }
+        $textMapPropagator = new MultiTextMapPropagator($propagators);
 
         if ($env->bool('OTEL_SDK_DISABLED') ?? false) {
             return new ConfigurationResult(

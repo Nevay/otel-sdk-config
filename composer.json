@@ -68,7 +68,6 @@
                 "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Propagator\\TextMapPropagatorLoaderB3",
                 "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Propagator\\TextMapPropagatorLoaderB3Multi",
                 "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Propagator\\TextMapPropagatorLoaderBaggage",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Propagator\\TextMapPropagatorLoaderComposite",
                 "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Propagator\\TextMapPropagatorLoaderJaeger",
                 "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Propagator\\TextMapPropagatorLoaderTraceContext",
                 "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Trace\\SamplerLoaderAlwaysOff",
