@@ -1,5 +1,5 @@
 {
-    "name": "tbachert/otel-sdk-configuration-implementation",
+    "name": "tbachert/otel-sdk-config",
     "description": "OpenTelemetry SDK configuration",
     "keywords": ["opentelemetry", "otel", "sdk"],
     "license": "Apache-2.0",
