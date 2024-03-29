@@ -68,7 +68,7 @@ use function register_shutdown_function;
             );
         }
 
-        if (($configFile = $env->string('OTEL_CONFIG_FILE')) !== null) {
+        if (($configFile = $env->string('OTEL_EXPERIMENTAL_CONFIG_FILE')) !== null) {
             $config = Config::loadFile($configFile, context: $context);
         } else {
             if (($detectors = $env->list('OTEL_PHP_DETECTORS')) !== null && $detectors !== ['all']) {
