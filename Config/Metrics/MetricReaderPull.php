@@ -20,7 +20,9 @@ final class MetricReaderPull implements ComponentProvider {
     public function createPlugin(array $properties, Context $context): MetricReader {
         return new PeriodicExportingMetricReader(
             metricExporter: $properties['exporter']->create($context),
+            tracerProvider: $context->tracerProvider,
             meterProvider: $context->meterProvider,
+            logger: $context->logger,
         );
     }
 

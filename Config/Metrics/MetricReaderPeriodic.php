@@ -24,7 +24,9 @@ final class MetricReaderPeriodic implements ComponentProvider {
             metricExporter: $properties['exporter']->create($context),
             exportIntervalMillis: $properties['interval'],
             exportTimeoutMillis: $properties['timeout'],
+            tracerProvider: $context->tracerProvider,
             meterProvider: $context->meterProvider,
+            logger: $context->logger,
         );
     }
 
