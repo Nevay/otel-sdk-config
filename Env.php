@@ -8,9 +8,9 @@ use Nevay\OTelSDK\Configuration\Env\EnvResolver;
 use Nevay\OTelSDK\Configuration\Env\Loader;
 use Nevay\OTelSDK\Configuration\Env\LoaderRegistry;
 use Nevay\OTelSDK\Configuration\Env\MutableLoaderRegistry;
-use Nevay\OTelSDK\Configuration\Environment\ArrayEnvSource;
 use Nevay\OTelSDK\Configuration\Environment\EnvSourceReader;
 use Nevay\OTelSDK\Configuration\Environment\PhpIniEnvSource;
+use Nevay\OTelSDK\Configuration\Environment\ServerEnvSource;
 use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
 use Nevay\OTelSDK\Logs\LogRecordProcessor;
 use Nevay\OTelSDK\Metrics\ExemplarReservoirResolver;
@@ -37,7 +37,7 @@ final class Env {
             $registry->register($loader);
         }
         $env = new EnvResolver(new EnvSourceReader([
-            new ArrayEnvSource($_SERVER),
+            new ServerEnvSource(),
             new PhpIniEnvSource(),
         ]));
 

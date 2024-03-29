@@ -19,7 +19,6 @@ final class TextMapPropagatorLoaderB3Multi implements Loader {
         return B3Propagator::getB3SingleHeaderInstance();
     }
 
-
     public function name(): string {
         return 'b3multi';
     }

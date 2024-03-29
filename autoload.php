@@ -9,9 +9,9 @@ use Monolog\Handler\ErrorLogHandler;
 use Monolog\Handler\PsrHandler;
 use Monolog\Logger;
 use Nevay\OTelSDK\Configuration\Env\EnvResolver;
-use Nevay\OTelSDK\Configuration\Environment\ArrayEnvSource;
 use Nevay\OTelSDK\Configuration\Environment\EnvSourceReader;
 use Nevay\OTelSDK\Configuration\Environment\PhpIniEnvSource;
+use Nevay\OTelSDK\Configuration\Environment\ServerEnvSource;
 use Nevay\OTelSDK\Configuration\Logging\ApiLoggerHolderLogger;
 use Nevay\OTelSDK\Configuration\Logging\LoggerHandler;
 use Nevay\OTelSDK\Configuration\Logging\NoopHandler;
@@ -31,7 +31,7 @@ use function register_shutdown_function;
     /** @var Future<ConfigurationResult|null> $config */
     $config = async(static function(): ?ConfigurationResult {
         $env = new EnvResolver(new EnvSourceReader([
-            new ArrayEnvSource($_SERVER),
+            new ServerEnvSource(),
             new PhpIniEnvSource(),
         ]));
         if (!$env->bool('OTEL_PHP_AUTOLOAD_ENABLED')) {
