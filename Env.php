@@ -13,7 +13,7 @@ use Nevay\OTelSDK\Configuration\Environment\PhpIniEnvSource;
 use Nevay\OTelSDK\Configuration\Environment\ServerEnvSource;
 use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
 use Nevay\OTelSDK\Logs\LogRecordProcessor;
-use Nevay\OTelSDK\Metrics\ExemplarReservoirResolver;
+use Nevay\OTelSDK\Metrics\ExemplarFilter;
 use Nevay\OTelSDK\Metrics\MeterProviderBuilder;
 use Nevay\OTelSDK\Metrics\MetricReader;
 use Nevay\OTelSDK\Trace\Sampler;
@@ -112,7 +112,7 @@ final class Env {
     }
 
     private static function meterProvider(MeterProviderBuilder $meterProviderBuilder, EnvResolver $env, LoaderRegistry $registry, Context $context): void {
-        $meterProviderBuilder->setExemplarReservoirResolver($registry->load(ExemplarReservoirResolver::class, $env->string('OTEL_METRICS_EXEMPLAR_FILTER') ?? 'trace_based', $env, $context));
+        $meterProviderBuilder->setExemplarFilter($registry->load(ExemplarFilter::class, $env->string('OTEL_METRICS_EXEMPLAR_FILTER') ?? 'trace_based', $env, $context));
         $meterProviderBuilder->addMetricReader($registry->load(MetricReader::class, $env->string('OTEL_METRICS_EXPORTER') ?? 'otlp', $env, $context));
     }
 
