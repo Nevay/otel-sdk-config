@@ -12,7 +12,7 @@ use Nevay\OTelSDK\Configuration\ComponentProvider;
 use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
 use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Configuration\Validation;
-use Nevay\OTelSDK\Metrics\AggregationResolvers;
+use Nevay\OTelSDK\Metrics\Aggregation\DefaultAggregation;
 use Nevay\OTelSDK\Metrics\MetricExporter;
 use Nevay\OTelSDK\Metrics\TemporalityResolvers;
 use Nevay\OTelSDK\Otlp\OtlpHttpMetricExporter;
@@ -69,8 +69,8 @@ final class MetricExporterOtlp implements ComponentProvider {
                 'delta' => TemporalityResolvers::Delta,
                 'lowmemory' => TemporalityResolvers::LowMemory,
             },
-            aggregationResolver: match ($properties['default_histogram_aggregation']) {
-                'explicit_bucket_histogram' => AggregationResolvers::Default,
+            aggregation: match ($properties['default_histogram_aggregation']) {
+                'explicit_bucket_histogram' => new DefaultAggregation(),
             },
             logger: $context->logger,
         );

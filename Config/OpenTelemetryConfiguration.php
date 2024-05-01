@@ -13,7 +13,7 @@ use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Configuration\Validation;
 use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
 use Nevay\OTelSDK\Logs\LogRecordProcessor;
-use Nevay\OTelSDK\Metrics\AggregationResolver;
+use Nevay\OTelSDK\Metrics\Aggregation;
 use Nevay\OTelSDK\Metrics\AttributeProcessor\FilteredAttributeProcessor;
 use Nevay\OTelSDK\Metrics\InstrumentType;
 use Nevay\OTelSDK\Metrics\MeterProviderBuilder;
@@ -66,7 +66,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *                 name: ?string,
      *                 description: ?string,
      *                 attribute_keys: list<string>,
-     *                 aggregation: ?ComponentPlugin<AggregationResolver>,
+     *                 aggregation: ?ComponentPlugin<Aggregation>,
      *             },
      *             selector: array{
      *                 instrument_type: 'counter'|'gauge'|'histogram'|'observable_counter'|'observable_gauge'|'observable_up_down_counter'|'up_down_counter'|null,
@@ -145,7 +145,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                     attributeProcessor: $view['stream']['attribute_keys']
                         ? new FilteredAttributeProcessor($view['stream']['attribute_keys'])
                         : null,
-                    aggregationResolver: $view['stream']['aggregation']?->create($context),
+                    aggregation: $view['stream']['aggregation']?->create($context),
                 ),
                 type: match ($view['selector']['instrument_type']) {
                     'counter' => InstrumentType::Counter,
@@ -297,7 +297,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                                     ->arrayNode('attribute_keys')
                                         ->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()
                                     ->end()
-                                    ->append($registry->component('aggregation', AggregationResolver::class))
+                                    ->append($registry->component('aggregation', Aggregation::class))
                                 ->end()
                             ->end()
                             ->arrayNode('selector')

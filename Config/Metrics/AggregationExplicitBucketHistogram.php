@@ -5,11 +5,11 @@ use InvalidArgumentException;
 use Nevay\OTelSDK\Configuration\ComponentProvider;
 use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
 use Nevay\OTelSDK\Configuration\Context;
-use Nevay\OTelSDK\Metrics\Aggregation\ExplicitBucketHistogramAggregationResolver;
-use Nevay\OTelSDK\Metrics\AggregationResolver;
+use Nevay\OTelSDK\Metrics\Aggregation\ExplicitBucketHistogramAggregation;
+use Nevay\OTelSDK\Metrics\Aggregation;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
-final class AggregationResolverExplicitBucketHistogram implements ComponentProvider {
+final class AggregationExplicitBucketHistogram implements ComponentProvider {
 
     /**
      * @param array{
@@ -17,8 +17,8 @@ final class AggregationResolverExplicitBucketHistogram implements ComponentProvi
      *     record_min_max: bool,
      * } $properties
      */
-    public function createPlugin(array $properties, Context $context): AggregationResolver {
-        return new ExplicitBucketHistogramAggregationResolver(
+    public function createPlugin(array $properties, Context $context): Aggregation {
+        return new ExplicitBucketHistogramAggregation(
             boundaries: $properties['boundaries'] ?: null,
             recordMinMax: $properties['record_min_max'],
         );

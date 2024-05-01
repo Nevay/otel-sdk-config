@@ -4,20 +4,20 @@ namespace Nevay\OTelSDK\Configuration\Config\Metrics;
 use Nevay\OTelSDK\Configuration\ComponentProvider;
 use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
 use Nevay\OTelSDK\Configuration\Context;
-use Nevay\OTelSDK\Metrics\Aggregation\DropAggregationResolver;
-use Nevay\OTelSDK\Metrics\AggregationResolver;
+use Nevay\OTelSDK\Metrics\Aggregation\SumAggregation;
+use Nevay\OTelSDK\Metrics\Aggregation;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
-final class AggregationResolverDrop implements ComponentProvider {
+final class AggregationSum implements ComponentProvider {
 
     /**
      * @param array{} $properties
      */
-    public function createPlugin(array $properties, Context $context): AggregationResolver {
-        return new DropAggregationResolver();
+    public function createPlugin(array $properties, Context $context): Aggregation {
+        return new SumAggregation();
     }
 
     public function getConfig(ComponentProviderRegistry $registry): ArrayNodeDefinition {
-        return new ArrayNodeDefinition('drop');
+        return new ArrayNodeDefinition('sum');
     }
 }
