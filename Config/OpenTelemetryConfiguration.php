@@ -28,6 +28,8 @@ use OpenTelemetry\Context\Propagation\NoopTextMapPropagator;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
 use OpenTelemetry\SDK\Metrics\NoopMeterProvider;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use function is_array;
+use function is_string;
 
 final class OpenTelemetryConfiguration implements ComponentProvider {
 
@@ -142,7 +144,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 view: new View(
                     name: $view['stream']['name'],
                     description: $view['stream']['description'],
-                    attributeProcessor: $view['stream']['attribute_keys']
+                    attributeProcessor: $view['stream']['attribute_keys'] !== null
                         ? new FilteredAttributeProcessor($view['stream']['attribute_keys'])
                         : null,
                     aggregation: $view['stream']['aggregation']?->create($context),
@@ -294,8 +296,12 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                                 ->children()
                                     ->scalarNode('name')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
                                     ->scalarNode('description')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
-                                    ->arrayNode('attribute_keys')
-                                        ->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()
+                                    ->variableNode('attribute_keys')
+                                        ->defaultNull()
+                                        ->validate()
+                                            ->ifTrue(static fn($v) => !is_array($v) || array_filter($v, static fn($v) => !is_string($v)))
+                                            ->thenInvalid('must be an array of attribute keys')
+                                        ->end()
                                     ->end()
                                     ->append($registry->component('aggregation', Aggregation::class))
                                 ->end()
