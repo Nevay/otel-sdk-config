@@ -14,7 +14,6 @@ use Nevay\OTelSDK\Configuration\Validation;
 use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
 use Nevay\OTelSDK\Logs\LogRecordProcessor;
 use Nevay\OTelSDK\Metrics\Aggregation;
-use Nevay\OTelSDK\Metrics\AttributeProcessor\FilteredAttributeProcessor;
 use Nevay\OTelSDK\Metrics\InstrumentType;
 use Nevay\OTelSDK\Metrics\MeterProviderBuilder;
 use Nevay\OTelSDK\Metrics\MetricReader;
@@ -144,9 +143,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 view: new View(
                     name: $view['stream']['name'],
                     description: $view['stream']['description'],
-                    attributeProcessor: $view['stream']['attribute_keys'] !== null
-                        ? new FilteredAttributeProcessor($view['stream']['attribute_keys'])
-                        : null,
+                    attributeKeys: $view['stream']['attribute_keys'],
                     aggregation: $view['stream']['aggregation']?->create($context),
                 ),
                 type: match ($view['selector']['instrument_type']) {
