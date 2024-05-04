@@ -12,6 +12,10 @@ use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Configuration\Env\EnvResolver;
 use Nevay\OTelSDK\Configuration\Env\Loader;
 use Nevay\OTelSDK\Configuration\Env\LoaderRegistry;
+use Nevay\OTelSDK\Metrics\Aggregation\Base2ExponentialBucketHistogramAggregation;
+use Nevay\OTelSDK\Metrics\Aggregation\DefaultAggregation;
+use Nevay\OTelSDK\Metrics\Aggregation\ExplicitBucketHistogramAggregation;
+use Nevay\OTelSDK\Metrics\InstrumentType;
 use Nevay\OTelSDK\Metrics\MetricReader;
 use Nevay\OTelSDK\Metrics\MetricReader\PeriodicExportingMetricReader;
 use Nevay\OTelSDK\Metrics\TemporalityResolvers;
@@ -59,6 +63,10 @@ final class MetricReaderLoaderOtlp implements Loader {
                     'delta' => TemporalityResolvers::Delta,
                     'lowmemory' => TemporalityResolvers::LowMemory,
                 },
+                aggregation: (new DefaultAggregation())->with(InstrumentType::Histogram, match ($env->string('OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION') ?? 'explicit_bucket_histogram') {
+                    'explicit_bucket_histogram' => new ExplicitBucketHistogramAggregation(),
+                    'base2_exponential_bucket_histogram' => new Base2ExponentialBucketHistogramAggregation(),
+                }),
                 logger: $context->logger,
             ),
             exportIntervalMillis: $env->numeric('OTEL_METRIC_EXPORT_INTERVAL') ?? 60000,

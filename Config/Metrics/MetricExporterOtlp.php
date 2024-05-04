@@ -12,7 +12,10 @@ use Nevay\OTelSDK\Configuration\ComponentProvider;
 use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
 use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Configuration\Validation;
+use Nevay\OTelSDK\Metrics\Aggregation\Base2ExponentialBucketHistogramAggregation;
 use Nevay\OTelSDK\Metrics\Aggregation\DefaultAggregation;
+use Nevay\OTelSDK\Metrics\Aggregation\ExplicitBucketHistogramAggregation;
+use Nevay\OTelSDK\Metrics\InstrumentType;
 use Nevay\OTelSDK\Metrics\MetricExporter;
 use Nevay\OTelSDK\Metrics\TemporalityResolvers;
 use Nevay\OTelSDK\Otlp\OtlpHttpMetricExporter;
@@ -37,7 +40,7 @@ final class MetricExporterOtlp implements ComponentProvider {
      *     compression: 'gzip'|null,
      *     timeout: int<0, max>,
      *     temporality_preference: 'cumulative'|'delta'|'lowmemory',
-     *     default_histogram_aggregation: 'explicit_bucket_histogram',
+     *     default_histogram_aggregation: 'explicit_bucket_histogram'|'base2_exponential_bucket_histogram',
      * } $properties
      */
     public function createPlugin(array $properties, Context $context): MetricExporter {
@@ -69,9 +72,10 @@ final class MetricExporterOtlp implements ComponentProvider {
                 'delta' => TemporalityResolvers::Delta,
                 'lowmemory' => TemporalityResolvers::LowMemory,
             },
-            aggregation: match ($properties['default_histogram_aggregation']) {
-                'explicit_bucket_histogram' => new DefaultAggregation(),
-            },
+            aggregation: (new DefaultAggregation())->with(InstrumentType::Histogram, match ($properties['default_histogram_aggregation']) {
+                'explicit_bucket_histogram' => new ExplicitBucketHistogramAggregation(),
+                'base2_exponential_bucket_histogram' => new Base2ExponentialBucketHistogramAggregation(),
+            }),
             logger: $context->logger,
         );
     }
@@ -95,7 +99,7 @@ final class MetricExporterOtlp implements ComponentProvider {
                     ->defaultValue('cumulative')
                 ->end()
                 ->enumNode('default_histogram_aggregation')
-                    ->values(['explicit_bucket_histogram'])
+                    ->values(['explicit_bucket_histogram', 'base2_exponential_bucket_histogram'])
                     ->defaultValue('explicit_bucket_histogram')
                 ->end()
             ->end()
