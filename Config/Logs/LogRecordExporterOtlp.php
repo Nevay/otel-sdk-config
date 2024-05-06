@@ -54,8 +54,8 @@ q     */
             client: $client,
             endpoint: Uri\Http::new($properties['endpoint'] . '/v1/logs'),
             format: match ($properties['protocol']) {
-                'http/protobuf' => ProtobufFormat::PROTOBUF,
-                'http/json' => ProtobufFormat::JSON,
+                'http/protobuf' => ProtobufFormat::Protobuf,
+                'http/json' => ProtobufFormat::Json,
             },
             compression: $properties['compression'],
             headers: $properties['headers'],

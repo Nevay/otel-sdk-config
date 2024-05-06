@@ -61,8 +61,8 @@ final class MetricExporterOtlp implements ComponentProvider {
             client: $client,
             endpoint: Uri\Http::new($properties['endpoint'] . '/v1/metrics'),
             format: match ($properties['protocol']) {
-                'http/protobuf' => ProtobufFormat::PROTOBUF,
-                'http/json' => ProtobufFormat::JSON,
+                'http/protobuf' => ProtobufFormat::Protobuf,
+                'http/json' => ProtobufFormat::Json,
             },
             compression: $properties['compression'],
             headers: $properties['headers'],

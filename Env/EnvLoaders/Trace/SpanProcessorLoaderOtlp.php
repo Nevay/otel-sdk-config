@@ -46,8 +46,8 @@ final class SpanProcessorLoaderOtlp implements Loader {
                 client: $client,
                 endpoint: Uri\Http::new($env->string('OTEL_EXPORTER_OTLP_TRACES_ENDPOINT') ?? ($env->string('OTEL_EXPORTER_OTLP_ENDPOINT') ?? 'http://localhost:4318') . '/v1/traces'),
                 format: match ($env->string('OTEL_EXPORTER_OTLP_TRACES_PROTOCOL') ?? $env->string('OTEL_EXPORTER_OTLP_PROTOCOL') ?? 'http/protobuf') {
-                    'http/protobuf' => ProtobufFormat::PROTOBUF,
-                    'http/json' => ProtobufFormat::JSON,
+                    'http/protobuf' => ProtobufFormat::Protobuf,
+                    'http/json' => ProtobufFormat::Json,
                 },
                 compression: $env->string('OTEL_EXPORTER_OTLP_TRACES_COMPRESSION') ?? $env->string('OTEL_EXPORTER_OTLP_COMPRESSION'),
                 headers: $env->map('OTEL_EXPORTER_OTLP_TRACES_HEADERS') ?? $env->map('OTEL_EXPORTER_OTLP_HEADERS') ?? [],
