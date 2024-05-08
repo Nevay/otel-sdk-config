@@ -68,17 +68,9 @@ use function register_shutdown_function;
             );
         }
 
-        if (($configFile = $env->string('OTEL_EXPERIMENTAL_CONFIG_FILE')) !== null) {
-            $config = Config::loadFile($configFile, context: $context);
-        } else {
-            if (($detectors = $env->list('OTEL_PHP_DETECTORS')) !== null && $detectors !== ['all']) {
-                $context->logger->notice('Not supported environment variable OTEL_PHP_DETECTORS, using all available detectors', [
-                    'requested_detectors' => $detectors,
-                ]);
-            }
-
-            $config = Env::load($context);
-        }
+        $config = ($configFile = $env->string('OTEL_EXPERIMENTAL_CONFIG_FILE')) !== null
+            ? Config::loadFile($configFile, context: $context)
+            : Env::load($context);
 
         $deferredTracerProvider?->complete($config->tracerProvider);
         $deferredMeterProvider?->complete($config->meterProvider);
