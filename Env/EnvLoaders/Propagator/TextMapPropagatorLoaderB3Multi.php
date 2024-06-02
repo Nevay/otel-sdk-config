@@ -16,7 +16,7 @@ use OpenTelemetry\Extension\Propagator\B3\B3Propagator;
 final class TextMapPropagatorLoaderB3Multi implements Loader {
 
     public function load(EnvResolver $env, LoaderRegistry $registry, Context $context): TextMapPropagatorInterface {
-        return B3Propagator::getB3SingleHeaderInstance();
+        return B3Propagator::getB3MultiHeaderInstance();
     }
 
     public function name(): string {
