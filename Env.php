@@ -39,7 +39,7 @@ final class Env {
         $env = new EnvResolver(new EnvSourceReader([
             new ServerEnvSource(),
             new PhpIniEnvSource(),
-        ]));
+        ]), $context->logger);
 
         $propagators = [];
         foreach (array_unique($env->list('OTEL_PROPAGATORS') ?? ['tracecontext', 'baggage']) as $name) {
@@ -70,8 +70,8 @@ final class Env {
         $meterProviderBuilder->addResource($resource);
         $loggerProviderBuilder->addResource($resource);
 
-        $attributeCountLimit = $env->numeric('OTEL_ATTRIBUTE_COUNT_LIMIT');
-        $attributeValueLengthLimit = $env->numeric('OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT');
+        $attributeCountLimit = $env->int('OTEL_ATTRIBUTE_COUNT_LIMIT');
+        $attributeValueLengthLimit = $env->int('OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT');
         $tracerProviderBuilder->setAttributeLimits($attributeCountLimit, $attributeValueLengthLimit);
         $loggerProviderBuilder->setAttributeLimits($attributeCountLimit, $attributeValueLengthLimit);
 
@@ -102,11 +102,11 @@ final class Env {
     }
 
     private static function tracerProvider(TracerProviderBuilder $tracerProviderBuilder, EnvResolver $env, LoaderRegistry $registry, Context $context): void {
-        $tracerProviderBuilder->setSpanAttributeLimits($env->numeric('OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT'), $env->numeric('OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT'));
-        $tracerProviderBuilder->setEventCountLimit($env->numeric('OTEL_SPAN_EVENT_COUNT_LIMIT'));
-        $tracerProviderBuilder->setLinkCountLimit($env->numeric('OTEL_SPAN_LINK_COUNT_LIMIT'));
-        $tracerProviderBuilder->setEventAttributeLimits($env->numeric('OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT'));
-        $tracerProviderBuilder->setLinkAttributeLimits($env->numeric('OTEL_LINK_ATTRIBUTE_COUNT_LIMIT'));
+        $tracerProviderBuilder->setSpanAttributeLimits($env->int('OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT'), $env->int('OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT'));
+        $tracerProviderBuilder->setEventCountLimit($env->int('OTEL_SPAN_EVENT_COUNT_LIMIT'));
+        $tracerProviderBuilder->setLinkCountLimit($env->int('OTEL_SPAN_LINK_COUNT_LIMIT'));
+        $tracerProviderBuilder->setEventAttributeLimits($env->int('OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT'));
+        $tracerProviderBuilder->setLinkAttributeLimits($env->int('OTEL_LINK_ATTRIBUTE_COUNT_LIMIT'));
         $tracerProviderBuilder->setSampler($registry->load(Sampler::class, $env->string('OTEL_TRACES_SAMPLER') ?? 'parentbased_always_on', $env, $context));
         $tracerProviderBuilder->addSpanProcessor($registry->load(SpanProcessor::class, $env->string('OTEL_TRACES_EXPORTER') ?? 'otlp', $env, $context));
     }
@@ -117,7 +117,7 @@ final class Env {
     }
 
     private static function loggerProvider(LoggerProviderBuilder $loggerProviderBuilder, EnvResolver $env, LoaderRegistry $registry, Context $context): void {
-        $loggerProviderBuilder->setLogRecordAttributeLimits($env->numeric('OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT'), $env->numeric('OTEL_LOGRECORD_ATTRIBUTE_VALUE_LENGTH_LIMIT'));
+        $loggerProviderBuilder->setLogRecordAttributeLimits($env->int('OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT'), $env->int('OTEL_LOGRECORD_ATTRIBUTE_VALUE_LENGTH_LIMIT'));
         $loggerProviderBuilder->addLogRecordProcessor($registry->load(LogRecordProcessor::class, $env->string('OTEL_LOGS_EXPORTER') ?? 'otlp', $env, $context));
     }
 }

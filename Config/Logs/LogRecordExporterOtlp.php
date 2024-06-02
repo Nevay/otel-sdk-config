@@ -59,7 +59,7 @@ q     */
             },
             compression: $properties['compression'],
             headers: $properties['headers'],
-            timeout: $properties['timeout'],
+            timeout: $properties['timeout'] / 1e3,
             logger: $context->logger,
         );
     }
@@ -77,7 +77,7 @@ q     */
                     ->scalarPrototype()->end()
                 ->end()
                 ->enumNode('compression')->values(['gzip'])->defaultNull()->end()
-                ->integerNode('timeout')->min(0)->defaultValue(10)->end()
+                ->integerNode('timeout')->min(0)->defaultValue(10000)->end()
             ->end()
         ;
 

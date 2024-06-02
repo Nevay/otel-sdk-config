@@ -66,7 +66,7 @@ final class MetricExporterOtlp implements ComponentProvider {
             },
             compression: $properties['compression'],
             headers: $properties['headers'],
-            timeout: $properties['timeout'],
+            timeout: $properties['timeout'] / 1e3,
             temporalityResolver: match ($properties['temporality_preference']) {
                 'cumulative' => TemporalityResolvers::Cumulative,
                 'delta' => TemporalityResolvers::Delta,
@@ -93,7 +93,7 @@ final class MetricExporterOtlp implements ComponentProvider {
                     ->scalarPrototype()->end()
                 ->end()
                 ->enumNode('compression')->values(['gzip'])->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
-                ->integerNode('timeout')->min(0)->defaultValue(10)->end()
+                ->integerNode('timeout')->min(0)->defaultValue(10000)->end()
                 ->enumNode('temporality_preference')
                     ->values(['cumulative', 'delta', 'lowmemory'])
                     ->defaultValue('cumulative')

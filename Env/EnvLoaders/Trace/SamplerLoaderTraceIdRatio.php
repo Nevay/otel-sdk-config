@@ -14,7 +14,7 @@ use Nevay\OTelSDK\Trace\Sampler\TraceIdRatioBasedSampler;
 final class SamplerLoaderTraceIdRatio implements Loader {
 
     public function load(EnvResolver $env, LoaderRegistry $registry, Context $context): Sampler {
-        return new TraceIdRatioBasedSampler($env->numeric('OTEL_TRACES_SAMPLER_ARG') ?? 1.);
+        return new TraceIdRatioBasedSampler($env->numeric('OTEL_TRACES_SAMPLER_ARG', max: 1) ?? 1.);
     }
 
     public function name(): string {

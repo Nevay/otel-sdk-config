@@ -26,7 +26,7 @@ final class MetricReaderLoaderPrometheus implements Loader {
         $server = SocketHttpServer::createForDirectAccess($context->logger, allowedMethods: ['GET']);
 
         $host = $env->string('OTEL_EXPORTER_PROMETHEUS_HOST') ?? 'localhost';
-        $port = $env->numeric('OTEL_EXPORTER_PROMETHEUS_PORT') ?? 9464;
+        $port = $env->int('OTEL_EXPORTER_PROMETHEUS_PORT') ?? 9464;
 
         $address = Dns\resolve($host)[0]->getValue();
         $server->expose(new InternetAddress(
@@ -36,7 +36,7 @@ final class MetricReaderLoaderPrometheus implements Loader {
 
         return new PullMetricReader(
             metricExporter: new PrometheusMetricExporter($server),
-            exportTimeoutMillis: $env->numeric('OTEL_METRIC_EXPORT_TIMEOUT') ?? 30000,
+            exportTimeoutMillis: $env->int('OTEL_METRIC_EXPORT_TIMEOUT') ?? 30000,
             tracerProvider: $context->tracerProvider,
             meterProvider: $context->meterProvider,
             logger: $context->logger,
