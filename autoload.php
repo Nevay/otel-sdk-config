@@ -92,6 +92,7 @@ use function register_shutdown_function;
                 ->withTracerProvider($config->tracerProvider)
                 ->withMeterProvider($config->meterProvider)
                 ->withLoggerProvider($config->loggerProvider)
+                ->withEventLoggerProvider($config->eventLoggerProvider)
             ;
         }
 

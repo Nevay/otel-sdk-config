@@ -2,6 +2,7 @@
 namespace Nevay\OTelSDK\Configuration;
 
 use Nevay\OTelSDK\Common\Provider;
+use OpenTelemetry\API\Logs\EventLoggerProviderInterface;
 use OpenTelemetry\API\Logs\LoggerProviderInterface;
 use OpenTelemetry\API\Metrics\MeterProviderInterface;
 use OpenTelemetry\API\Trace\TracerProviderInterface;
@@ -14,6 +15,7 @@ final class ConfigurationResult {
         public readonly TracerProviderInterface $tracerProvider,
         public readonly MeterProviderInterface $meterProvider,
         public readonly LoggerProviderInterface $loggerProvider,
+        public readonly EventLoggerProviderInterface $eventLoggerProvider,
         public readonly Provider $provider,
     ) {}
 }
