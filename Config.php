@@ -3,7 +3,6 @@ namespace Nevay\OTelSDK\Configuration;
 
 use Exception;
 use Nevay\OTelSDK\Configuration\Config\OpenTelemetryConfiguration;
-use Nevay\OTelSDK\Configuration\ConfigurationProcessor\DetectResource;
 use Nevay\OTelSDK\Configuration\Environment\EnvSourceReader;
 use Nevay\OTelSDK\Configuration\Environment\PhpIniEnvSource;
 use Nevay\OTelSDK\Configuration\Environment\ServerEnvSource;
@@ -48,7 +47,7 @@ final class Config {
         static $factory;
         return $factory ??= new ConfigurationFactory(
             ServiceLoader::load(ComponentProvider::class),
-            new OpenTelemetryConfiguration(new DetectResource()),
+            new OpenTelemetryConfiguration(),
             new EnvSourceReader([
                 new ServerEnvSource(),
                 new PhpIniEnvSource(),

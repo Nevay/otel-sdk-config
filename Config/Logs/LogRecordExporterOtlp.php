@@ -10,6 +10,7 @@ use Amp\Socket\ConnectContext;
 use League\Uri;
 use Nevay\OTelSDK\Configuration\ComponentProvider;
 use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
+use Nevay\OTelSDK\Configuration\Config\Util;
 use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Configuration\Validation;
 use Nevay\OTelSDK\Logs\LogRecordExporter;
@@ -31,7 +32,11 @@ final class LogRecordExporterOtlp implements ComponentProvider {
      *     certificate: ?string,
      *     client_key: ?string,
      *     client_certificate: ?string,
-     *     headers: array<string, string>,
+     *     headers: list<array{
+     *         name: string,
+     *         value: string,
+     *     }>,
+     *     headers_list: ?string,
      *     compression: 'gzip'|null,
      *     timeout: int<0, max>,
      * } $properties
@@ -58,7 +63,7 @@ q     */
                 'http/json' => ProtobufFormat::Json,
             },
             compression: $properties['compression'],
-            headers: $properties['headers'],
+            headers: Util::parseMapList($properties['headers'], $properties['headers_list']),
             timeout: $properties['timeout'] / 1e3,
             logger: $context->logger,
         );
@@ -74,8 +79,14 @@ q     */
                 ->scalarNode('client_key')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
                 ->scalarNode('client_certificate')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
                 ->arrayNode('headers')
-                    ->scalarPrototype()->end()
+                    ->arrayPrototype()
+                        ->children()
+                            ->scalarNode('name')->isRequired()->validate()->always(Validation::ensureString())->end()->end()
+                            ->scalarNode('value')->isRequired()->validate()->always(Validation::ensureString())->end()->end()
+                        ->end()
+                    ->end()
                 ->end()
+                ->scalarNode('headers_list')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
                 ->enumNode('compression')->values(['gzip'])->defaultNull()->end()
                 ->integerNode('timeout')->min(0)->defaultValue(10000)->end()
             ->end()

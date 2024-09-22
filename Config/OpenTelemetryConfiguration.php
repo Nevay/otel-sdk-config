@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\Config;
 
+use Nevay\OTelSDK\Common\Attributes;
 use Nevay\OTelSDK\Common\Provider\MultiProvider;
 use Nevay\OTelSDK\Common\Provider\NoopProvider;
 use Nevay\OTelSDK\Common\Resource;
@@ -16,7 +17,10 @@ use Nevay\OTelSDK\Logs\LogRecordProcessor;
 use Nevay\OTelSDK\Metrics\Aggregation;
 use Nevay\OTelSDK\Metrics\InstrumentType;
 use Nevay\OTelSDK\Metrics\MeterProviderBuilder;
-use Nevay\OTelSDK\Metrics\MetricReader;
+use Nevay\OTelSDK\Metrics\MetricExporter;
+use Nevay\OTelSDK\Metrics\MetricProducer;
+use Nevay\OTelSDK\Metrics\MetricReader\PeriodicExportingMetricReader;
+use Nevay\OTelSDK\Metrics\MetricReader\PullMetricReader;
 use Nevay\OTelSDK\Metrics\View;
 use Nevay\OTelSDK\Trace\Sampler;
 use Nevay\OTelSDK\Trace\SpanProcessor;
@@ -28,8 +32,6 @@ use OpenTelemetry\Context\Propagation\NoopTextMapPropagator;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
 use OpenTelemetry\SDK\Metrics\NoopMeterProvider;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
-use function is_array;
-use function is_string;
 
 final class OpenTelemetryConfiguration implements ComponentProvider {
 
@@ -42,8 +44,16 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *     file_format: '0.1',
      *     disabled: bool,
      *     resource: array{
-     *         attributes: array,
+     *         attributes: list<array{
+     *             name: string,
+     *             value: mixed,
+     *         }>,
+     *         attributes_list: ?string,
      *         schema_url: ?string,
+     *         detectors: array{
+     *             included: list<string>,
+     *             excluded: list<string>,
+     *         },
      *     },
      *     attribute_limits: array{
      *         attribute_value_length_limit: ?int<0, max>,
@@ -67,7 +77,10 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *             stream: array{
      *                 name: ?string,
      *                 description: ?string,
-     *                 attribute_keys: list<string>,
+     *                 attribute_keys: array{
+     *                     included: list<string>,
+     *                     excluded: list<string>,
+     *                 },
      *                 aggregation: ?ComponentPlugin<Aggregation>,
      *             },
      *             selector: array{
@@ -79,7 +92,17 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *                 meter_schema_url: ?string,
      *             },
      *         }>,
-     *         readers: list<ComponentPlugin<MetricReader>>,
+     *         readers: list<array{
+     *             pull?: array{
+     *                 exporter: ComponentPlugin<MetricExporter>,
+     *             },
+     *             periodic?: array{
+     *                 interval: int<0, max>,
+     *                 timeout: int<0, max>,
+     *                 exporter: ComponentPlugin<MetricExporter>,
+     *             },
+     *             producers: list<ComponentPlugin<MetricProducer>>,
+     *         }>,
      *     },
      *     logger_provider: array{
      *         limits: array{
@@ -109,7 +132,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $loggerProviderBuilder = new LoggerProviderBuilder();
 
         $resource = Resource::create(
-            $properties['resource']['attributes'],
+            Util::parseMapList($properties['resource']['attributes'], $properties['resource']['attributes_list']),
             $properties['resource']['schema_url'],
         );
         $tracerProviderBuilder->addResource($resource);
@@ -145,7 +168,10 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 view: new View(
                     name: $view['stream']['name'],
                     description: $view['stream']['description'],
-                    attributeKeys: $view['stream']['attribute_keys'],
+                    attributeKeys: Attributes::filterKeys(
+                        include: $view['stream']['attribute_keys']['included'] ?: null,
+                        exclude: $view['stream']['attribute_keys']['excluded'] ?: null,
+                    ),
                     aggregation: $view['stream']['aggregation']?->create($context),
                 ),
                 type: match ($view['selector']['instrument_type']) {
@@ -167,7 +193,28 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             );
         }
         foreach ($properties['meter_provider']['readers'] as $reader) {
-            $meterProviderBuilder->addMetricReader($reader->create($context));
+            $metricReader = match (true) {
+                isset($reader['pull']) => new PullMetricReader(
+                    metricExporter: $reader['pull']['exporter']->create($context),
+                    tracerProvider: $context->tracerProvider,
+                    meterProvider: $context->meterProvider,
+                    logger: $context->logger,
+                ),
+                isset($reader['periodic']) => new PeriodicExportingMetricReader(
+                    metricExporter: $reader['periodic']['exporter']->create($context),
+                    exportIntervalMillis: $reader['periodic']['interval'],
+                    exportTimeoutMillis: $reader['periodic']['timeout'],
+                    tracerProvider: $context->tracerProvider,
+                    meterProvider: $context->meterProvider,
+                    logger: $context->logger,
+                ),
+            };
+
+            foreach ($reader['producers'] as $producer) {
+                $metricReader->registerProducer($producer->create($context));
+            }
+
+            $meterProviderBuilder->addMetricReader($metricReader);
         }
 
         // </editor-fold>
@@ -186,7 +233,10 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         $this->processor?->process($tracerProviderBuilder, $meterProviderBuilder, $loggerProviderBuilder);
 
-        $resource = Resource::default();
+        $resource = Resource::detect(
+            include: $properties['resource']['detectors']['attributes']['included'] ?: null,
+            exclude: $properties['resource']['detectors']['attributes']['excluded'] ?: null,
+        );
         $tracerProviderBuilder->addResource($resource);
         $meterProviderBuilder->addResource($resource);
         $loggerProviderBuilder->addResource($resource);
@@ -239,7 +289,25 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             ->addDefaultsIfNotSet()
             ->children()
                 ->arrayNode('attributes')
-                    ->variablePrototype()->end()
+                    ->arrayPrototype()
+                        ->children()
+                            ->scalarNode('name')->isRequired()->validate()->always(Validation::ensureString())->end()->end()
+                            ->variableNode('value')->isRequired()->end()
+                            ->scalarNode('type')->defaultValue('string')->validate()->always(Validation::ensureString())->end()->end()
+                        ->end()
+                    ->end()
+                ->end()
+                ->scalarNode('attributes_list')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
+                ->arrayNode('detectors')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->arrayNode('attributes')
+                            ->children()
+                                ->arrayNode('included')->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()->end()
+                                ->arrayNode('excluded')->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()->end()
+                            ->end()
+                        ->end()
+                    ->end()
                 ->end()
                 ->scalarNode('schema_url')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
             ->end();
@@ -296,11 +364,10 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                                 ->children()
                                     ->scalarNode('name')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
                                     ->scalarNode('description')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
-                                    ->variableNode('attribute_keys')
-                                        ->defaultNull()
-                                        ->validate()
-                                            ->ifTrue(static fn($v) => !is_array($v) || array_filter($v, static fn($v) => !is_string($v)))
-                                            ->thenInvalid('must be an array of attribute keys')
+                                    ->arrayNode('attribute_keys')
+                                        ->children()
+                                            ->arrayNode('included')->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()->end()
+                                            ->arrayNode('excluded')->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()->end()
                                         ->end()
                                     ->end()
                                     ->append($registry->component('aggregation', Aggregation::class))
@@ -331,7 +398,25 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                         ->end()
                     ->end()
                 ->end()
-                ->append($registry->componentList('readers', MetricReader::class))
+                ->arrayNode('readers')
+                    ->arrayPrototype()
+                        ->children()
+                            ->arrayNode('pull')
+                                ->children()
+                                    ->append($registry->component('exporter', MetricExporter::class)->isRequired())
+                                ->end()
+                            ->end()
+                            ->arrayNode('periodic')
+                                ->children()
+                                    ->integerNode('interval')->min(0)->defaultValue(5000)->end()
+                                    ->integerNode('timeout')->min(0)->defaultValue(30000)->end()
+                                    ->append($registry->component('exporter', MetricExporter::class)->isRequired())
+                                ->end()
+                            ->end()
+                            ->append($registry->componentList('producers', MetricProducer::class))
+                        ->end()
+                    ->end()
+                ->end()
             ->end()
         ;
 
