@@ -168,9 +168,9 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 view: new View(
                     name: $view['stream']['name'],
                     description: $view['stream']['description'],
-                    attributeKeys: Attributes::filterKeys(
-                        include: $view['stream']['attribute_keys']['included'] ?: null,
-                        exclude: $view['stream']['attribute_keys']['excluded'] ?: null,
+                    attributeKeys: !isset($view['stream']['attribute_keys']) ? null : Attributes::filterKeys(
+                        include: $view['stream']['attribute_keys']['included'] ?: '*',
+                        exclude: $view['stream']['attribute_keys']['excluded'] ?: [],
                     ),
                     aggregation: $view['stream']['aggregation']?->create($context),
                 ),
@@ -234,8 +234,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $this->processor?->process($tracerProviderBuilder, $meterProviderBuilder, $loggerProviderBuilder);
 
         $resource = Resource::detect(
-            include: $properties['resource']['detectors']['attributes']['included'] ?: null,
-            exclude: $properties['resource']['detectors']['attributes']['excluded'] ?: null,
+            include: $properties['resource']['detectors']['attributes']['included'] ?? null ?: '*',
+            exclude: $properties['resource']['detectors']['attributes']['excluded'] ?? null ?: [],
         );
         $tracerProviderBuilder->addResource($resource);
         $meterProviderBuilder->addResource($resource);
