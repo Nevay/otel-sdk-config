@@ -57,7 +57,7 @@ final class SpanExporterOtlp implements ComponentProvider {
 
         return new OtlpHttpSpanExporter(
             client: $client,
-            endpoint: Uri\Http::new($properties['endpoint'] . '/v1/traces'),
+            endpoint: Uri\Http::new($properties['endpoint']),
             format: match ($properties['protocol']) {
                 'http/protobuf' => ProtobufFormat::Protobuf,
                 'http/json' => ProtobufFormat::Json,

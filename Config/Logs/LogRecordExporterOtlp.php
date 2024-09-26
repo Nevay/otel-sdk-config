@@ -57,7 +57,7 @@ q     */
 
         return new OtlpHttpLogRecordExporter(
             client: $client,
-            endpoint: Uri\Http::new($properties['endpoint'] . '/v1/logs'),
+            endpoint: Uri\Http::new($properties['endpoint']),
             format: match ($properties['protocol']) {
                 'http/protobuf' => ProtobufFormat::Protobuf,
                 'http/json' => ProtobufFormat::Json,
