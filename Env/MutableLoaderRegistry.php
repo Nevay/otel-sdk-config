@@ -4,8 +4,8 @@ namespace Nevay\OTelSDK\Configuration\Env;
 use InvalidArgumentException;
 use LogicException;
 use Nevay\OTelSDK\Configuration\Context;
-use ReflectionClass;
 use ReflectionIntersectionType;
+use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionType;
 use ReflectionUnionType;
@@ -50,7 +50,7 @@ final class MutableLoaderRegistry implements LoaderRegistry {
     }
 
     private static function loadType(Loader $loader): string {
-        if ($returnType = (new ReflectionClass($loader))->getMethod('load')->getReturnType()) {
+        if ($returnType = (new ReflectionMethod($loader, 'load'))->getReturnType()) {
             return self::typeToString($returnType);
         }
 
