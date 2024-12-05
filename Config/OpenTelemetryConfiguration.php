@@ -28,7 +28,6 @@ use Nevay\OTelSDK\Trace\NoopTracerProvider;
 use Nevay\OTelSDK\Trace\Sampler;
 use Nevay\OTelSDK\Trace\SpanProcessor;
 use Nevay\OTelSDK\Trace\TracerProviderBuilder;
-use OpenTelemetry\API\Logs\NoopEventLoggerProvider;
 use OpenTelemetry\Context\Propagation\NoopTextMapPropagator;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
@@ -122,7 +121,6 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 new NoopTracerProvider(),
                 new NoopMeterProvider(),
                 new NoopLoggerProvider(),
-                new NoopEventLoggerProvider(),
                 new NoopProvider(),
             );
         }
@@ -249,7 +247,6 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             $propagator,
             $tracerProvider,
             $meterProvider,
-            $loggerProvider,
             $loggerProvider,
             new MultiProvider([
                 $tracerProvider,
