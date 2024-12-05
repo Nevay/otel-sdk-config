@@ -2,10 +2,10 @@
 namespace Nevay\OTelSDK\Configuration;
 
 use Nevay\OTelSDK\Common\Provider;
+use Nevay\OTelSDK\Logs\LoggerProviderInterface;
+use Nevay\OTelSDK\Metrics\MeterProviderInterface;
+use Nevay\OTelSDK\Trace\TracerProviderInterface;
 use OpenTelemetry\API\Logs\EventLoggerProviderInterface;
-use OpenTelemetry\API\Logs\LoggerProviderInterface;
-use OpenTelemetry\API\Metrics\MeterProviderInterface;
-use OpenTelemetry\API\Trace\TracerProviderInterface;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
 
 final class ConfigurationResult {

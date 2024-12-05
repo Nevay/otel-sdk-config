@@ -14,6 +14,7 @@ use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Configuration\Validation;
 use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
 use Nevay\OTelSDK\Logs\LogRecordProcessor;
+use Nevay\OTelSDK\Logs\NoopLoggerProvider;
 use Nevay\OTelSDK\Metrics\Aggregation;
 use Nevay\OTelSDK\Metrics\InstrumentType;
 use Nevay\OTelSDK\Metrics\MeterProviderBuilder;
@@ -21,16 +22,15 @@ use Nevay\OTelSDK\Metrics\MetricExporter;
 use Nevay\OTelSDK\Metrics\MetricProducer;
 use Nevay\OTelSDK\Metrics\MetricReader\PeriodicExportingMetricReader;
 use Nevay\OTelSDK\Metrics\MetricReader\PullMetricReader;
+use Nevay\OTelSDK\Metrics\NoopMeterProvider;
 use Nevay\OTelSDK\Metrics\View;
+use Nevay\OTelSDK\Trace\NoopTracerProvider;
 use Nevay\OTelSDK\Trace\Sampler;
 use Nevay\OTelSDK\Trace\SpanProcessor;
 use Nevay\OTelSDK\Trace\TracerProviderBuilder;
 use OpenTelemetry\API\Logs\NoopEventLoggerProvider;
-use OpenTelemetry\API\Logs\NoopLoggerProvider;
-use OpenTelemetry\API\Trace\NoopTracerProvider;
 use OpenTelemetry\Context\Propagation\NoopTextMapPropagator;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
-use OpenTelemetry\SDK\Metrics\NoopMeterProvider;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
 final class OpenTelemetryConfiguration implements ComponentProvider {
