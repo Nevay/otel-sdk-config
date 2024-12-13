@@ -49,6 +49,7 @@
                 "Nevay\\OTelSDK\\Configuration\\Config\\Trace\\SpanExporterOtlp",
                 "Nevay\\OTelSDK\\Configuration\\Config\\Trace\\SpanProcessorBatch",
                 "Nevay\\OTelSDK\\Configuration\\Config\\Trace\\SpanProcessorSimple",
+                "Nevay\\OTelSDK\\Configuration\\Config\\Metrics\\AggregationBase2ExponentialBucketHistogram",
                 "Nevay\\OTelSDK\\Configuration\\Config\\Metrics\\AggregationDefault",
                 "Nevay\\OTelSDK\\Configuration\\Config\\Metrics\\AggregationDrop",
                 "Nevay\\OTelSDK\\Configuration\\Config\\Metrics\\AggregationExplicitBucketHistogram",
