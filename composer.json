@@ -57,6 +57,8 @@
                 "Nevay\\OTelSDK\\Configuration\\Config\\Metrics\\MetricExporterConsole",
                 "Nevay\\OTelSDK\\Configuration\\Config\\Metrics\\MetricExporterOtlp",
                 "Nevay\\OTelSDK\\Configuration\\Config\\Metrics\\MetricExporterPrometheus",
+                "Nevay\\OTelSDK\\Configuration\\Config\\Metrics\\MetricReaderPeriodic",
+                "Nevay\\OTelSDK\\Configuration\\Config\\Metrics\\MetricReaderPull",
                 "Nevay\\OTelSDK\\Configuration\\Config\\Logs\\LogRecordExporterConsole",
                 "Nevay\\OTelSDK\\Configuration\\Config\\Logs\\LogRecordExporterOtlp",
                 "Nevay\\OTelSDK\\Configuration\\Config\\Logs\\LogRecordProcessorBatch",

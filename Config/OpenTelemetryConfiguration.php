@@ -16,12 +16,10 @@ use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
 use Nevay\OTelSDK\Logs\LogRecordProcessor;
 use Nevay\OTelSDK\Logs\NoopLoggerProvider;
 use Nevay\OTelSDK\Metrics\Aggregation;
+use Nevay\OTelSDK\Metrics\ExemplarFilter;
 use Nevay\OTelSDK\Metrics\InstrumentType;
 use Nevay\OTelSDK\Metrics\MeterProviderBuilder;
-use Nevay\OTelSDK\Metrics\MetricExporter;
-use Nevay\OTelSDK\Metrics\MetricProducer;
-use Nevay\OTelSDK\Metrics\MetricReader\PeriodicExportingMetricReader;
-use Nevay\OTelSDK\Metrics\MetricReader\PullMetricReader;
+use Nevay\OTelSDK\Metrics\MetricReader;
 use Nevay\OTelSDK\Metrics\NoopMeterProvider;
 use Nevay\OTelSDK\Metrics\View;
 use Nevay\OTelSDK\Trace\NoopTracerProvider;
@@ -91,17 +89,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *                 meter_schema_url: ?string,
      *             },
      *         }>,
-     *         readers: list<array{
-     *             pull?: array{
-     *                 exporter: ComponentPlugin<MetricExporter>,
-     *             },
-     *             periodic?: array{
-     *                 interval: int<0, max>,
-     *                 timeout: int<0, max>,
-     *                 exporter: ComponentPlugin<MetricExporter>,
-     *             },
-     *             producers: list<ComponentPlugin<MetricProducer>>,
-     *         }>,
+     *         readers: list<ComponentPlugin<MetricReader>>,
+     *         exemplar_filter: 'trace_based'|'always_on'|'always_off',
      *     },
      *     logger_provider: array{
      *         limits: array{
@@ -191,29 +180,14 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             );
         }
         foreach ($properties['meter_provider']['readers'] as $reader) {
-            $metricReader = match (true) {
-                isset($reader['pull']) => new PullMetricReader(
-                    metricExporter: $reader['pull']['exporter']->create($context),
-                    tracerProvider: $context->tracerProvider,
-                    meterProvider: $context->meterProvider,
-                    logger: $context->logger,
-                ),
-                isset($reader['periodic']) => new PeriodicExportingMetricReader(
-                    metricExporter: $reader['periodic']['exporter']->create($context),
-                    exportIntervalMillis: $reader['periodic']['interval'],
-                    exportTimeoutMillis: $reader['periodic']['timeout'],
-                    tracerProvider: $context->tracerProvider,
-                    meterProvider: $context->meterProvider,
-                    logger: $context->logger,
-                ),
-            };
-
-            foreach ($reader['producers'] as $producer) {
-                $metricReader->registerProducer($producer->create($context));
-            }
-
-            $meterProviderBuilder->addMetricReader($metricReader);
+            $meterProviderBuilder->addMetricReader($reader->create($context));
         }
+
+        $meterProviderBuilder->setExemplarFilter(match ($properties['meter_provider']['exemplar_filter']) {
+            'trace_based' => ExemplarFilter::TraceBased,
+            'always_on' => ExemplarFilter::AlwaysOn,
+            'always_off' => ExemplarFilter::AlwaysOff,
+        });
 
         // </editor-fold>
 
@@ -395,25 +369,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                         ->end()
                     ->end()
                 ->end()
-                ->arrayNode('readers')
-                    ->arrayPrototype()
-                        ->children()
-                            ->arrayNode('pull')
-                                ->children()
-                                    ->append($registry->component('exporter', MetricExporter::class)->isRequired())
-                                ->end()
-                            ->end()
-                            ->arrayNode('periodic')
-                                ->children()
-                                    ->integerNode('interval')->min(0)->defaultValue(5000)->end()
-                                    ->integerNode('timeout')->min(0)->defaultValue(30000)->end()
-                                    ->append($registry->component('exporter', MetricExporter::class)->isRequired())
-                                ->end()
-                            ->end()
-                            ->append($registry->componentList('producers', MetricProducer::class))
-                        ->end()
-                    ->end()
-                ->end()
+                ->append($registry->componentList('readers', MetricReader::class))
+                ->enumNode('exemplar_filter')->values(['trace_based', 'always_on', 'always_off'])->defaultValue('trace_based')->end()
             ->end()
         ;
 
