@@ -135,7 +135,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         $tracerProviderBuilder->setSpanAttributeLimits(
             $properties['tracer_provider']['limits']['attribute_count_limit'],
-            $properties['tracer_provider']['limits']['attribute_count_limit'],
+            $properties['tracer_provider']['limits']['attribute_value_length_limit'],
         );
         $tracerProviderBuilder->setEventCountLimit($properties['tracer_provider']['limits']['event_count_limit']);
         $tracerProviderBuilder->setLinkCountLimit($properties['tracer_provider']['limits']['link_count_limit']);
@@ -195,7 +195,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         $loggerProviderBuilder->setLogRecordAttributeLimits(
             $properties['logger_provider']['limits']['attribute_count_limit'],
-            $properties['logger_provider']['limits']['attribute_count_limit'],
+            $properties['logger_provider']['limits']['attribute_value_length_limit'],
         );
         foreach ($properties['logger_provider']['processors'] as $processor) {
             $loggerProviderBuilder->addLogRecordProcessor($processor->create($context));
