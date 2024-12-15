@@ -49,8 +49,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *         attributes_list: ?string,
      *         schema_url: ?string,
      *         detectors: array{
-     *             included: list<string>,
-     *             excluded: list<string>,
+     *             included: ?list<string>,
+     *             excluded: ?list<string>,
      *         },
      *     },
      *     attribute_limits: array{
@@ -76,8 +76,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *                 name: ?string,
      *                 description: ?string,
      *                 attribute_keys: array{
-     *                     included: list<string>,
-     *                     excluded: list<string>,
+     *                     included: ?list<string>,
+     *                     excluded: ?list<string>,
      *                 },
      *                 aggregation: ?ComponentPlugin<Aggregation>,
      *             },
@@ -157,8 +157,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                     name: $view['stream']['name'],
                     description: $view['stream']['description'],
                     attributeKeys: !isset($view['stream']['attribute_keys']) ? null : Attributes::filterKeys(
-                        include: $view['stream']['attribute_keys']['included'] ?: '*',
-                        exclude: $view['stream']['attribute_keys']['excluded'] ?: [],
+                        include: $view['stream']['attribute_keys']['included'] ?? '*',
+                        exclude: $view['stream']['attribute_keys']['excluded'] ?? [],
                     ),
                     aggregation: $view['stream']['aggregation']?->create($context),
                 ),
@@ -207,8 +207,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $this->processor?->process($tracerProviderBuilder, $meterProviderBuilder, $loggerProviderBuilder);
 
         $resource = Resource::detect(
-            include: $properties['resource']['detectors']['attributes']['included'] ?? null ?: '*',
-            exclude: $properties['resource']['detectors']['attributes']['excluded'] ?? null ?: [],
+            include: $properties['resource']['detectors']['attributes']['included'] ?? '*',
+            exclude: $properties['resource']['detectors']['attributes']['excluded'] ?? [],
         );
         $tracerProviderBuilder->addResource($resource);
         $meterProviderBuilder->addResource($resource);
@@ -275,8 +275,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                     ->children()
                         ->arrayNode('attributes')
                             ->children()
-                                ->arrayNode('included')->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()->end()
-                                ->arrayNode('excluded')->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()->end()
+                                ->arrayNode('included')->defaultNull()->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()->end()
+                                ->arrayNode('excluded')->defaultNull()->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()->end()
                             ->end()
                         ->end()
                     ->end()
@@ -338,8 +338,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                                     ->scalarNode('description')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
                                     ->arrayNode('attribute_keys')
                                         ->children()
-                                            ->arrayNode('included')->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()->end()
-                                            ->arrayNode('excluded')->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()->end()
+                                            ->arrayNode('included')->defaultNull()->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()->end()
+                                            ->arrayNode('excluded')->defaultNull()->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()->end()
                                         ->end()
                                     ->end()
                                     ->append($registry->component('aggregation', Aggregation::class))
