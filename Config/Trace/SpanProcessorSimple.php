@@ -9,6 +9,7 @@ use Nevay\OTelSDK\Trace\SpanExporter;
 use Nevay\OTelSDK\Trace\SpanProcessor;
 use Nevay\OTelSDK\Trace\SpanProcessor\SimpleSpanProcessor;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
 final class SpanProcessorSimple implements ComponentProvider {
 
@@ -26,8 +27,8 @@ final class SpanProcessorSimple implements ComponentProvider {
         );
     }
 
-    public function getConfig(ComponentProviderRegistry $registry): ArrayNodeDefinition {
-        $node = new ArrayNodeDefinition('simple');
+    public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
+        $node = $builder->arrayNode('simple');
         $node
             ->children()
                 ->append($registry->component('exporter', SpanExporter::class)->isRequired())

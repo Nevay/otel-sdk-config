@@ -8,6 +8,7 @@ use Nevay\OTelSDK\Metrics\MetricExporter;
 use Nevay\OTelSDK\Otlp\OtlpStreamMetricExporter;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 use function Amp\ByteStream\getStdout;
 
 #[PackageDependency('tbachert/otel-sdk-otlpexporter', '^0.1')]
@@ -24,7 +25,7 @@ final class MetricExporterConsole implements ComponentProvider {
         );
     }
 
-    public function getConfig(ComponentProviderRegistry $registry): ArrayNodeDefinition {
-        return new ArrayNodeDefinition('console');
+    public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
+        return $builder->arrayNode('console');
     }
 }

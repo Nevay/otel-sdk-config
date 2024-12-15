@@ -8,6 +8,7 @@ use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
 use OpenTelemetry\Extension\Propagator\Jaeger\JaegerPropagator;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
 #[PackageDependency('open-telemetry/extension-propagator-jaeger', '^0.0.2')]
 final class TextMapPropagatorJaeger implements ComponentProvider {
@@ -19,7 +20,7 @@ final class TextMapPropagatorJaeger implements ComponentProvider {
         return JaegerPropagator::getInstance();
     }
 
-    public function getConfig(ComponentProviderRegistry $registry): ArrayNodeDefinition {
-        return new ArrayNodeDefinition('jaeger');
+    public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
+        return $builder->arrayNode('jaeger');
     }
 }

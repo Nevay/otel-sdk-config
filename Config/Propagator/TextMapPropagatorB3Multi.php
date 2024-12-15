@@ -8,6 +8,7 @@ use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
 use OpenTelemetry\Extension\Propagator\B3\B3Propagator;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
 #[PackageDependency('open-telemetry/extension-propagator-b3', '^1.0.1')]
 final class TextMapPropagatorB3Multi implements ComponentProvider {
@@ -19,7 +20,7 @@ final class TextMapPropagatorB3Multi implements ComponentProvider {
         return B3Propagator::getB3MultiHeaderInstance();
     }
 
-    public function getConfig(ComponentProviderRegistry $registry): ArrayNodeDefinition {
-        return new ArrayNodeDefinition('b3multi');
+    public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
+        return $builder->arrayNode('b3multi');
     }
 }

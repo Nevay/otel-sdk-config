@@ -7,6 +7,7 @@ use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Metrics\Aggregation\Base2ExponentialBucketHistogramAggregation;
 use Nevay\OTelSDK\Metrics\Aggregation;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
 final class AggregationBase2ExponentialBucketHistogram implements ComponentProvider {
 
@@ -25,8 +26,8 @@ final class AggregationBase2ExponentialBucketHistogram implements ComponentProvi
         );
     }
 
-    public function getConfig(ComponentProviderRegistry $registry): ArrayNodeDefinition {
-        $node = new ArrayNodeDefinition('base2_exponential_bucket_histogram');
+    public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
+        $node = $builder->arrayNode('base2_exponential_bucket_histogram');
         $node
             ->children()
                 ->integerNode('max_scale')->min(-10)->max(20)->defaultValue(20)->end()

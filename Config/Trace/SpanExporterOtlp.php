@@ -18,6 +18,7 @@ use Nevay\OTelSDK\Otlp\ProtobufFormat;
 use Nevay\OTelSDK\Trace\SpanExporter;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
 #[PackageDependency('tbachert/otel-sdk-otlpexporter', '^0.1')]
 #[PackageDependency('amphp/http-client', '^5.0')]
@@ -69,8 +70,8 @@ final class SpanExporterOtlp implements ComponentProvider {
         );
     }
 
-    public function getConfig(ComponentProviderRegistry $registry): ArrayNodeDefinition {
-        $node = new ArrayNodeDefinition('otlp');
+    public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
+        $node = $builder->arrayNode('otlp');
         $node
             ->children()
                 ->enumNode('protocol')->isRequired()->values(['http/protobuf', 'http/json'])->end()

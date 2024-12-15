@@ -7,6 +7,7 @@ use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Metrics\Aggregation\SumAggregation;
 use Nevay\OTelSDK\Metrics\Aggregation;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
 final class AggregationSum implements ComponentProvider {
 
@@ -17,7 +18,7 @@ final class AggregationSum implements ComponentProvider {
         return new SumAggregation();
     }
 
-    public function getConfig(ComponentProviderRegistry $registry): ArrayNodeDefinition {
-        return new ArrayNodeDefinition('sum');
+    public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
+        return $builder->arrayNode('sum');
     }
 }

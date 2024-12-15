@@ -7,6 +7,7 @@ use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Metrics\Aggregation\DropAggregation;
 use Nevay\OTelSDK\Metrics\Aggregation;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
 final class AggregationDrop implements ComponentProvider {
 
@@ -17,7 +18,7 @@ final class AggregationDrop implements ComponentProvider {
         return new DropAggregation();
     }
 
-    public function getConfig(ComponentProviderRegistry $registry): ArrayNodeDefinition {
-        return new ArrayNodeDefinition('drop');
+    public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
+        return $builder->arrayNode('drop');
     }
 }

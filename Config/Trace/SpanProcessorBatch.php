@@ -9,6 +9,7 @@ use Nevay\OTelSDK\Trace\SpanExporter;
 use Nevay\OTelSDK\Trace\SpanProcessor;
 use Nevay\OTelSDK\Trace\SpanProcessor\BatchSpanProcessor;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
 final class SpanProcessorBatch implements ComponentProvider {
 
@@ -34,8 +35,8 @@ final class SpanProcessorBatch implements ComponentProvider {
         );
     }
 
-    public function getConfig(ComponentProviderRegistry $registry): ArrayNodeDefinition {
-        $node = new ArrayNodeDefinition('batch');
+    public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
+        $node = $builder->arrayNode('batch');
         $node
             ->children()
                 ->integerNode('schedule_delay')->min(0)->defaultValue(5000)->end()

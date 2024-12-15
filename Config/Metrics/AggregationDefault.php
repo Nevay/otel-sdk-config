@@ -7,6 +7,7 @@ use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Metrics\Aggregation;
 use Nevay\OTelSDK\Metrics\Aggregation\DefaultAggregation;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
 final class AggregationDefault implements ComponentProvider {
 
@@ -17,7 +18,7 @@ final class AggregationDefault implements ComponentProvider {
         return new DefaultAggregation();
     }
 
-    public function getConfig(ComponentProviderRegistry $registry): ArrayNodeDefinition {
-        return new ArrayNodeDefinition('default');
+    public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
+        return $builder->arrayNode('default');
     }
 }

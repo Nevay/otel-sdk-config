@@ -9,6 +9,7 @@ use Nevay\OTelSDK\Logs\LogRecordExporter;
 use Nevay\OTelSDK\Logs\LogRecordProcessor;
 use Nevay\OTelSDK\Logs\LogRecordProcessor\BatchLogRecordProcessor;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
 final class LogRecordProcessorBatch implements ComponentProvider {
 
@@ -34,8 +35,8 @@ final class LogRecordProcessorBatch implements ComponentProvider {
         );
     }
 
-    public function getConfig(ComponentProviderRegistry $registry): ArrayNodeDefinition {
-        $node = new ArrayNodeDefinition('batch');
+    public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
+        $node = $builder->arrayNode('batch');
         $node
             ->children()
                 ->integerNode('schedule_delay')->min(0)->defaultValue(5000)->end()

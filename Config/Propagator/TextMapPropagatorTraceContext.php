@@ -7,6 +7,7 @@ use Nevay\OTelSDK\Configuration\Context;
 use OpenTelemetry\API\Trace\Propagation\TraceContextPropagator;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
 final class TextMapPropagatorTraceContext implements ComponentProvider {
 
@@ -17,7 +18,7 @@ final class TextMapPropagatorTraceContext implements ComponentProvider {
         return TraceContextPropagator::getInstance();
     }
 
-    public function getConfig(ComponentProviderRegistry $registry): ArrayNodeDefinition {
-        return new ArrayNodeDefinition('tracecontext');
+    public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
+        return $builder->arrayNode('tracecontext');
     }
 }

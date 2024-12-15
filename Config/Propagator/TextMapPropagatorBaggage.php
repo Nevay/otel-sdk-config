@@ -7,6 +7,7 @@ use Nevay\OTelSDK\Configuration\Context;
 use OpenTelemetry\API\Baggage\Propagation\BaggagePropagator;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
 final class TextMapPropagatorBaggage implements ComponentProvider {
 
@@ -17,7 +18,7 @@ final class TextMapPropagatorBaggage implements ComponentProvider {
         return BaggagePropagator::getInstance();
     }
 
-    public function getConfig(ComponentProviderRegistry $registry): ArrayNodeDefinition {
-        return new ArrayNodeDefinition('baggage');
+    public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
+        return $builder->arrayNode('baggage');
     }
 }

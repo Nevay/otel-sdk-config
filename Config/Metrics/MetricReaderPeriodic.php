@@ -10,6 +10,7 @@ use Nevay\OTelSDK\Metrics\MetricProducer;
 use Nevay\OTelSDK\Metrics\MetricReader;
 use Nevay\OTelSDK\Metrics\MetricReader\PeriodicExportingMetricReader;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 use function array_map;
 
 final class MetricReaderPeriodic implements ComponentProvider {
@@ -34,8 +35,8 @@ final class MetricReaderPeriodic implements ComponentProvider {
         );
     }
 
-    public function getConfig(ComponentProviderRegistry $registry): ArrayNodeDefinition {
-        $node = new ArrayNodeDefinition('periodic');
+    public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
+        $node = $builder->arrayNode('periodic');
         $node
             ->children()
             ->integerNode('interval')->min(0)->defaultValue(5000)->end()

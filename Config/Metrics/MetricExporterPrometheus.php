@@ -12,6 +12,7 @@ use Nevay\OTelSDK\Metrics\MetricExporter;
 use Nevay\OTelSDK\Prometheus\PrometheusMetricExporter;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
 #[PackageDependency('tbachert/otel-sdk-prometheusexporter', '^0.1')]
 #[PackageDependency('amphp/http-server', '^3.0')]
@@ -48,8 +49,8 @@ final class MetricExporterPrometheus implements ComponentProvider {
         );
     }
 
-    public function getConfig(ComponentProviderRegistry $registry): ArrayNodeDefinition {
-        $node = new ArrayNodeDefinition('prometheus');
+    public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
+        $node = $builder->arrayNode('prometheus');
         $node
             ->children()
                 ->scalarNode('host')->defaultValue('localhost')->validate()->always(Validation::ensureString())->end()->end()

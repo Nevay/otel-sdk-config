@@ -10,6 +10,7 @@ use Nevay\OTelSDK\Metrics\MetricProducer;
 use Nevay\OTelSDK\Metrics\MetricReader;
 use Nevay\OTelSDK\Metrics\MetricReader\PeriodicExportingMetricReader;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 use function array_map;
 
 final class MetricReaderPull implements ComponentProvider {
@@ -30,8 +31,8 @@ final class MetricReaderPull implements ComponentProvider {
         );
     }
 
-    public function getConfig(ComponentProviderRegistry $registry): ArrayNodeDefinition {
-        $node = new ArrayNodeDefinition('pull');
+    public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
+        $node = $builder->arrayNode('pull');
         $node
             ->children()
             ->append($registry->component('exporter', MetricExporter::class)->isRequired())

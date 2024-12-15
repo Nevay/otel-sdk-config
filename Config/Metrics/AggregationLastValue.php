@@ -7,6 +7,7 @@ use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Metrics\Aggregation\LastValueAggregation;
 use Nevay\OTelSDK\Metrics\Aggregation;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
 final class AggregationLastValue implements ComponentProvider {
 
@@ -17,7 +18,7 @@ final class AggregationLastValue implements ComponentProvider {
         return new LastValueAggregation();
     }
 
-    public function getConfig(ComponentProviderRegistry $registry): ArrayNodeDefinition {
-        return new ArrayNodeDefinition('last_value');
+    public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
+        return $builder->arrayNode('last_value');
     }
 }

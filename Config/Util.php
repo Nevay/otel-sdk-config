@@ -3,6 +3,7 @@ namespace Nevay\OTelSDK\Configuration\Config;
 
 use InvalidArgumentException;
 use function array_column;
+use function array_filter;
 use function count;
 use function explode;
 use function rawurldecode;
@@ -19,6 +20,7 @@ final class Util {
      */
     public static function parseMapList(array $entries, ?string $listEntries): array {
         $map = array_column($entries, 'value', 'name');
+        $map = array_filter($map, static fn(mixed $value) => $value !== null);
         if ($listEntries === null) {
             return $map;
         }

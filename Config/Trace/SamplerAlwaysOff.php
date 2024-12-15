@@ -7,6 +7,7 @@ use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Trace\Sampler;
 use Nevay\OTelSDK\Trace\Sampler\AlwaysOffSampler;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
 final class SamplerAlwaysOff implements ComponentProvider {
 
@@ -17,7 +18,7 @@ final class SamplerAlwaysOff implements ComponentProvider {
         return new AlwaysOffSampler();
     }
 
-    public function getConfig(ComponentProviderRegistry $registry): ArrayNodeDefinition {
-        return new ArrayNodeDefinition('always_off');
+    public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
+        return $builder->arrayNode('always_off');
     }
 }

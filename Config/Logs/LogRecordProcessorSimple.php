@@ -9,6 +9,7 @@ use Nevay\OTelSDK\Logs\LogRecordExporter;
 use Nevay\OTelSDK\Logs\LogRecordProcessor;
 use Nevay\OTelSDK\Logs\LogRecordProcessor\SimpleLogRecordProcessor;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
 final class LogRecordProcessorSimple implements ComponentProvider {
 
@@ -24,8 +25,8 @@ final class LogRecordProcessorSimple implements ComponentProvider {
         );
     }
 
-    public function getConfig(ComponentProviderRegistry $registry): ArrayNodeDefinition {
-        $node = new ArrayNodeDefinition('simple');
+    public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
+        $node = $builder->arrayNode('simple');
         $node
             ->children()
                 ->append($registry->component('exporter', LogRecordExporter::class)->isRequired())
