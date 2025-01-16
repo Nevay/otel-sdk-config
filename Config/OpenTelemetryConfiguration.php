@@ -39,7 +39,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
     /**
      * @param array{
-     *     file_format: '0.1',
+     *     file_format: string,
      *     disabled: bool,
      *     resource: array{
      *         attributes: list<array{

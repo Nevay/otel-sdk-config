@@ -28,7 +28,6 @@ final class SpanExporterOtlp implements ComponentProvider {
 
     /**
      * @param array{
-     *     protocol: 'http/protobuf'|'http/json',
      *     endpoint: string,
      *     certificate: ?string,
      *     client_key: ?string,
@@ -40,6 +39,7 @@ final class SpanExporterOtlp implements ComponentProvider {
      *     headers_list: ?string,
      *     compression: 'gzip'|null,
      *     timeout: int<0, max>,
+     *     encoding: 'protobuf'|'json',
      * } $properties
      */
     public function createPlugin(array $properties, Context $context): SpanExporter {
@@ -59,9 +59,9 @@ final class SpanExporterOtlp implements ComponentProvider {
         return new OtlpHttpSpanExporter(
             client: $client,
             endpoint: Uri\Http::new($properties['endpoint']),
-            format: match ($properties['protocol']) {
-                'http/protobuf' => ProtobufFormat::Protobuf,
-                'http/json' => ProtobufFormat::Json,
+            format: match ($properties['encoding']) {
+                'protobuf' => ProtobufFormat::Protobuf,
+                'json' => ProtobufFormat::Json,
             },
             compression: $properties['compression'],
             headers: Util::parseMapList($properties['headers'], $properties['headers_list']),
@@ -71,11 +71,10 @@ final class SpanExporterOtlp implements ComponentProvider {
     }
 
     public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
-        $node = $builder->arrayNode('otlp');
+        $node = $builder->arrayNode('otlp_http');
         $node
             ->children()
-                ->enumNode('protocol')->isRequired()->values(['http/protobuf', 'http/json'])->end()
-                ->scalarNode('endpoint')->isRequired()->validate()->always(Validation::ensureString())->end()->end()
+                ->scalarNode('endpoint')->defaultValue('http://localhost:4318/v1/traces')->validate()->always(Validation::ensureString())->end()->end()
                 ->scalarNode('certificate')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
                 ->scalarNode('client_key')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
                 ->scalarNode('client_certificate')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
@@ -90,6 +89,10 @@ final class SpanExporterOtlp implements ComponentProvider {
                 ->scalarNode('headers_list')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
                 ->enumNode('compression')->values(['gzip'])->defaultNull()->end()
                 ->integerNode('timeout')->min(0)->defaultValue(10000)->end()
+                ->enumNode('encoding')
+                    ->values(['protobuf', 'json'])
+                    ->defaultValue('protobuf')
+                ->end()
             ->end()
         ;
 
