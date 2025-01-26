@@ -66,6 +66,7 @@ final class LogRecordExporterOtlp implements ComponentProvider {
             compression: $properties['compression'],
             headers: Util::parseMapList($properties['headers'], $properties['headers_list']),
             timeout: $properties['timeout'] / 1e3,
+            meterProvider: $context->meterProvider,
             logger: $context->logger,
         );
     }
