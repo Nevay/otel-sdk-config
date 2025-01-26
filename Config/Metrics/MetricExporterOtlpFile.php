@@ -49,6 +49,7 @@ final class MetricExporterOtlpFile implements ComponentProvider {
                 'explicit_bucket_histogram' => new ExplicitBucketHistogramAggregation(),
                 'base2_exponential_bucket_histogram' => new Base2ExponentialBucketHistogramAggregation(),
             }),
+            meterProvider: $context->meterProvider,
             logger: $context->logger,
         );
     }

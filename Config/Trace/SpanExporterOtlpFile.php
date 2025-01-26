@@ -33,6 +33,7 @@ final class SpanExporterOtlpFile implements ComponentProvider {
                 'stderr' => getStderr(),
                 default => new WritableResourceStream(@fopen($properties['output_stream'], 'ab') ?: throw new StreamException(error_get_last()['message'])),
             },
+            meterProvider: $context->meterProvider,
             logger: $context->logger,
         );
     }
