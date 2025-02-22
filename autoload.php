@@ -19,8 +19,14 @@ use Nevay\OTelSDK\Deferred\Deferred;
 use Nevay\OTelSDK\Deferred\DeferredLoggerProvider;
 use Nevay\OTelSDK\Deferred\DeferredMeterProvider;
 use Nevay\OTelSDK\Deferred\DeferredTracerProvider;
+use Nevay\SPI\ServiceLoader;
 use OpenTelemetry\API\Globals;
+use OpenTelemetry\API\Instrumentation\AutoInstrumentation\Context as InstrumentationContext;
+use OpenTelemetry\API\Instrumentation\AutoInstrumentation\HookManager;
+use OpenTelemetry\API\Instrumentation\AutoInstrumentation\Instrumentation;
+use OpenTelemetry\API\Instrumentation\AutoInstrumentation\NoopHookManager;
 use OpenTelemetry\API\Instrumentation\Configurator;
+use Throwable;
 use function Amp\async;
 use function Amp\ByteStream\getStderr;
 use function Amp\ByteStream\getStdout;
@@ -92,10 +98,30 @@ use function register_shutdown_function;
                 ->withTracerProvider($config->tracerProvider)
                 ->withMeterProvider($config->meterProvider)
                 ->withLoggerProvider($config->loggerProvider)
-                ->withEventLoggerProvider($config->eventLoggerProvider)
             ;
         }
 
         return $configurator;
     });
+
+    $instrumentations = ServiceLoader::load(Instrumentation::class);
+    if (!$instrumentations->getIterator()->valid()) {
+        return;
+    }
+    if (!$config = $config->catch(static fn() => null)->await()) {
+        return;
+    }
+
+    $hookManager = ServiceLoader::load(HookManager::class)->getIterator()->current() ?? new NoopHookManager();
+    $context = new InstrumentationContext(
+        tracerProvider: $config->tracerProvider,
+        meterProvider: $config->meterProvider,
+        loggerProvider: $config->loggerProvider,
+        propagator: $config->propagator,
+    );
+    foreach ($instrumentations as $instrumentation) {
+        try {
+            $instrumentation->register($hookManager, $config->configProperties, $context);
+        } catch (Throwable) {}
+    }
 })();

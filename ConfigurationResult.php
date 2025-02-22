@@ -5,6 +5,7 @@ use Nevay\OTelSDK\Common\Provider;
 use Nevay\OTelSDK\Logs\LoggerProviderInterface;
 use Nevay\OTelSDK\Metrics\MeterProviderInterface;
 use Nevay\OTelSDK\Trace\TracerProviderInterface;
+use OpenTelemetry\API\Configuration\ConfigProperties;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
 
 final class ConfigurationResult {
@@ -18,5 +19,6 @@ final class ConfigurationResult {
         public readonly MeterProviderInterface $meterProvider,
         public readonly LoggerProviderInterface $loggerProvider,
         public readonly Provider $provider,
+        public readonly ConfigProperties $configProperties,
     ) {}
 }

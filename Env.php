@@ -23,6 +23,7 @@ use Nevay\OTelSDK\Trace\Sampler;
 use Nevay\OTelSDK\Trace\SpanProcessor;
 use Nevay\OTelSDK\Trace\TracerProviderBuilder;
 use Nevay\SPI\ServiceLoader;
+use OpenTelemetry\API\Configuration\Noop\NoopConfigProperties;
 use OpenTelemetry\Context\Propagation\MultiTextMapPropagator;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
 use function array_unique;
@@ -54,6 +55,7 @@ final class Env {
                 new NoopMeterProvider(),
                 new NoopLoggerProvider(),
                 new NoopProvider(),
+                new NoopConfigProperties(),
             );
         }
 
@@ -98,6 +100,7 @@ final class Env {
                 $meterProvider,
                 $loggerProvider,
             ]),
+            new NoopConfigProperties(),
         );
     }
 

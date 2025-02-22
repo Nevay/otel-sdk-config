@@ -26,6 +26,10 @@ use Nevay\OTelSDK\Trace\NoopTracerProvider;
 use Nevay\OTelSDK\Trace\Sampler;
 use Nevay\OTelSDK\Trace\SpanProcessor;
 use Nevay\OTelSDK\Trace\TracerProviderBuilder;
+use OpenTelemetry\API\Configuration\Noop\NoopConfigProperties;
+use OpenTelemetry\API\Instrumentation\AutoInstrumentation\ConfigurationRegistry;
+use OpenTelemetry\API\Instrumentation\AutoInstrumentation\GeneralInstrumentationConfiguration;
+use OpenTelemetry\API\Instrumentation\AutoInstrumentation\InstrumentationConfiguration;
 use OpenTelemetry\Context\Propagation\NoopTextMapPropagator;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
@@ -100,6 +104,10 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *         },
      *         processors: list<ComponentPlugin<LogRecordProcessor>>,
      *     },
+     *     instrumentation: array{
+     *         general: list<ComponentPlugin<GeneralInstrumentationConfiguration>>,
+     *         php: list<ComponentPlugin<InstrumentationConfiguration>>,
+     *     },
      * } $properties
      */
     public function createPlugin(array $properties, Context $context): ConfigurationResult {
@@ -112,6 +120,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 new NoopMeterProvider(),
                 new NoopLoggerProvider(),
                 new NoopProvider(),
+                new NoopConfigProperties(),
             );
         }
 
@@ -218,6 +227,14 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $meterProvider = $meterProviderBuilder->build($context->logger);
         $loggerProvider = $loggerProviderBuilder->build($context->logger);
 
+        $configProperties = new ConfigurationRegistry();
+        foreach ($properties['instrumentation']['general'] ?? [] as $instrumentation) {
+            $configProperties->add($instrumentation->create($context));
+        }
+        foreach ($properties['instrumentation']['php'] ?? [] as $instrumentation) {
+            $configProperties->add($instrumentation->create($context));
+        }
+
         return new ConfigurationResult(
             $propagator,
             $tracerProvider,
@@ -228,6 +245,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 $meterProvider,
                 $loggerProvider,
             ]),
+            $configProperties,
         );
     }
 
@@ -250,6 +268,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 ->append($this->getTracerProviderConfig($registry, $builder))
                 ->append($this->getMeterProviderConfig($registry, $builder))
                 ->append($this->getLoggerProviderConfig($registry, $builder))
+                ->append($this->getInstrumentationConfig($registry, $builder))
             ->end();
 
         return $node;
@@ -392,6 +411,18 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 ->end()
                 ->append($registry->componentList('processors', LogRecordProcessor::class))
             ->end()
+        ;
+
+        return $node;
+    }
+
+    private function getInstrumentationConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
+        $node = $builder->arrayNode('instrumentation');
+        $node
+            ->addDefaultsIfNotSet()
+            ->ignoreExtraKeys()
+            ->append($registry->componentMap('general', GeneralInstrumentationConfiguration::class))
+            ->append($registry->componentMap('php', InstrumentationConfiguration::class))
         ;
 
         return $node;
