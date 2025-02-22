@@ -22,7 +22,7 @@ use Nevay\OTelSDK\Deferred\DeferredTracerProvider;
 use Nevay\SPI\ServiceLoader;
 use OpenTelemetry\API\Globals;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\Context as InstrumentationContext;
-use OpenTelemetry\API\Instrumentation\AutoInstrumentation\HookManager;
+use OpenTelemetry\API\Instrumentation\AutoInstrumentation\HookManagerInterface;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\Instrumentation;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\NoopHookManager;
 use OpenTelemetry\API\Instrumentation\Configurator;
@@ -112,7 +112,7 @@ use function register_shutdown_function;
         return;
     }
 
-    $hookManager = ServiceLoader::load(HookManager::class)->getIterator()->current() ?? new NoopHookManager();
+    $hookManager = ServiceLoader::load(HookManagerInterface::class)->getIterator()->current() ?? new NoopHookManager();
     $context = new InstrumentationContext(
         tracerProvider: $config->tracerProvider,
         meterProvider: $config->meterProvider,
