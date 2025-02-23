@@ -6,7 +6,7 @@ use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
 use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Configuration\Validation;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\GeneralInstrumentationConfiguration;
-use OpenTelemetry\API\Instrumentation\Configuration\General\PeerConfig;
+use OpenTelemetry\API\Instrumentation\Configuration\General\HttpConfig;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
@@ -16,7 +16,7 @@ use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 final class InstrumentationConfigurationHttp implements ComponentProvider {
 
     public function createPlugin(array $properties, Context $context): GeneralInstrumentationConfiguration {
-        return new PeerConfig($properties);
+        return new HttpConfig($properties);
     }
 
     public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
