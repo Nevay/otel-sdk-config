@@ -39,7 +39,7 @@ final class MetricReaderPeriodic implements ComponentProvider {
         $node = $builder->arrayNode('periodic');
         $node
             ->children()
-            ->integerNode('interval')->min(0)->defaultValue(5000)->end()
+            ->integerNode('interval')->min(0)->defaultValue(60000)->end()
             ->integerNode('timeout')->min(0)->defaultValue(30000)->end()
             ->append($registry->component('exporter', MetricExporter::class)->isRequired())
             ->append($registry->componentList('producers', MetricProducer::class))
