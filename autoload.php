@@ -70,6 +70,7 @@ use function register_shutdown_function;
             $context = new Context(
                 tracerProvider: new DeferredTracerProvider($deferredTracerProvider->getFuture()),
                 meterProvider: new DeferredMeterProvider($deferredMeterProvider->getFuture()),
+                loggerProvider: new DeferredLoggerProvider($deferredLoggerProvider->getFuture()),
                 logger: $logger->pushHandler(new LoggerHandler(new DeferredLoggerProvider($deferredLoggerProvider->getFuture()), $logLevel)),
             );
         }
