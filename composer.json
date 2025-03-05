@@ -34,6 +34,10 @@
             "dev-main": "0.1.x-dev"
         },
         "spi": {
+            "Nevay\\OTelSDK\\Configuration\\EnvSource\\EnvSourceProvider": [
+                "Nevay\\OTelSDK\\Configuration\\EnvSource\\SymfonyDotenvProvider",
+                "Nevay\\OTelSDK\\Configuration\\EnvSource\\VlucasPhpdotenvProvider"
+            ],
             "Nevay\\OTelSDK\\Configuration\\ComponentProvider": [
                 "Nevay\\OTelSDK\\Configuration\\Config\\Propagator\\TextMapPropagatorB3",
                 "Nevay\\OTelSDK\\Configuration\\Config\\Propagator\\TextMapPropagatorB3Multi",

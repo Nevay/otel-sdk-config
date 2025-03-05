@@ -3,10 +3,12 @@ namespace Nevay\OTelSDK\Configuration;
 
 use Exception;
 use Nevay\OTelSDK\Configuration\Config\OpenTelemetryConfiguration;
+use Nevay\OTelSDK\Configuration\Environment\EnvReader;
 use Nevay\OTelSDK\Configuration\Environment\EnvSourceReader;
 use Nevay\OTelSDK\Configuration\Environment\PhpIniEnvSource;
 use Nevay\OTelSDK\Configuration\Environment\ServerEnvSource;
 use Nevay\SPI\ServiceLoader;
+use WeakMap;
 
 final class Config {
 
@@ -28,8 +30,9 @@ final class Config {
         ?string $cacheFile = null,
         bool $debug = true,
         Context $context = new Context(),
+        ?EnvReader $envReader = null,
     ): ConfigurationResult {
-        return self::factory()
+        return self::factory($envReader)
             ->parseFile($configFile, $cacheFile, $debug)
             ->create($context);
     }
@@ -37,21 +40,25 @@ final class Config {
     public static function load(
         array $config,
         Context $context = new Context(),
+        ?EnvReader $envReader = null,
     ): ConfigurationResult {
-        return self::factory()
+        return self::factory($envReader)
             ->process([$config])
             ->create($context);
     }
 
-    private static function factory(): ConfigurationFactory {
-        static $factory;
-        return $factory ??= new ConfigurationFactory(
+    private static function factory(?EnvReader $envReader): ConfigurationFactory {
+        static $defaultEnvReader;
+        $envReader ??= $defaultEnvReader ??= new EnvSourceReader([
+            new ServerEnvSource(),
+            new PhpIniEnvSource(),
+        ]);
+
+        static $factories = new WeakMap();
+        return $factories[$envReader] ??= new ConfigurationFactory(
             ServiceLoader::load(ComponentProvider::class),
             new OpenTelemetryConfiguration(),
-            new EnvSourceReader([
-                new ServerEnvSource(),
-                new PhpIniEnvSource(),
-            ]),
+            $envReader,
         );
     }
 }

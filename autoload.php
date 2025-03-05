@@ -12,6 +12,8 @@ use Nevay\OTelSDK\Configuration\Env\EnvResolver;
 use Nevay\OTelSDK\Configuration\Environment\EnvSourceReader;
 use Nevay\OTelSDK\Configuration\Environment\PhpIniEnvSource;
 use Nevay\OTelSDK\Configuration\Environment\ServerEnvSource;
+use Nevay\OTelSDK\Configuration\EnvSource\EnvSourceProvider;
+use Nevay\OTelSDK\Configuration\EnvSource\LazyEnvSource;
 use Nevay\OTelSDK\Configuration\Logging\ApiLoggerHolderLogger;
 use Nevay\OTelSDK\Configuration\Logging\LoggerHandler;
 use Nevay\OTelSDK\Configuration\Logging\NoopHandler;
@@ -36,10 +38,15 @@ use function register_shutdown_function;
 (static function(): void {
     /** @var Future<ConfigurationResult|null> $config */
     $config = async(static function(): ?ConfigurationResult {
-        $env = new EnvResolver(new EnvSourceReader([
-            new ServerEnvSource(),
-            new PhpIniEnvSource(),
-        ]));
+        $envSources = [];
+        $envSources[] = new ServerEnvSource();
+        $envSources[] = new PhpIniEnvSource();
+        foreach (ServiceLoader::load(EnvSourceProvider::class) as $provider) {
+            $envSources[] = new LazyEnvSource($provider->getEnvSource(...));
+        }
+
+        $envReader = new EnvSourceReader($envSources);
+        $env = new EnvResolver($envReader);
         if (!$env->bool('OTEL_PHP_AUTOLOAD_ENABLED')) {
             return null;
         }
@@ -76,8 +83,8 @@ use function register_shutdown_function;
         }
 
         $config = ($configFile = $env->string('OTEL_EXPERIMENTAL_CONFIG_FILE')) !== null
-            ? Config::loadFile($configFile, context: $context)
-            : Env::load($context);
+            ? Config::loadFile($configFile, context: $context, envReader: $envReader)
+            : Env::load($context, envReader: $envReader);
 
         $deferredTracerProvider?->complete($config->tracerProvider);
         $deferredMeterProvider?->complete($config->meterProvider);

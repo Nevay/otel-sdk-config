@@ -8,6 +8,7 @@ use Nevay\OTelSDK\Configuration\Env\EnvResolver;
 use Nevay\OTelSDK\Configuration\Env\Loader;
 use Nevay\OTelSDK\Configuration\Env\LoaderRegistry;
 use Nevay\OTelSDK\Configuration\Env\MutableLoaderRegistry;
+use Nevay\OTelSDK\Configuration\Environment\EnvReader;
 use Nevay\OTelSDK\Configuration\Environment\EnvSourceReader;
 use Nevay\OTelSDK\Configuration\Environment\PhpIniEnvSource;
 use Nevay\OTelSDK\Configuration\Environment\ServerEnvSource;
@@ -32,12 +33,13 @@ final class Env {
 
     public static function load(
         Context $context = new Context(),
+        ?EnvReader $envReader = null,
     ): ConfigurationResult {
         $registry = new MutableLoaderRegistry();
         foreach (ServiceLoader::load(Loader::class) as $loader) {
             $registry->register($loader);
         }
-        $env = new EnvResolver(new EnvSourceReader([
+        $env = new EnvResolver($envReader ?? new EnvSourceReader([
             new ServerEnvSource(),
             new PhpIniEnvSource(),
         ]), $context->logger);
