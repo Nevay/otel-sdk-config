@@ -1,6 +1,8 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration;
 
+use Monolog\Handler\ErrorLogHandler;
+use Monolog\Logger;
 use Nevay\OTelSDK\Common\Provider\MultiProvider;
 use Nevay\OTelSDK\Common\Provider\NoopProvider;
 use Nevay\OTelSDK\Common\Resource;
@@ -12,6 +14,7 @@ use Nevay\OTelSDK\Configuration\Environment\EnvReader;
 use Nevay\OTelSDK\Configuration\Environment\EnvSourceReader;
 use Nevay\OTelSDK\Configuration\Environment\PhpIniEnvSource;
 use Nevay\OTelSDK\Configuration\Environment\ServerEnvSource;
+use Nevay\OTelSDK\Configuration\Logging\LoggerHandler;
 use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
 use Nevay\OTelSDK\Logs\LogRecordProcessor;
 use Nevay\OTelSDK\Logs\NoopLoggerProvider;
@@ -32,17 +35,25 @@ use function array_unique;
 final class Env {
 
     public static function load(
-        Context $context = new Context(),
         ?EnvReader $envReader = null,
     ): ConfigurationResult {
+        $envReader ??= new EnvSourceReader([
+            new ServerEnvSource(),
+            new PhpIniEnvSource(),
+        ]);
+
+        $logLevel = (new EnvResolver($envReader))->string('OTEL_LOG_LEVEL') ?? 'info';
+
+        $logger = new Logger('otel');
+        $logger->pushHandler(new ErrorLogHandler(level: $logLevel));
+
+        $env = new EnvResolver($envReader, $logger);
+        $context = new Context(logger: $logger);
+
         $registry = new MutableLoaderRegistry();
         foreach (ServiceLoader::load(Loader::class) as $loader) {
             $registry->register($loader);
         }
-        $env = new EnvResolver($envReader ?? new EnvSourceReader([
-            new ServerEnvSource(),
-            new PhpIniEnvSource(),
-        ]), $context->logger);
 
         $propagators = [];
         foreach (array_unique($env->list('OTEL_PROPAGATORS') ?? ['tracecontext', 'baggage']) as $name) {
@@ -58,6 +69,7 @@ final class Env {
                 new NoopLoggerProvider(),
                 new NoopProvider(),
                 new NoopConfigProperties(),
+                $logger,
             );
         }
 
@@ -92,6 +104,9 @@ final class Env {
         $meterProvider = $meterProviderBuilder->build($context->logger);
         $loggerProvider = $loggerProviderBuilder->build($context->logger);
 
+        $logger = clone $logger;
+        $logger->pushHandler(new LoggerHandler($loggerProvider, level: $logLevel));
+
         return new ConfigurationResult(
             $textMapPropagator,
             $tracerProvider,
@@ -103,6 +118,7 @@ final class Env {
                 $loggerProvider,
             ]),
             new NoopConfigProperties(),
+            $logger,
         );
     }
 

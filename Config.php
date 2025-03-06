@@ -21,7 +21,6 @@ final class Config {
      * @param string|null $cacheFile optional file to cache configuration to
      * @param bool $debug whether debug mode is enabled, enables checking of resources for cache
      *        freshness
-     * @param Context $context context used for creation
      * @return ConfigurationResult created SDK components
      * @throws Exception if the configuration is invalid
      */
@@ -29,22 +28,20 @@ final class Config {
         string|array $configFile,
         ?string $cacheFile = null,
         bool $debug = true,
-        Context $context = new Context(),
         ?EnvReader $envReader = null,
     ): ConfigurationResult {
         return self::factory($envReader)
             ->parseFile($configFile, $cacheFile, $debug)
-            ->create($context);
+            ->create(new Context());
     }
 
     public static function load(
         array $config,
-        Context $context = new Context(),
         ?EnvReader $envReader = null,
     ): ConfigurationResult {
         return self::factory($envReader)
             ->process([$config])
-            ->create($context);
+            ->create(new Context());
     }
 
     private static function factory(?EnvReader $envReader): ConfigurationFactory {

@@ -1,6 +1,8 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\Config;
 
+use Monolog\Handler\ErrorLogHandler;
+use Monolog\Logger;
 use Nevay\OTelSDK\Common\Attributes;
 use Nevay\OTelSDK\Common\Provider\MultiProvider;
 use Nevay\OTelSDK\Common\Provider\NoopProvider;
@@ -11,6 +13,7 @@ use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
 use Nevay\OTelSDK\Configuration\ConfigurationProcessor;
 use Nevay\OTelSDK\Configuration\ConfigurationResult;
 use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Configuration\Logging\LoggerHandler;
 use Nevay\OTelSDK\Configuration\Validation;
 use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
 use Nevay\OTelSDK\Logs\LogRecordProcessor;
@@ -45,6 +48,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      * @param array{
      *     file_format: string,
      *     disabled: bool,
+     *     log_level: string,
      *     resource: array{
      *         attributes: list<array{
      *             name: string,
@@ -111,6 +115,13 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      * } $properties
      */
     public function createPlugin(array $properties, Context $context): ConfigurationResult {
+        $logLevel = $properties['log_level'];
+
+        $logger = new Logger('otel');
+        $logger->pushHandler(new ErrorLogHandler(level: $logLevel));
+
+        $context = new Context(logger: $logger);
+
         $propagator = $properties['propagator']?->create($context) ?? NoopTextMapPropagator::getInstance();
 
         if ($properties['disabled']) {
@@ -121,8 +132,16 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 new NoopLoggerProvider(),
                 new NoopProvider(),
                 new NoopConfigProperties(),
+                $logger,
             );
         }
+
+        $context = new Context(
+            $context->tracerProvider,
+            $context->meterProvider,
+            $context->loggerProvider,
+            $logger,
+        );
 
         $tracerProviderBuilder = new TracerProviderBuilder();
         $meterProviderBuilder = new MeterProviderBuilder();
@@ -235,6 +254,9 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             $configProperties->add($instrumentation->create($context));
         }
 
+        $logger = clone $logger;
+        $logger->pushHandler(new LoggerHandler($loggerProvider, level: $logLevel));
+
         return new ConfigurationResult(
             $propagator,
             $tracerProvider,
@@ -246,6 +268,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 $loggerProvider,
             ]),
             $configProperties,
+            $logger,
         );
     }
 
@@ -262,6 +285,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                     ->validate()->ifNotInArray(['0.3'])->thenInvalid('unsupported version')->end()
                 ->end()
                 ->booleanNode('disabled')->defaultFalse()->end()
+                ->scalarNode('log_level')->defaultValue('info')->validate()->always(Validation::ensureString())->end()->end()
                 ->append($this->getResourceConfig($builder))
                 ->append($this->getAttributeLimitsConfig($builder))
                 ->append($registry->component('propagator', TextMapPropagatorInterface::class))
