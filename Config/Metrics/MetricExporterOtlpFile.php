@@ -5,6 +5,7 @@ use Amp\ByteStream\StreamException;
 use Amp\ByteStream\WritableResourceStream;
 use Nevay\OTelSDK\Configuration\ComponentProvider;
 use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
+use Nevay\OTelSDK\Configuration\Config\Util;
 use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Configuration\Validation;
 use Nevay\OTelSDK\Metrics\Aggregation\Base2ExponentialBucketHistogramAggregation;
@@ -58,7 +59,11 @@ final class MetricExporterOtlpFile implements ComponentProvider {
         $node = $builder->arrayNode('otlp_file');
         $node
             ->children()
-                ->scalarNode('output_stream')->defaultValue('stdout')->validate()->always(Validation::ensureString())->end()->end()
+                ->scalarNode('output_stream')
+                    ->defaultValue('stdout')
+                    ->validate()->always(Validation::ensureString())->end()
+                    ->validate()->ifNotInArray(['stdout', 'stderr'])->then(Util::ensurePath())->end()
+                ->end()
                 ->enumNode('temporality_preference')
                     ->values(['cumulative', 'delta', 'lowmemory'])
                     ->defaultValue('cumulative')

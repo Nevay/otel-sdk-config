@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\Config;
 
+use Closure;
 use Composer\InstalledVersions;
 use InvalidArgumentException;
 use Symfony\Component\Config\Exception\FileLocatorFileNotFoundException;
@@ -12,6 +13,7 @@ use function assert;
 use function class_exists;
 use function count;
 use function explode;
+use function is_string;
 use function rawurldecode;
 use function sprintf;
 use function trim;
@@ -20,6 +22,19 @@ use function trim;
  * @internal
  */
 final class Util {
+
+    public static function ensurePath(): Closure {
+        return static function(mixed $value): ?string {
+            if ($value === null) {
+                return null;
+            }
+            if (!is_string($value)) {
+                throw new InvalidArgumentException('must be of type string');
+            }
+
+            return self::makePathAbsolute($value);
+        };
+    }
 
     public static function makePathAbsolute(?string $path): ?string {
         if ($path === null) {

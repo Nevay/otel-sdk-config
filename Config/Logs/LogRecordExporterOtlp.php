@@ -76,9 +76,9 @@ final class LogRecordExporterOtlp implements ComponentProvider {
         $node
             ->children()
                 ->scalarNode('endpoint')->defaultValue('http://localhost:4318/v1/logs')->validate()->always(Validation::ensureString())->end()->end()
-                ->scalarNode('certificate')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
-                ->scalarNode('client_key')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
-                ->scalarNode('client_certificate')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
+                ->scalarNode('certificate')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
+                ->scalarNode('client_key')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
+                ->scalarNode('client_certificate')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
                 ->arrayNode('headers')
                     ->arrayPrototype()
                         ->children()

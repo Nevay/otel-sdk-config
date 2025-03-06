@@ -5,6 +5,7 @@ use Amp\ByteStream\StreamException;
 use Amp\ByteStream\WritableResourceStream;
 use Nevay\OTelSDK\Configuration\ComponentProvider;
 use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
+use Nevay\OTelSDK\Configuration\Config\Util;
 use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Configuration\Validation;
 use Nevay\OTelSDK\Otlp\OtlpStreamSpanExporter;
@@ -42,7 +43,11 @@ final class SpanExporterOtlpFile implements ComponentProvider {
         $node = $builder->arrayNode('otlp_file');
         $node
             ->children()
-                ->scalarNode('output_stream')->defaultValue('stdout')->validate()->always(Validation::ensureString())->end()->end()
+                ->scalarNode('output_stream')
+                    ->defaultValue('stdout')
+                    ->validate()->always(Validation::ensureString())->end()
+                    ->validate()->ifNotInArray(['stdout', 'stderr'])->then(Util::ensurePath())->end()
+                ->end()
             ->end()
         ;
 
