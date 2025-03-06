@@ -29,9 +29,9 @@ final class SpanExporterOtlp implements ComponentProvider {
     /**
      * @param array{
      *     endpoint: string,
-     *     certificate: ?string,
-     *     client_key: ?string,
-     *     client_certificate: ?string,
+     *     certificate_file: ?string,
+     *     client_key_file: ?string,
+     *     client_certificate_file: ?string,
      *     headers: list<array{
      *         name: string,
      *         value: string,
@@ -44,10 +44,10 @@ final class SpanExporterOtlp implements ComponentProvider {
      */
     public function createPlugin(array $properties, Context $context): SpanExporter {
         $tlsContext = new ClientTlsContext();
-        if ($clientCertificate = $properties['client_certificate']) {
-            $tlsContext = $tlsContext->withCertificate(new Certificate($clientCertificate, $properties['client_key']));
+        if ($clientCertificate = $properties['client_certificate_file']) {
+            $tlsContext = $tlsContext->withCertificate(new Certificate($clientCertificate, $properties['client_key_file']));
         }
-        if ($certificate = $properties['certificate']) {
+        if ($certificate = $properties['certificate_file']) {
             $tlsContext = $tlsContext->withCaPath($certificate);
         }
 
@@ -76,9 +76,9 @@ final class SpanExporterOtlp implements ComponentProvider {
         $node
             ->children()
                 ->scalarNode('endpoint')->defaultValue('http://localhost:4318/v1/traces')->validate()->always(Validation::ensureString())->end()->end()
-                ->scalarNode('certificate')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
-                ->scalarNode('client_key')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
-                ->scalarNode('client_certificate')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
+                ->scalarNode('certificate_file')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
+                ->scalarNode('client_key_file')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
+                ->scalarNode('client_certificate_file')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
                 ->arrayNode('headers')
                     ->arrayPrototype()
                         ->children()
