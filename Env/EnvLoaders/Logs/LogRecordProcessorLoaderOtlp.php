@@ -29,10 +29,10 @@ final class LogRecordProcessorLoaderOtlp implements Loader {
 
     public function load(EnvResolver $env, LoaderRegistry $registry, Context $context): LogRecordProcessor {
         $tlsContext = new ClientTlsContext();
-        if ($clientCertificate = $env->string('OTEL_EXPORTER_OTLP_LOGS_CLIENT_CERTIFICATE') ?? $env->string('OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE')) {
-            $tlsContext = $tlsContext->withCertificate(new Certificate($clientCertificate, $env->string('OTEL_EXPORTER_OTLP_LOGS_CLIENT_KEY') ?? $env->string('OTEL_EXPORTER_OTLP_CLIENT_KEY')));
+        if ($clientCertificate = $env->path('OTEL_EXPORTER_OTLP_LOGS_CLIENT_CERTIFICATE') ?? $env->path('OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE')) {
+            $tlsContext = $tlsContext->withCertificate(new Certificate($clientCertificate, $env->path('OTEL_EXPORTER_OTLP_LOGS_CLIENT_KEY') ?? $env->path('OTEL_EXPORTER_OTLP_CLIENT_KEY')));
         }
-        if ($certificate = $env->string('OTEL_EXPORTER_OTLP_LOGS_CERTIFICATE') ?? $env->string('OTEL_EXPORTER_OTLP_CERTIFICATE')) {
+        if ($certificate = $env->path('OTEL_EXPORTER_OTLP_LOGS_CERTIFICATE') ?? $env->path('OTEL_EXPORTER_OTLP_CERTIFICATE')) {
             $tlsContext = $tlsContext->withCaPath($certificate);
         }
 

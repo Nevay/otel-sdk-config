@@ -1,9 +1,15 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\Config;
 
+use Composer\InstalledVersions;
 use InvalidArgumentException;
+use Symfony\Component\Config\Exception\FileLocatorFileNotFoundException;
+use Symfony\Component\Config\FileLocator;
+use Symfony\Component\Filesystem\Path;
 use function array_column;
 use function array_filter;
+use function assert;
+use function class_exists;
 use function count;
 use function explode;
 use function rawurldecode;
@@ -14,6 +20,32 @@ use function trim;
  * @internal
  */
 final class Util {
+
+    public static function makePathAbsolute(?string $path): ?string {
+        if ($path === null) {
+            return null;
+        }
+
+        $installPath = InstalledVersions::getRootPackage()['install_path'];
+        if (class_exists(Path::class)) {
+            return Path::makeAbsolute($path, $installPath);
+        }
+
+        if ($path === '') {
+            return $installPath;
+        }
+
+        $loader = new FileLocator($installPath);
+        try {
+            return $loader->locate($path);
+        } catch (FileLocatorFileNotFoundException $e) {
+            foreach ($e->getPaths() as $path) {
+                return $path;
+            }
+
+            assert(false);
+        }
+    }
 
     /**
      * @param list<array{name: string, value: mixed}> $entries

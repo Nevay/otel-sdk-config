@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\Env;
 
+use Nevay\OTelSDK\Configuration\Config\Util;
 use Nevay\OTelSDK\Configuration\Environment\EnvReader;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -28,6 +29,16 @@ final class EnvResolver {
      */
     public function string(string $name): ?string {
         return $this->envReader->read($name);
+    }
+
+    /**
+     * Resolves a path-valued environment variable.
+     *
+     * @param string $name environment variable name
+     * @return string|null value of the environment variable, or null if not set or invalid
+     */
+    public function path(string $name): ?string {
+        return Util::makePathAbsolute($this->envReader->read($name));
     }
 
     /**

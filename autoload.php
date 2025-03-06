@@ -80,7 +80,7 @@ use function register_shutdown_function;
         }
 
         try {
-            $config = ($configFile = $env->string('OTEL_EXPERIMENTAL_CONFIG_FILE')) !== null
+            $config = ($configFile = $env->path('OTEL_EXPERIMENTAL_CONFIG_FILE')) !== null
                 ? Config::loadFile($configFile, context: $context, envReader: $envReader)
                 : Env::load($context, envReader: $envReader);
         } catch (Throwable $e) {
