@@ -2,7 +2,6 @@
 namespace Nevay\OTelSDK\Configuration;
 
 use Amp\DeferredFuture;
-use Amp\Future;
 use Amp\Log\ConsoleFormatter;
 use Amp\Log\StreamHandler;
 use Monolog\Handler\ErrorLogHandler;
@@ -23,7 +22,7 @@ use Nevay\OTelSDK\Deferred\DeferredMeterProvider;
 use Nevay\OTelSDK\Deferred\DeferredTracerProvider;
 use Nevay\SPI\ServiceLoader;
 use OpenTelemetry\API\Globals;
-use OpenTelemetry\API\Instrumentation\AutoInstrumentation\Context as InstrumentationContext;
+use OpenTelemetry\API\Instrumentation\AutoInstrumentation;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\HookManagerInterface;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\Instrumentation;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\NoopHookManager;
@@ -36,8 +35,7 @@ use function class_exists;
 use function register_shutdown_function;
 
 (static function(): void {
-    /** @var Future<ConfigurationResult|null> $config */
-    $config = async(static function(): ?ConfigurationResult {
+    $config = async(static function(): ?array {
         $envSources = [];
         $envSources[] = new ServerEnvSource();
         $envSources[] = new PhpIniEnvSource();
@@ -53,7 +51,6 @@ use function register_shutdown_function;
 
         $logLevel = $env->string('OTEL_LOG_LEVEL') ?? 'info';
         $logDestination = $env->string('OTEL_PHP_LOG_DESTINATION') ?? 'stderr';
-        $selfDiagnostics = $env->bool('OTEL_PHP_INTERNAL_METRICS_ENABLED') ?? false;
 
         $handler = match ($logDestination) {
             'none' => new NoopHandler($logLevel),
@@ -70,7 +67,7 @@ use function register_shutdown_function;
         $deferredMeterProvider = null;
         $deferredLoggerProvider = null;
         $context = new Context(logger: $logger);
-        if ($selfDiagnostics && class_exists(Deferred::class)) {
+        if (class_exists(Deferred::class) && $env->bool('OTEL_PHP_INTERNAL_METRICS_ENABLED')) {
             $deferredTracerProvider = new DeferredFuture();
             $deferredMeterProvider = new DeferredFuture();
             $deferredLoggerProvider = new DeferredFuture();
@@ -82,9 +79,15 @@ use function register_shutdown_function;
             );
         }
 
-        $config = ($configFile = $env->string('OTEL_EXPERIMENTAL_CONFIG_FILE')) !== null
-            ? Config::loadFile($configFile, context: $context, envReader: $envReader)
-            : Env::load($context, envReader: $envReader);
+        try {
+            $config = ($configFile = $env->string('OTEL_EXPERIMENTAL_CONFIG_FILE')) !== null
+                ? Config::loadFile($configFile, context: $context, envReader: $envReader)
+                : Env::load($context, envReader: $envReader);
+        } catch (Throwable $e) {
+            $logger->warning('Error during SDK initialization', ['exception' => $e]);
+
+            return null;
+        }
 
         $deferredTracerProvider?->complete($config->tracerProvider);
         $deferredMeterProvider?->complete($config->meterProvider);
@@ -96,11 +99,11 @@ use function register_shutdown_function;
             $config->provider->shutdown(...),
         );
 
-        return $config;
+        return [$config, $logger];
     })->ignore();
 
     Globals::registerInitializer(static function(Configurator $configurator) use ($config): Configurator {
-        if ($config = $config->await()) {
+        if ([$config] = $config->await()) {
             $configurator = $configurator
                 ->withPropagator($config->propagator)
                 ->withTracerProvider($config->tracerProvider)
@@ -116,12 +119,12 @@ use function register_shutdown_function;
     if (!$instrumentations->getIterator()->valid()) {
         return;
     }
-    if (!$config = $config->catch(static fn() => null)->await()) {
+    if (![$config, $logger] = $config->catch(static fn() => null)->await()) {
         return;
     }
 
     $hookManager = ServiceLoader::load(HookManagerInterface::class)->getIterator()->current() ?? new NoopHookManager();
-    $context = new InstrumentationContext(
+    $context = new AutoInstrumentation\Context(
         tracerProvider: $config->tracerProvider,
         meterProvider: $config->meterProvider,
         loggerProvider: $config->loggerProvider,
@@ -130,6 +133,8 @@ use function register_shutdown_function;
     foreach ($instrumentations as $instrumentation) {
         try {
             $instrumentation->register($hookManager, $config->configProperties, $context);
-        } catch (Throwable) {}
+        } catch (Throwable $e) {
+            $logger->warning('Error during instrumentation registration', ['exception' => $e, 'instrumentation' => $instrumentation]);
+        }
     }
 })();
