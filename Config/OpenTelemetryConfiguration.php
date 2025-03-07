@@ -4,23 +4,25 @@ namespace Nevay\OTelSDK\Configuration\Config;
 use Monolog\Handler\ErrorLogHandler;
 use Monolog\Logger;
 use Nevay\OTelSDK\Common\Attributes;
+use Nevay\OTelSDK\Common\Configurator\RuleConfiguratorBuilder;
 use Nevay\OTelSDK\Common\Provider\MultiProvider;
 use Nevay\OTelSDK\Common\Provider\NoopProvider;
 use Nevay\OTelSDK\Common\Resource;
 use Nevay\OTelSDK\Configuration\ComponentPlugin;
 use Nevay\OTelSDK\Configuration\ComponentProvider;
 use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
-use Nevay\OTelSDK\Configuration\ConfigurationProcessor;
 use Nevay\OTelSDK\Configuration\ConfigurationResult;
 use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Configuration\Logging\LoggerHandler;
 use Nevay\OTelSDK\Configuration\Validation;
+use Nevay\OTelSDK\Logs\LoggerConfig;
 use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
 use Nevay\OTelSDK\Logs\LogRecordProcessor;
 use Nevay\OTelSDK\Logs\NoopLoggerProvider;
 use Nevay\OTelSDK\Metrics\Aggregation;
 use Nevay\OTelSDK\Metrics\ExemplarFilter;
 use Nevay\OTelSDK\Metrics\InstrumentType;
+use Nevay\OTelSDK\Metrics\MeterConfig;
 use Nevay\OTelSDK\Metrics\MeterProviderBuilder;
 use Nevay\OTelSDK\Metrics\MetricReader;
 use Nevay\OTelSDK\Metrics\NoopMeterProvider;
@@ -28,6 +30,7 @@ use Nevay\OTelSDK\Metrics\View;
 use Nevay\OTelSDK\Trace\NoopTracerProvider;
 use Nevay\OTelSDK\Trace\Sampler;
 use Nevay\OTelSDK\Trace\SpanProcessor;
+use Nevay\OTelSDK\Trace\TracerConfig;
 use Nevay\OTelSDK\Trace\TracerProviderBuilder;
 use OpenTelemetry\API\Configuration\Noop\NoopConfigProperties;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\ConfigurationRegistry;
@@ -39,10 +42,6 @@ use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
 final class OpenTelemetryConfiguration implements ComponentProvider {
-
-    public function __construct(
-        private readonly ?ConfigurationProcessor $processor = null,
-    ) {}
 
     /**
      * @param array{
@@ -136,20 +135,23 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             );
         }
 
-        $context = new Context(
-            $context->tracerProvider,
-            $context->meterProvider,
-            $context->loggerProvider,
-            $logger,
-        );
-
         $tracerProviderBuilder = new TracerProviderBuilder();
         $meterProviderBuilder = new MeterProviderBuilder();
         $loggerProviderBuilder = new LoggerProviderBuilder();
 
+        // <editor-fold desc="resource and attribute_limits">
+
         $resource = Resource::create(
             Util::parseMapList($properties['resource']['attributes'], $properties['resource']['attributes_list']),
             $properties['resource']['schema_url'],
+        );
+        $tracerProviderBuilder->addResource($resource);
+        $meterProviderBuilder->addResource($resource);
+        $loggerProviderBuilder->addResource($resource);
+
+        $resource = Resource::detect(
+            include: $properties['resource']['detectors']['attributes']['included'] ?? '*',
+            exclude: $properties['resource']['detectors']['attributes']['excluded'] ?? [],
         );
         $tracerProviderBuilder->addResource($resource);
         $meterProviderBuilder->addResource($resource);
@@ -160,8 +162,6 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $tracerProviderBuilder->setAttributeLimits($attributeCountLimit, $attributeValueLengthLimit);
         $loggerProviderBuilder->setAttributeLimits($attributeCountLimit, $attributeValueLengthLimit);
 
-        // <editor-fold desc="tracer_provider">
-
         $tracerProviderBuilder->setSpanAttributeLimits(
             $properties['tracer_provider']['limits']['attribute_count_limit'],
             $properties['tracer_provider']['limits']['attribute_value_length_limit'],
@@ -170,6 +170,38 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $tracerProviderBuilder->setLinkCountLimit($properties['tracer_provider']['limits']['link_count_limit']);
         $tracerProviderBuilder->setEventAttributeLimits($properties['tracer_provider']['limits']['event_attribute_count_limit']);
         $tracerProviderBuilder->setLinkAttributeLimits($properties['tracer_provider']['limits']['link_attribute_count_limit']);
+
+        $loggerProviderBuilder->setLogRecordAttributeLimits(
+            $properties['logger_provider']['limits']['attribute_count_limit'],
+            $properties['logger_provider']['limits']['attribute_value_length_limit'],
+        );
+
+        // </editor-fold>
+
+        $configurator = (new RuleConfiguratorBuilder())
+            ->withRule(
+                configurator: static fn(TracerConfig|MeterConfig|LoggerConfig $config) => $config->disabled = true,
+                name: 'com.tobiasbachert.otel.sdk.*',
+            )
+            ->toConfigurator();
+
+        $tracerProviderBuilder->addTracerConfigurator($configurator);
+        $meterProviderBuilder->addMeterConfigurator($configurator);
+        $loggerProviderBuilder->addLoggerConfigurator($configurator);
+
+        $tracerProvider = $tracerProviderBuilder->buildBase($logger);
+        $meterProvider = $meterProviderBuilder->buildBase($logger);
+        $loggerProvider = $loggerProviderBuilder->buildBase($logger);
+
+        $context = new Context(
+            tracerProvider: $tracerProvider,
+            meterProvider: $meterProvider,
+            loggerProvider: $loggerProvider,
+            logger: $logger,
+        );
+
+        // <editor-fold desc="tracer_provider">
+
         $tracerProviderBuilder->setSampler($properties['tracer_provider']['sampler']?->create($context));
         foreach ($properties['tracer_provider']['processors'] as $processor) {
             $tracerProviderBuilder->addSpanProcessor($processor->create($context));
@@ -232,20 +264,6 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         // </editor-fold>
 
-        $this->processor?->process($tracerProviderBuilder, $meterProviderBuilder, $loggerProviderBuilder);
-
-        $resource = Resource::detect(
-            include: $properties['resource']['detectors']['attributes']['included'] ?? '*',
-            exclude: $properties['resource']['detectors']['attributes']['excluded'] ?? [],
-        );
-        $tracerProviderBuilder->addResource($resource);
-        $meterProviderBuilder->addResource($resource);
-        $loggerProviderBuilder->addResource($resource);
-
-        $tracerProvider = $tracerProviderBuilder->build($context->logger);
-        $meterProvider = $meterProviderBuilder->build($context->logger);
-        $loggerProvider = $loggerProviderBuilder->build($context->logger);
-
         $configProperties = new ConfigurationRegistry();
         foreach ($properties['instrumentation']['general'] ?? [] as $instrumentation) {
             $configProperties->add($instrumentation->create($context));
@@ -256,6 +274,10 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         $logger = clone $logger;
         $logger->pushHandler(new LoggerHandler($loggerProvider, level: $logLevel));
+
+        $tracerProviderBuilder->copyStateInto($tracerProvider);
+        $meterProviderBuilder->copyStateInto($meterProvider);
+        $loggerProviderBuilder->copyStateInto($loggerProvider);
 
         return new ConfigurationResult(
             $propagator,

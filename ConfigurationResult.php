@@ -11,16 +11,35 @@ use Psr\Log\LoggerInterface;
 
 final class ConfigurationResult {
 
+    public readonly TextMapPropagatorInterface $propagator;
+    public readonly TracerProviderInterface $tracerProvider;
+    public readonly MeterProviderInterface $meterProvider;
+    public readonly LoggerProviderInterface $loggerProvider;
+    public readonly Provider $provider;
+
+    public readonly ConfigProperties $configProperties;
+
+    /** @internal */
+    public readonly LoggerInterface $logger;
+
     /**
      * @internal
      */
     public function __construct(
-        public readonly TextMapPropagatorInterface $propagator,
-        public readonly TracerProviderInterface $tracerProvider,
-        public readonly MeterProviderInterface $meterProvider,
-        public readonly LoggerProviderInterface $loggerProvider,
-        public readonly Provider $provider,
-        public readonly ConfigProperties $configProperties,
-        public readonly LoggerInterface $logger,
-    ) {}
+        TextMapPropagatorInterface $propagator,
+        TracerProviderInterface $tracerProvider,
+        MeterProviderInterface $meterProvider,
+        LoggerProviderInterface $loggerProvider,
+        Provider $provider,
+        ConfigProperties $configProperties,
+        LoggerInterface $logger,
+    ) {
+        $this->logger = $logger;
+        $this->configProperties = $configProperties;
+        $this->provider = $provider;
+        $this->loggerProvider = $loggerProvider;
+        $this->meterProvider = $meterProvider;
+        $this->tracerProvider = $tracerProvider;
+        $this->propagator = $propagator;
+    }
 }

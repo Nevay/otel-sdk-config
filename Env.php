@@ -3,6 +3,7 @@ namespace Nevay\OTelSDK\Configuration;
 
 use Monolog\Handler\ErrorLogHandler;
 use Monolog\Logger;
+use Nevay\OTelSDK\Common\Configurator\RuleConfiguratorBuilder;
 use Nevay\OTelSDK\Common\Provider\MultiProvider;
 use Nevay\OTelSDK\Common\Provider\NoopProvider;
 use Nevay\OTelSDK\Common\Resource;
@@ -15,16 +16,19 @@ use Nevay\OTelSDK\Configuration\Environment\EnvSourceReader;
 use Nevay\OTelSDK\Configuration\Environment\PhpIniEnvSource;
 use Nevay\OTelSDK\Configuration\Environment\ServerEnvSource;
 use Nevay\OTelSDK\Configuration\Logging\LoggerHandler;
+use Nevay\OTelSDK\Logs\LoggerConfig;
 use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
 use Nevay\OTelSDK\Logs\LogRecordProcessor;
 use Nevay\OTelSDK\Logs\NoopLoggerProvider;
 use Nevay\OTelSDK\Metrics\ExemplarFilter;
+use Nevay\OTelSDK\Metrics\MeterConfig;
 use Nevay\OTelSDK\Metrics\MeterProviderBuilder;
 use Nevay\OTelSDK\Metrics\MetricReader;
 use Nevay\OTelSDK\Metrics\NoopMeterProvider;
 use Nevay\OTelSDK\Trace\NoopTracerProvider;
 use Nevay\OTelSDK\Trace\Sampler;
 use Nevay\OTelSDK\Trace\SpanProcessor;
+use Nevay\OTelSDK\Trace\TracerConfig;
 use Nevay\OTelSDK\Trace\TracerProviderBuilder;
 use Nevay\SPI\ServiceLoader;
 use OpenTelemetry\API\Configuration\Noop\NoopConfigProperties;
@@ -77,6 +81,8 @@ final class Env {
         $meterProviderBuilder = new MeterProviderBuilder();
         $loggerProviderBuilder = new LoggerProviderBuilder();
 
+        // <editor-fold desc="resource and attribute_limits">
+
         $attributes = $env->map('OTEL_RESOURCE_ATTRIBUTES') ?? [];
         if (($serviceName = $env->string('OTEL_SERVICE_NAME')) !== null) {
             $attributes['service.name'] = $serviceName;
@@ -86,26 +92,50 @@ final class Env {
         $meterProviderBuilder->addResource($resource);
         $loggerProviderBuilder->addResource($resource);
 
-        $attributeCountLimit = $env->int('OTEL_ATTRIBUTE_COUNT_LIMIT');
-        $attributeValueLengthLimit = $env->int('OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT');
-        $tracerProviderBuilder->setAttributeLimits($attributeCountLimit, $attributeValueLengthLimit);
-        $loggerProviderBuilder->setAttributeLimits($attributeCountLimit, $attributeValueLengthLimit);
-
-        self::tracerProvider($tracerProviderBuilder, $env, $registry, $context);
-        self::meterProvider($meterProviderBuilder, $env, $registry, $context);
-        self::loggerProvider($loggerProviderBuilder, $env, $registry, $context);
-
         $resource = Resource::detect();
         $tracerProviderBuilder->addResource($resource);
         $meterProviderBuilder->addResource($resource);
         $loggerProviderBuilder->addResource($resource);
 
-        $tracerProvider = $tracerProviderBuilder->build($context->logger);
-        $meterProvider = $meterProviderBuilder->build($context->logger);
-        $loggerProvider = $loggerProviderBuilder->build($context->logger);
+        $attributeCountLimit = $env->int('OTEL_ATTRIBUTE_COUNT_LIMIT');
+        $attributeValueLengthLimit = $env->int('OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT');
+        $tracerProviderBuilder->setAttributeLimits($attributeCountLimit, $attributeValueLengthLimit);
+        $loggerProviderBuilder->setAttributeLimits($attributeCountLimit, $attributeValueLengthLimit);
+
+        // </editor-fold>
+
+        $configurator = (new RuleConfiguratorBuilder())
+            ->withRule(
+                configurator: static fn(TracerConfig|MeterConfig|LoggerConfig $config) => $config->disabled = true,
+                name: 'com.tobiasbachert.otel.sdk.*',
+            )
+            ->toConfigurator();
+
+        $tracerProviderBuilder->addTracerConfigurator($configurator);
+        $meterProviderBuilder->addMeterConfigurator($configurator);
+        $loggerProviderBuilder->addLoggerConfigurator($configurator);
+
+        $tracerProvider = $tracerProviderBuilder->buildBase($logger);
+        $meterProvider = $meterProviderBuilder->buildBase($logger);
+        $loggerProvider = $loggerProviderBuilder->buildBase($logger);
+
+        $context = new Context(
+            tracerProvider: $tracerProvider,
+            meterProvider: $meterProvider,
+            loggerProvider: $loggerProvider,
+            logger: $logger,
+        );
+
+        self::tracerProvider($tracerProviderBuilder, $env, $registry, $context);
+        self::meterProvider($meterProviderBuilder, $env, $registry, $context);
+        self::loggerProvider($loggerProviderBuilder, $env, $registry, $context);
 
         $logger = clone $logger;
         $logger->pushHandler(new LoggerHandler($loggerProvider, level: $logLevel));
+
+        $tracerProviderBuilder->copyStateInto($tracerProvider);
+        $meterProviderBuilder->copyStateInto($meterProvider);
+        $loggerProviderBuilder->copyStateInto($loggerProvider);
 
         return new ConfigurationResult(
             $textMapPropagator,
