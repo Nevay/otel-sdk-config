@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\EnvSource;
 
-use Composer\InstalledVersions;
+use Nevay\OTelSDK\Configuration\Config\Util;
 use Nevay\OTelSDK\Configuration\Environment\ArrayEnvSource;
 use Nevay\OTelSDK\Configuration\Environment\EnvSource;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
@@ -13,12 +13,10 @@ use function array_diff_key;
 final class SymfonyDotenvProvider implements EnvSourceProvider {
 
     public function getEnvSource(): EnvSource {
-        $installPath = InstalledVersions::getRootPackage()['install_path'];
-
         $backup = [$_SERVER, $_ENV];
         $env = [];
         try {
-            (new Dotenv())->bootEnv($installPath . '/.env');
+            (new Dotenv())->bootEnv(Util::makePathAbsolute('/.env'));
             $env = $_SERVER;
         } catch (PathException) {
         } finally {

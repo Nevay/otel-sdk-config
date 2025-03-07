@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\EnvSource;
 
-use Composer\InstalledVersions;
 use Dotenv\Dotenv;
 use Dotenv\Exception\InvalidPathException;
+use Nevay\OTelSDK\Configuration\Config\Util;
 use Nevay\OTelSDK\Configuration\Environment\ArrayEnvSource;
 use Nevay\OTelSDK\Configuration\Environment\EnvSource;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
@@ -13,12 +13,10 @@ use function array_diff_key;
 final class VlucasPhpdotenvProvider implements EnvSourceProvider {
 
     public function getEnvSource(): EnvSource {
-        $installPath = InstalledVersions::getRootPackage()['install_path'];
-
         $backup = [$_SERVER, $_ENV];
         $env = [];
         try {
-            Dotenv::createImmutable($installPath)->load();
+            Dotenv::createImmutable(Util::makePathAbsolute(''))->load();
             $env = $_SERVER;
         } catch (InvalidPathException) {
         } finally {

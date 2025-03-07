@@ -38,7 +38,11 @@ final class EnvResolver {
      * @return string|null value of the environment variable, or null if not set or invalid
      */
     public function path(string $name): ?string {
-        return Util::makePathAbsolute($this->envReader->read($name));
+        if (($value = $this->envReader->read($name)) === null) {
+            return null;
+        }
+
+        return Util::makePathAbsolute($value);
     }
 
     /**

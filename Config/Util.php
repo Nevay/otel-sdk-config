@@ -36,11 +36,7 @@ final class Util {
         };
     }
 
-    public static function makePathAbsolute(?string $path): ?string {
-        if ($path === null) {
-            return null;
-        }
-
+    public static function makePathAbsolute(string $path): string {
         $installPath = InstalledVersions::getRootPackage()['install_path'];
         if (class_exists(Path::class)) {
             return Path::makeAbsolute($path, $installPath);
