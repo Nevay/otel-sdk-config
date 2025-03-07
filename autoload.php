@@ -29,13 +29,14 @@ use function register_shutdown_function;
 
         $envReader = new EnvSourceReader($envSources);
         $env = new EnvResolver($envReader);
-        if (!$env->bool('OTEL_PHP_AUTOLOAD_ENABLED')) {
+
+        if (($configFile = $env->path('OTEL_EXPERIMENTAL_CONFIG_FILE')) !== null) {
+            $config = Config::loadFile($configFile, envReader: $envReader);
+        } elseif ($env->bool('OTEL_PHP_AUTOLOAD_ENABLED')) {
+            $config = Env::load(envReader: $envReader);
+        } else {
             return null;
         }
-
-        $config = ($configFile = $env->path('OTEL_EXPERIMENTAL_CONFIG_FILE')) !== null
-            ? Config::loadFile($configFile, envReader: $envReader)
-            : Env::load(envReader: $envReader);
 
         // Re-register to trigger after normal shutdown functions
         register_shutdown_function(
