@@ -4,7 +4,6 @@ namespace Nevay\OTelSDK\Configuration\Config;
 use Monolog\Handler\ErrorLogHandler;
 use Monolog\Logger;
 use Nevay\OTelSDK\Common\Attributes;
-use Nevay\OTelSDK\Common\Configurator\RuleConfiguratorBuilder;
 use Nevay\OTelSDK\Common\Provider\MultiProvider;
 use Nevay\OTelSDK\Common\Provider\NoopProvider;
 use Nevay\OTelSDK\Common\Resource;
@@ -14,15 +13,15 @@ use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
 use Nevay\OTelSDK\Configuration\ConfigurationResult;
 use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Configuration\Logging\LoggerHandler;
+use Nevay\OTelSDK\Configuration\SelfDiagnostics\DisableSelfDiagnosticsConfigurator;
+use Nevay\OTelSDK\Configuration\SelfDiagnostics;
 use Nevay\OTelSDK\Configuration\Validation;
-use Nevay\OTelSDK\Logs\LoggerConfig;
 use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
 use Nevay\OTelSDK\Logs\LogRecordProcessor;
 use Nevay\OTelSDK\Logs\NoopLoggerProvider;
 use Nevay\OTelSDK\Metrics\Aggregation;
 use Nevay\OTelSDK\Metrics\ExemplarFilter;
 use Nevay\OTelSDK\Metrics\InstrumentType;
-use Nevay\OTelSDK\Metrics\MeterConfig;
 use Nevay\OTelSDK\Metrics\MeterProviderBuilder;
 use Nevay\OTelSDK\Metrics\MetricReader;
 use Nevay\OTelSDK\Metrics\NoopMeterProvider;
@@ -30,7 +29,6 @@ use Nevay\OTelSDK\Metrics\View;
 use Nevay\OTelSDK\Trace\NoopTracerProvider;
 use Nevay\OTelSDK\Trace\Sampler;
 use Nevay\OTelSDK\Trace\SpanProcessor;
-use Nevay\OTelSDK\Trace\TracerConfig;
 use Nevay\OTelSDK\Trace\TracerProviderBuilder;
 use OpenTelemetry\API\Configuration\Noop\NoopConfigProperties;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\ConfigurationRegistry;
@@ -178,13 +176,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         // </editor-fold>
 
-        $configurator = (new RuleConfiguratorBuilder())
-            ->withRule(
-                configurator: static fn(TracerConfig|MeterConfig|LoggerConfig $config) => $config->disabled = true,
-                name: 'com.tobiasbachert.otel.sdk.*',
-            )
-            ->toConfigurator();
-
+        $configurator = new DisableSelfDiagnosticsConfigurator();
         $tracerProviderBuilder->addTracerConfigurator($configurator);
         $meterProviderBuilder->addMeterConfigurator($configurator);
         $loggerProviderBuilder->addLoggerConfigurator($configurator);
@@ -194,9 +186,9 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $loggerProvider = $loggerProviderBuilder->buildBase($logger);
 
         $context = new Context(
-            tracerProvider: $tracerProvider,
-            meterProvider: $meterProvider,
-            loggerProvider: $loggerProvider,
+            tracerProvider: new SelfDiagnostics\TracerProvider($tracerProvider),
+            meterProvider: new SelfDiagnostics\MeterProvider($meterProvider),
+            loggerProvider: new SelfDiagnostics\LoggerProvider($loggerProvider),
             logger: $logger,
         );
 
@@ -273,7 +265,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         }
 
         $logger = clone $logger;
-        $logger->pushHandler(new LoggerHandler($loggerProvider, level: $logLevel));
+        $logger->pushHandler(new LoggerHandler($context->loggerProvider, level: $logLevel));
 
         $tracerProviderBuilder->copyStateInto($tracerProvider);
         $meterProviderBuilder->copyStateInto($meterProvider);

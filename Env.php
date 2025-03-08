@@ -3,7 +3,6 @@ namespace Nevay\OTelSDK\Configuration;
 
 use Monolog\Handler\ErrorLogHandler;
 use Monolog\Logger;
-use Nevay\OTelSDK\Common\Configurator\RuleConfiguratorBuilder;
 use Nevay\OTelSDK\Common\Provider\MultiProvider;
 use Nevay\OTelSDK\Common\Provider\NoopProvider;
 use Nevay\OTelSDK\Common\Resource;
@@ -16,19 +15,17 @@ use Nevay\OTelSDK\Configuration\Environment\EnvSourceReader;
 use Nevay\OTelSDK\Configuration\Environment\PhpIniEnvSource;
 use Nevay\OTelSDK\Configuration\Environment\ServerEnvSource;
 use Nevay\OTelSDK\Configuration\Logging\LoggerHandler;
-use Nevay\OTelSDK\Logs\LoggerConfig;
+use Nevay\OTelSDK\Configuration\SelfDiagnostics\DisableSelfDiagnosticsConfigurator;
 use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
 use Nevay\OTelSDK\Logs\LogRecordProcessor;
 use Nevay\OTelSDK\Logs\NoopLoggerProvider;
 use Nevay\OTelSDK\Metrics\ExemplarFilter;
-use Nevay\OTelSDK\Metrics\MeterConfig;
 use Nevay\OTelSDK\Metrics\MeterProviderBuilder;
 use Nevay\OTelSDK\Metrics\MetricReader;
 use Nevay\OTelSDK\Metrics\NoopMeterProvider;
 use Nevay\OTelSDK\Trace\NoopTracerProvider;
 use Nevay\OTelSDK\Trace\Sampler;
 use Nevay\OTelSDK\Trace\SpanProcessor;
-use Nevay\OTelSDK\Trace\TracerConfig;
 use Nevay\OTelSDK\Trace\TracerProviderBuilder;
 use Nevay\SPI\ServiceLoader;
 use OpenTelemetry\API\Configuration\Noop\NoopConfigProperties;
@@ -104,13 +101,7 @@ final class Env {
 
         // </editor-fold>
 
-        $configurator = (new RuleConfiguratorBuilder())
-            ->withRule(
-                configurator: static fn(TracerConfig|MeterConfig|LoggerConfig $config) => $config->disabled = true,
-                name: 'com.tobiasbachert.otel.sdk.*',
-            )
-            ->toConfigurator();
-
+        $configurator = new DisableSelfDiagnosticsConfigurator();
         $tracerProviderBuilder->addTracerConfigurator($configurator);
         $meterProviderBuilder->addMeterConfigurator($configurator);
         $loggerProviderBuilder->addLoggerConfigurator($configurator);
@@ -120,9 +111,9 @@ final class Env {
         $loggerProvider = $loggerProviderBuilder->buildBase($logger);
 
         $context = new Context(
-            tracerProvider: $tracerProvider,
-            meterProvider: $meterProvider,
-            loggerProvider: $loggerProvider,
+            tracerProvider: new SelfDiagnostics\TracerProvider($tracerProvider),
+            meterProvider: new SelfDiagnostics\MeterProvider($meterProvider),
+            loggerProvider: new SelfDiagnostics\LoggerProvider($loggerProvider),
             logger: $logger,
         );
 
@@ -131,7 +122,7 @@ final class Env {
         self::loggerProvider($loggerProviderBuilder, $env, $registry, $context);
 
         $logger = clone $logger;
-        $logger->pushHandler(new LoggerHandler($loggerProvider, level: $logLevel));
+        $logger->pushHandler(new LoggerHandler($context->loggerProvider, level: $logLevel));
 
         $tracerProviderBuilder->copyStateInto($tracerProvider);
         $meterProviderBuilder->copyStateInto($meterProvider);
