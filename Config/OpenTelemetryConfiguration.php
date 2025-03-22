@@ -4,10 +4,12 @@ namespace Nevay\OTelSDK\Configuration\Config;
 use Monolog\Handler\ErrorLogHandler;
 use Monolog\Logger;
 use Nevay\OTelSDK\Common\Attributes;
+use Nevay\OTelSDK\Common\AttributesLimitingFactory;
 use Nevay\OTelSDK\Common\Configurator\RuleConfiguratorBuilder;
 use Nevay\OTelSDK\Common\Provider\MultiProvider;
 use Nevay\OTelSDK\Common\Provider\NoopProvider;
 use Nevay\OTelSDK\Common\Resource;
+use Nevay\OTelSDK\Common\ResourceDetector;
 use Nevay\OTelSDK\Configuration\ComponentPlugin;
 use Nevay\OTelSDK\Configuration\ComponentProvider;
 use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
@@ -58,9 +60,10 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *         }>,
      *         attributes_list: ?string,
      *         schema_url: ?string,
-     *         detectors: array{
+     *         "detection/development": array{
      *             included: ?list<string>,
      *             excluded: ?list<string>,
+     *             detectors: list<ComponentPlugin<ResourceDetector>>,
      *         },
      *     },
      *     attribute_limits: array{
@@ -184,13 +187,24 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $meterProviderBuilder->addResource($resource);
         $loggerProviderBuilder->addResource($resource);
 
-        $resource = Resource::detect(
-            include: $properties['resource']['detectors']['attributes']['included'] ?? '*',
-            exclude: $properties['resource']['detectors']['attributes']['excluded'] ?? [],
+        $attributesFactory = AttributesLimitingFactory::create(
+            attributeKeyFilter: Attributes::filterKeys(
+                include: $properties['resource']['detection/development']['attributes']['included'] ?? '*',
+                exclude: $properties['resource']['detection/development']['attributes']['excluded'] ?? [],
+            ),
         );
-        $tracerProviderBuilder->addResource($resource);
-        $meterProviderBuilder->addResource($resource);
-        $loggerProviderBuilder->addResource($resource);
+        foreach ($properties['resource']['detection/development']['detectors'] as $detector) {
+            $detector = $detector->create(new Context(logger: $logger));
+            $resource = $detector->getResource();
+            $resource = new Resource(
+                $attributesFactory->build($resource->attributes),
+                $resource->schemaUrl,
+            );
+
+            $tracerProviderBuilder->addResource($resource);
+            $meterProviderBuilder->addResource($resource);
+            $loggerProviderBuilder->addResource($resource);
+        }
 
         $attributeCountLimit = $properties['attribute_limits']['attribute_count_limit'];
         $attributeValueLengthLimit = $properties['attribute_limits']['attribute_value_length_limit'];
@@ -392,7 +406,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 ->end()
                 ->booleanNode('disabled')->defaultFalse()->end()
                 ->scalarNode('log_level')->defaultValue('info')->validate()->always(Validation::ensureString())->end()->end()
-                ->append($this->getResourceConfig($builder))
+                ->append($this->getResourceConfig($registry, $builder))
                 ->append($this->getAttributeLimitsConfig($builder))
                 ->append($this->getPropagatorConfig($registry, $builder))
                 ->append($this->getTracerProviderConfig($registry, $builder))
@@ -404,7 +418,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         return $node;
     }
 
-    private function getResourceConfig(NodeBuilder $builder): ArrayNodeDefinition {
+    private function getResourceConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
         $node = $builder->arrayNode('resource');
         $node
             ->addDefaultsIfNotSet()
@@ -419,7 +433,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                     ->end()
                 ->end()
                 ->scalarNode('attributes_list')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
-                ->arrayNode('detectors')
+                ->arrayNode('detection/development')
                     ->addDefaultsIfNotSet()
                     ->children()
                         ->arrayNode('attributes')
@@ -428,6 +442,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                                 ->arrayNode('excluded')->defaultNull()->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()->end()
                             ->end()
                         ->end()
+                        ->append($registry->componentList('detectors', ResourceDetector::class))
                     ->end()
                 ->end()
                 ->scalarNode('schema_url')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
