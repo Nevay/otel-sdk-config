@@ -5,6 +5,7 @@ use Nevay\OTelSDK\Configuration\ComponentPlugin;
 use Nevay\OTelSDK\Configuration\ComponentProvider;
 use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
 use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Metrics\CardinalityLimitResolver\CardinalityLimitResolver;
 use Nevay\OTelSDK\Metrics\MetricExporter;
 use Nevay\OTelSDK\Metrics\MetricProducer;
 use Nevay\OTelSDK\Metrics\MetricReader;
@@ -19,11 +20,31 @@ final class MetricReaderPull implements ComponentProvider {
      * @param array{
      *     exporter: ComponentPlugin<MetricExporter>,
      *     producers: list<ComponentPlugin<MetricProducer>>,
+     *     cardinality_limits: array{
+     *         default: ?int<1,max>,
+     *         counter: ?int<1,max>,
+     *         gauge: ?int<1,max>,
+     *         histogram: ?int<1,max>,
+     *         observable_counter: ?int<1,max>,
+     *         observable_gauge: ?int<1,max>,
+     *         observable_up_down_counter: ?int<1,max>,
+     *         up_down_counter: ?int<1,max>,
+     *     },
      * } $properties
      */
     public function createPlugin(array $properties, Context $context): MetricReader {
         return new PeriodicExportingMetricReader(
             metricExporter: $properties['exporter']->create($context),
+            cardinalityLimits: new CardinalityLimitResolver(
+                default: $properties['cardinality_limits']['default'],
+                counter: $properties['cardinality_limits']['counter'],
+                upDownCounter: $properties['cardinality_limits']['up_down_counter'],
+                histogram: $properties['cardinality_limits']['histogram'],
+                gauge: $properties['cardinality_limits']['gauge'],
+                asynchronousCounter: $properties['cardinality_limits']['observable_counter'],
+                asynchronousUpDownCounter: $properties['cardinality_limits']['observable_up_down_counter'],
+                asynchronousGauge: $properties['cardinality_limits']['observable_gauge'],
+            ),
             metricProducers: array_map(static fn(ComponentPlugin $producer) => $producer->create($context), $properties['producers']),
             tracerProvider: $context->tracerProvider,
             meterProvider: $context->meterProvider,
@@ -34,9 +55,23 @@ final class MetricReaderPull implements ComponentProvider {
     public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
         $node = $builder->arrayNode('pull');
         $node
+            ->addDefaultsIfNotSet()
             ->children()
-            ->append($registry->component('exporter', MetricExporter::class)->isRequired())
-            ->append($registry->componentList('producers', MetricProducer::class))
+                ->append($registry->component('exporter', MetricExporter::class)->isRequired())
+                ->append($registry->componentList('producers', MetricProducer::class))
+                ->arrayNode('cardinality_limits')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->integerNode('default')->min(1)->defaultNull()->end()
+                        ->integerNode('counter')->min(1)->defaultNull()->end()
+                        ->integerNode('gauge')->min(1)->defaultNull()->end()
+                        ->integerNode('histogram')->min(1)->defaultNull()->end()
+                        ->integerNode('observable_counter')->min(1)->defaultNull()->end()
+                        ->integerNode('observable_gauge')->min(1)->defaultNull()->end()
+                        ->integerNode('observable_up_down_counter')->min(1)->defaultNull()->end()
+                        ->integerNode('up_down_counter')->min(1)->defaultNull()->end()
+                    ->end()
+                ->end()
             ->end()
         ;
 
