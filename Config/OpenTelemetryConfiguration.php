@@ -4,6 +4,7 @@ namespace Nevay\OTelSDK\Configuration\Config;
 use Monolog\Handler\ErrorLogHandler;
 use Monolog\Logger;
 use Nevay\OTelSDK\Common\Attributes;
+use Nevay\OTelSDK\Common\Configurator\RuleConfiguratorBuilder;
 use Nevay\OTelSDK\Common\Provider\MultiProvider;
 use Nevay\OTelSDK\Common\Provider\NoopProvider;
 use Nevay\OTelSDK\Common\Resource;
@@ -16,12 +17,14 @@ use Nevay\OTelSDK\Configuration\Logging\LoggerHandler;
 use Nevay\OTelSDK\Configuration\SelfDiagnostics\DisableSelfDiagnosticsConfigurator;
 use Nevay\OTelSDK\Configuration\SelfDiagnostics;
 use Nevay\OTelSDK\Configuration\Validation;
+use Nevay\OTelSDK\Logs\LoggerConfig;
 use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
 use Nevay\OTelSDK\Logs\LogRecordProcessor;
 use Nevay\OTelSDK\Logs\NoopLoggerProvider;
 use Nevay\OTelSDK\Metrics\Aggregation;
 use Nevay\OTelSDK\Metrics\ExemplarFilter;
 use Nevay\OTelSDK\Metrics\InstrumentType;
+use Nevay\OTelSDK\Metrics\MeterConfig;
 use Nevay\OTelSDK\Metrics\MeterProviderBuilder;
 use Nevay\OTelSDK\Metrics\MetricReader;
 use Nevay\OTelSDK\Metrics\NoopMeterProvider;
@@ -29,6 +32,7 @@ use Nevay\OTelSDK\Metrics\View;
 use Nevay\OTelSDK\Trace\NoopTracerProvider;
 use Nevay\OTelSDK\Trace\Sampler;
 use Nevay\OTelSDK\Trace\SpanProcessor;
+use Nevay\OTelSDK\Trace\TracerConfig;
 use Nevay\OTelSDK\Trace\TracerProviderBuilder;
 use OpenTelemetry\API\Configuration\Noop\NoopConfigProperties;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\ConfigurationRegistry;
@@ -74,6 +78,17 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *         },
      *         sampler: ?ComponentPlugin<Sampler>,
      *         processors: list<ComponentPlugin<SpanProcessor>>,
+     *          "tracer_configurator/development": array{
+     *              default_config: array{
+     *                  disabled: bool,
+     *              },
+     *              tracers: list<array{
+     *                  name: string,
+     *                  config: array{
+     *                      disabled?: bool,
+     *                  }
+     *              }>,
+     *          },
      *     },
      *     meter_provider: array{
      *         views: list<array{
@@ -97,6 +112,17 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *         }>,
      *         readers: list<ComponentPlugin<MetricReader>>,
      *         exemplar_filter: 'trace_based'|'always_on'|'always_off',
+     *         "meter_configurator/development": array{
+     *             default_config: array{
+     *                 disabled: bool,
+     *             },
+     *             meters: list<array{
+     *                 name: string,
+     *                 config: array{
+     *                     disabled?: bool,
+     *                 }
+     *             }>,
+     *         },
      *     },
      *     logger_provider: array{
      *         limits: array{
@@ -104,6 +130,17 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *             attribute_count_limit: int<0, max>,
      *         },
      *         processors: list<ComponentPlugin<LogRecordProcessor>>,
+     *         "logger_configurator/development": array{
+     *             default_config: array{
+     *                 disabled: bool,
+     *             },
+     *             loggers: list<array{
+     *                 name: string,
+     *                 config: array{
+     *                     disabled?: bool,
+     *                 }
+     *             }>,
+     *         },
      *     },
      *     instrumentation: array{
      *         general: list<ComponentPlugin<GeneralInstrumentationConfiguration>>,
@@ -176,10 +213,47 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         // </editor-fold>
 
+        // <editor-fold desc="configurator">
+
         $configurator = new DisableSelfDiagnosticsConfigurator();
         $tracerProviderBuilder->addTracerConfigurator($configurator);
         $meterProviderBuilder->addMeterConfigurator($configurator);
         $loggerProviderBuilder->addLoggerConfigurator($configurator);
+
+        $builder = new RuleConfiguratorBuilder();
+        if ($properties['tracer_provider']['tracer_configurator/development']['default_config']['disabled']) {
+            $builder->withRule(static fn(TracerConfig $config) => $config->disabled = true);
+        }
+        foreach ($properties['tracer_provider']['tracer_configurator/development']['tracers'] as ['name' => $name, 'config' => $config]) {
+            if (($disabled = $config['disabled'] ?? null) !== null) {
+                $builder->withRule(static fn(TracerConfig $config) => $config->disabled = $disabled, name: $name);
+            }
+        }
+        $tracerProviderBuilder->addTracerConfigurator($builder->toConfigurator());
+
+        $builder = new RuleConfiguratorBuilder();
+        if ($properties['meter_provider']['meter_configurator/development']['default_config']['disabled']) {
+            $builder->withRule(static fn(MeterConfig $config) => $config->disabled = true);
+        }
+        foreach ($properties['meter_provider']['meter_configurator/development']['meters'] as ['name' => $name, 'config' => $config]) {
+            if (($disabled = $config['disabled'] ?? null) !== null) {
+                $builder->withRule(static fn(MeterConfig $config) => $config->disabled = $disabled, name: $name);
+            }
+        }
+        $meterProviderBuilder->addMeterConfigurator($builder->toConfigurator());
+
+        $builder = new RuleConfiguratorBuilder();
+        if ($properties['logger_provider']['logger_configurator/development']['default_config']['disabled']) {
+            $builder->withRule(static fn(LoggerConfig $config) => $config->disabled = true);
+        }
+        foreach ($properties['logger_provider']['logger_configurator/development']['loggers'] as ['name' => $name, 'config' => $config]) {
+            if (($disabled = $config['disabled'] ?? null) !== null) {
+                $builder->withRule(static fn(LoggerConfig $config) => $config->disabled = $disabled, name: $name);
+            }
+        }
+        $loggerProviderBuilder->addLoggerConfigurator($builder->toConfigurator());
+
+        // </editor-fold>
 
         $tracerProvider = $tracerProviderBuilder->buildBase($logger);
         $meterProvider = $meterProviderBuilder->buildBase($logger);
@@ -374,6 +448,30 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 ->end()
                 ->append($registry->component('sampler', Sampler::class))
                 ->append($registry->componentList('processors', SpanProcessor::class))
+                ->arrayNode('tracer_configurator/development')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->arrayNode('default_config')
+                            ->addDefaultsIfNotSet()
+                            ->children()
+                                ->booleanNode('disabled')->defaultFalse()->end()
+                            ->end()
+                        ->end()
+                        ->arrayNode('tracers')
+                            ->arrayPrototype()
+                                ->children()
+                                    ->scalarNode('name')->isRequired()->cannotBeEmpty()->validate()->always(Validation::ensureString())->end()->end()
+                                    ->arrayNode('config')
+                                        ->isRequired()
+                                        ->children()
+                                            ->booleanNode('disabled')->treatNullLike(null)->end()
+                                        ->end()
+                                    ->end()
+                                ->end()
+                            ->end()
+                        ->end()
+                    ->end()
+                ->end()
             ->end()
         ;
 
@@ -429,6 +527,30 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 ->end()
                 ->append($registry->componentList('readers', MetricReader::class))
                 ->enumNode('exemplar_filter')->values(['trace_based', 'always_on', 'always_off'])->defaultValue('trace_based')->end()
+                ->arrayNode('meter_configurator/development')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->arrayNode('default_config')
+                            ->addDefaultsIfNotSet()
+                            ->children()
+                                ->booleanNode('disabled')->defaultFalse()->end()
+                            ->end()
+                        ->end()
+                        ->arrayNode('meters')
+                            ->arrayPrototype()
+                                ->children()
+                                    ->scalarNode('name')->isRequired()->cannotBeEmpty()->validate()->always(Validation::ensureString())->end()->end()
+                                    ->arrayNode('config')
+                                        ->isRequired()
+                                        ->children()
+                                            ->booleanNode('disabled')->treatNullLike(null)->end()
+                                        ->end()
+                                    ->end()
+                                ->end()
+                            ->end()
+                        ->end()
+                    ->end()
+                ->end()
             ->end()
         ;
 
@@ -448,6 +570,30 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                     ->end()
                 ->end()
                 ->append($registry->componentList('processors', LogRecordProcessor::class))
+                ->arrayNode('logger_configurator/development')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->arrayNode('default_config')
+                            ->addDefaultsIfNotSet()
+                            ->children()
+                                ->booleanNode('disabled')->defaultFalse()->end()
+                            ->end()
+                        ->end()
+                        ->arrayNode('loggers')
+                            ->arrayPrototype()
+                                ->children()
+                                    ->scalarNode('name')->isRequired()->cannotBeEmpty()->validate()->always(Validation::ensureString())->end()->end()
+                                    ->arrayNode('config')
+                                        ->isRequired()
+                                        ->children()
+                                            ->booleanNode('disabled')->treatNullLike(null)->end()
+                                        ->end()
+                                    ->end()
+                                ->end()
+                            ->end()
+                        ->end()
+                    ->end()
+                ->end()
             ->end()
         ;
 
