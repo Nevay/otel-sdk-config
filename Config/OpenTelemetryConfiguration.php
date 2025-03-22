@@ -106,6 +106,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *                     excluded: ?list<string>,
      *                 },
      *                 aggregation: ?ComponentPlugin<Aggregation>,
+     *                 aggregation_cardinality_limit: ?int<1,max>,
      *             },
      *             selector: array{
      *                 instrument_type: 'counter'|'gauge'|'histogram'|'observable_counter'|'observable_gauge'|'observable_up_down_counter'|'up_down_counter'|null,
@@ -301,6 +302,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                         exclude: $view['stream']['attribute_keys']['excluded'] ?? [],
                     ),
                     aggregation: $view['stream']['aggregation']?->create($context),
+                    cardinalityLimit: $view['stream']['aggregation_cardinality_limit'],
                 ),
                 type: match ($view['selector']['instrument_type']) {
                     'counter' => InstrumentType::Counter,
@@ -574,6 +576,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                                         ->end()
                                     ->end()
                                     ->append($registry->component('aggregation', Aggregation::class))
+                                    ->integerNode('aggregation_cardinality_limit')->min(1)->defaultNull()->end()
                                 ->end()
                             ->end()
                             ->arrayNode('selector')
