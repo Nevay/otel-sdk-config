@@ -38,6 +38,7 @@ use OpenTelemetry\API\Configuration\Noop\NoopConfigProperties;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\ConfigurationRegistry;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\GeneralInstrumentationConfiguration;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\InstrumentationConfiguration;
+use OpenTelemetry\Context\Propagation\MultiTextMapPropagator;
 use OpenTelemetry\Context\Propagation\NoopTextMapPropagator;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
@@ -66,7 +67,9 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *         attribute_value_length_limit: ?int<0, max>,
      *         attribute_count_limit: ?int<0, max>,
      *     },
-     *     propagator: ?ComponentPlugin<TextMapPropagatorInterface>,
+     *     propagator: array{
+     *         composite: list<ComponentPlugin<TextMapPropagatorInterface>>,
+     *     },
      *     tracer_provider: array{
      *         limits: array{
      *             attribute_value_length_limit: ?int<0, max>,
@@ -155,13 +158,9 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $logger = new Logger('otel');
         $logger->pushHandler(new ErrorLogHandler(level: $logLevel));
 
-        $context = new Context(logger: $logger);
-
-        $propagator = $properties['propagator']?->create($context) ?? NoopTextMapPropagator::getInstance();
-
         if ($properties['disabled']) {
             return new ConfigurationResult(
-                $propagator,
+                $this->createPropagator($properties['propagator'], new Context(logger: $logger)),
                 new NoopTracerProvider(),
                 new NoopMeterProvider(),
                 new NoopLoggerProvider(),
@@ -347,7 +346,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $loggerProviderBuilder->copyStateInto($loggerProvider);
 
         return new ConfigurationResult(
-            $propagator,
+            $this->createPropagator($properties['propagator'], $context),
             $tracerProvider,
             $meterProvider,
             $loggerProvider,
@@ -359,6 +358,24 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             $configProperties,
             $logger,
         );
+    }
+
+    /**
+     * @param array{
+     *     composite: list<ComponentPlugin<TextMapPropagatorInterface>>,
+     * } $properties
+     */
+    private function createPropagator(array $properties, Context $context): TextMapPropagatorInterface {
+        if (!$properties['composite']) {
+            return NoopTextMapPropagator::getInstance();
+        }
+
+        $propagators = [];
+        foreach ($properties['composite'] as $propagator) {
+            $propagators[] = $propagator->create($context);
+        }
+
+        return new MultiTextMapPropagator($propagators);
     }
 
     public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
@@ -377,7 +394,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 ->scalarNode('log_level')->defaultValue('info')->validate()->always(Validation::ensureString())->end()->end()
                 ->append($this->getResourceConfig($builder))
                 ->append($this->getAttributeLimitsConfig($builder))
-                ->append($registry->component('propagator', TextMapPropagatorInterface::class))
+                ->append($this->getPropagatorConfig($registry, $builder))
                 ->append($this->getTracerProviderConfig($registry, $builder))
                 ->append($this->getMeterProviderConfig($registry, $builder))
                 ->append($this->getLoggerProviderConfig($registry, $builder))
@@ -427,6 +444,49 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 ->integerNode('attribute_value_length_limit')->min(0)->defaultNull()->end()
                 ->integerNode('attribute_count_limit')->min(0)->defaultValue(128)->end()
             ->end();
+
+        return $node;
+    }
+
+    private function getPropagatorConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
+        $node = $builder->arrayNode('propagator');
+        $node
+            ->beforeNormalization()
+                ->ifArray()
+                ->then(static function(array $value): array {
+                    if (!isset($value['composite_list']) || !\is_string($value['composite_list']) || \trim($value['composite_list'], " \t") === '') {
+                        return $value;
+                    }
+                    if (isset($value['composite']) && !\is_array($value['composite'])) {
+                        return $value;
+                    }
+
+                    // Entries are appended to .composite with duplicates filtered out.
+                    foreach (\explode(',', $value['composite_list']) as $entry) {
+                        $name = \rawurldecode(\trim($entry, " \t"));
+
+                        foreach ($value['composite'] ?? [] as $propagator) {
+                            if (\is_array($propagator) && \array_key_exists($name, $propagator)) {
+                                continue 2;
+                            }
+                        }
+
+                        $value['composite'][][$name] = null;
+                    }
+
+                    unset($value['composite_list']);
+
+                    return $value;
+                })
+            ->end();
+
+        $node
+            ->addDefaultsIfNotSet()
+            ->children()
+                ->append($registry->componentList('composite', TextMapPropagatorInterface::class))
+                ->scalarNode('composite_list')->validate()->always(Validation::ensureString())->end()->end()
+            ->end()
+        ;
 
         return $node;
     }

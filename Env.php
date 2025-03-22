@@ -48,23 +48,16 @@ final class Env {
         $logger = new Logger('otel');
         $logger->pushHandler(new ErrorLogHandler(level: $logLevel));
 
-        $env = new EnvResolver($envReader, $logger);
-        $context = new Context(logger: $logger);
-
         $registry = new MutableLoaderRegistry();
         foreach (ServiceLoader::load(Loader::class) as $loader) {
             $registry->register($loader);
         }
 
-        $propagators = [];
-        foreach (array_unique($env->list('OTEL_PROPAGATORS') ?? ['tracecontext', 'baggage']) as $name) {
-            $propagators[] = $registry->load(TextMapPropagatorInterface::class, $name, $env, $context);
-        }
-        $textMapPropagator = new MultiTextMapPropagator($propagators);
+        $env = new EnvResolver($envReader, $logger);
 
         if ($env->bool('OTEL_SDK_DISABLED') ?? false) {
             return new ConfigurationResult(
-                $textMapPropagator,
+                self::propagator($env, $registry, new Context(logger: $logger)),
                 new NoopTracerProvider(),
                 new NoopMeterProvider(),
                 new NoopLoggerProvider(),
@@ -129,7 +122,7 @@ final class Env {
         $loggerProviderBuilder->copyStateInto($loggerProvider);
 
         return new ConfigurationResult(
-            $textMapPropagator,
+            self::propagator($env, $registry, $context),
             $tracerProvider,
             $meterProvider,
             $loggerProvider,
@@ -141,6 +134,15 @@ final class Env {
             new NoopConfigProperties(),
             $logger,
         );
+    }
+
+    private static function propagator(EnvResolver $env, LoaderRegistry $registry, Context $context): TextMapPropagatorInterface {
+        $propagators = [];
+        foreach (array_unique($env->list('OTEL_PROPAGATORS') ?? ['tracecontext', 'baggage']) as $name) {
+            $propagators[] = $registry->load(TextMapPropagatorInterface::class, $name, $env, $context);
+        }
+
+        return new MultiTextMapPropagator($propagators);
     }
 
     private static function tracerProvider(TracerProviderBuilder $tracerProviderBuilder, EnvResolver $env, LoaderRegistry $registry, Context $context): void {
