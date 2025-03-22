@@ -142,9 +142,10 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *             }>,
      *         },
      *     },
-     *     instrumentation: array{
+     *     "instrumentation/development": array{
      *         general: list<ComponentPlugin<GeneralInstrumentationConfiguration>>,
      *         php: list<ComponentPlugin<InstrumentationConfiguration>>,
+     *         ...
      *     },
      * } $properties
      */
@@ -331,10 +332,10 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         // </editor-fold>
 
         $configProperties = new ConfigurationRegistry();
-        foreach ($properties['instrumentation']['general'] ?? [] as $instrumentation) {
+        foreach ($properties['instrumentation/development']['general'] ?? [] as $instrumentation) {
             $configProperties->add($instrumentation->create($context));
         }
-        foreach ($properties['instrumentation']['php'] ?? [] as $instrumentation) {
+        foreach ($properties['instrumentation/development']['php'] ?? [] as $instrumentation) {
             $configProperties->add($instrumentation->create($context));
         }
 
@@ -601,7 +602,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
     }
 
     private function getInstrumentationConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
-        $node = $builder->arrayNode('instrumentation');
+        $node = $builder->arrayNode('instrumentation/development');
         $node
             ->addDefaultsIfNotSet()
             ->ignoreExtraKeys()
