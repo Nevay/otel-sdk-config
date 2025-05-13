@@ -207,6 +207,11 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             $loggerProviderBuilder->addResource($resource);
         }
 
+        $default = Resource::default();
+        $tracerProviderBuilder->addResource($default);
+        $meterProviderBuilder->addResource($default);
+        $loggerProviderBuilder->addResource($default);
+
         $attributeCountLimit = $properties['attribute_limits']['attribute_count_limit'];
         $attributeValueLengthLimit = $properties['attribute_limits']['attribute_value_length_limit'];
         $tracerProviderBuilder->setAttributeLimits($attributeCountLimit, $attributeValueLengthLimit);
