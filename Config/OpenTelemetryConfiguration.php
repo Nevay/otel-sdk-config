@@ -36,7 +36,7 @@ use Nevay\OTelSDK\Trace\Sampler;
 use Nevay\OTelSDK\Trace\SpanProcessor;
 use Nevay\OTelSDK\Trace\TracerConfig;
 use Nevay\OTelSDK\Trace\TracerProviderBuilder;
-use OpenTelemetry\API\Configuration\Noop\NoopConfigProperties;
+use OpenTelemetry\API\Configuration\ConfigProperties;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\ConfigurationRegistry;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\GeneralInstrumentationConfiguration;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\InstrumentationConfiguration;
@@ -169,7 +169,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 new NoopMeterProvider(),
                 new NoopLoggerProvider(),
                 new NoopProvider(),
-                new NoopConfigProperties(),
+                $this->createConfigProperties($properties['instrumentation/development'], new Context(logger: $logger)),
                 $logger,
             );
         }
@@ -351,14 +351,6 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         // </editor-fold>
 
-        $configProperties = new ConfigurationRegistry();
-        foreach ($properties['instrumentation/development']['general'] ?? [] as $instrumentation) {
-            $configProperties->add($instrumentation->create($context));
-        }
-        foreach ($properties['instrumentation/development']['php'] ?? [] as $instrumentation) {
-            $configProperties->add($instrumentation->create($context));
-        }
-
         $logger = clone $logger;
         $logger->pushHandler(new LoggerHandler($context->loggerProvider, level: $logLevel));
 
@@ -376,7 +368,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 $meterProvider,
                 $loggerProvider,
             ]),
-            $configProperties,
+            $this->createConfigProperties($properties['instrumentation/development'], $context),
             $logger,
         );
     }
@@ -397,6 +389,25 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         }
 
         return new MultiTextMapPropagator($propagators);
+    }
+
+    /**
+     * @param array{
+     *     general: list<ComponentPlugin<GeneralInstrumentationConfiguration>>,
+     *     php: list<ComponentPlugin<InstrumentationConfiguration>>,
+     *     ...
+     * } $properties
+     */
+    private function createConfigProperties(array $properties, Context $context): ConfigProperties {
+        $configProperties = new ConfigurationRegistry();
+        foreach ($properties['instrumentation/development']['general'] ?? [] as $instrumentation) {
+            $configProperties->add($instrumentation->create($context));
+        }
+        foreach ($properties['instrumentation/development']['php'] ?? [] as $instrumentation) {
+            $configProperties->add($instrumentation->create($context));
+        }
+
+        return $configProperties;
     }
 
     public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
