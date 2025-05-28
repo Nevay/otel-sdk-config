@@ -49,6 +49,12 @@ final class MutableLoaderRegistry implements LoaderRegistry {
             : null;
     }
 
+    public function loadAll(string $type, EnvResolver $env, Context $context): iterable {
+        foreach ($this->loaders[$type] ?? [] as $loader) {
+            yield $loader->load($env, $this, $context);
+        }
+    }
+
     private static function loadType(Loader $loader): string {
         if ($returnType = (new ReflectionMethod($loader, 'load'))->getReturnType()) {
             return self::typeToString($returnType);

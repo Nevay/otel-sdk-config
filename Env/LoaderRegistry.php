@@ -18,4 +18,11 @@ interface LoaderRegistry {
      * @return T|null
      */
     public function loadNullable(string $type, ?string $name, EnvResolver $env, Context $context): mixed;
+
+    /**
+     * @template T
+     * @param class-string<T> $type
+     * @return iterable<T>
+     */
+    public function loadAll(string $type, EnvResolver $env, Context $context): iterable;
 }

@@ -28,7 +28,10 @@ use Nevay\OTelSDK\Trace\Sampler;
 use Nevay\OTelSDK\Trace\SpanProcessor;
 use Nevay\OTelSDK\Trace\TracerProviderBuilder;
 use Nevay\SPI\ServiceLoader;
-use OpenTelemetry\API\Configuration\Noop\NoopConfigProperties;
+use OpenTelemetry\API\Configuration\ConfigProperties;
+use OpenTelemetry\API\Instrumentation\AutoInstrumentation\ConfigurationRegistry;
+use OpenTelemetry\API\Instrumentation\AutoInstrumentation\GeneralInstrumentationConfiguration;
+use OpenTelemetry\API\Instrumentation\AutoInstrumentation\InstrumentationConfiguration;
 use OpenTelemetry\Context\Propagation\MultiTextMapPropagator;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
 use function array_unique;
@@ -62,7 +65,7 @@ final class Env {
                 new NoopMeterProvider(),
                 new NoopLoggerProvider(),
                 new NoopProvider(),
-                new NoopConfigProperties(),
+                self::configProperties($env, $registry, new Context(logger: $logger)),
                 $logger,
             );
         }
@@ -131,7 +134,7 @@ final class Env {
                 $meterProvider,
                 $loggerProvider,
             ]),
-            new NoopConfigProperties(),
+            self::configProperties($env, $registry, $context),
             $logger,
         );
     }
@@ -143,6 +146,18 @@ final class Env {
         }
 
         return new MultiTextMapPropagator($propagators);
+    }
+
+    private static function configProperties(EnvResolver $env, LoaderRegistry $registry, Context $context): ConfigProperties {
+        $configProperties = new ConfigurationRegistry();
+        foreach ($registry->loadAll(GeneralInstrumentationConfiguration::class, $env, $context) as $instrumentation) {
+            $configProperties->add($instrumentation);
+        }
+        foreach ($registry->loadAll(InstrumentationConfiguration::class, $env, $context) as $instrumentation) {
+            $configProperties->add($instrumentation);
+        }
+
+        return $configProperties;
     }
 
     private static function tracerProvider(TracerProviderBuilder $tracerProviderBuilder, EnvResolver $env, LoaderRegistry $registry, Context $context): void {
