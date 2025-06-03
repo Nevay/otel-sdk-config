@@ -400,10 +400,10 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      */
     private function createConfigProperties(array $properties, Context $context): ConfigProperties {
         $configProperties = new ConfigurationRegistry();
-        foreach ($properties['instrumentation/development']['general'] ?? [] as $instrumentation) {
+        foreach ($properties['general'] ?? [] as $instrumentation) {
             $configProperties->add($instrumentation->create($context));
         }
-        foreach ($properties['instrumentation/development']['php'] ?? [] as $instrumentation) {
+        foreach ($properties['php'] ?? [] as $instrumentation) {
             $configProperties->add($instrumentation->create($context));
         }
 
