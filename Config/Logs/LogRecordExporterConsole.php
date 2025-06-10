@@ -21,6 +21,7 @@ final class LogRecordExporterConsole implements ComponentProvider {
     public function createPlugin(array $properties, Context $context): LogRecordExporter {
         return new OtlpStreamLogRecordExporter(
             stream: getStdout(),
+            meterProvider: $context->meterProvider,
             logger: $context->logger,
         );
     }

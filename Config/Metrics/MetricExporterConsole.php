@@ -21,6 +21,7 @@ final class MetricExporterConsole implements ComponentProvider {
     public function createPlugin(array $properties, Context $context): MetricExporter {
         return new OtlpStreamMetricExporter(
             stream: getStdout(),
+            meterProvider: $context->meterProvider,
             logger: $context->logger,
         );
     }
