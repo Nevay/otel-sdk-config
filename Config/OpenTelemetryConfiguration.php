@@ -10,6 +10,7 @@ use Nevay\OTelSDK\Common\Provider\MultiProvider;
 use Nevay\OTelSDK\Common\Provider\NoopProvider;
 use Nevay\OTelSDK\Common\Resource;
 use Nevay\OTelSDK\Common\ResourceDetector;
+use Nevay\OTelSDK\Common\SelfDiagnosticsContext;
 use Nevay\OTelSDK\Configuration\ComponentPlugin;
 use Nevay\OTelSDK\Configuration\ComponentProvider;
 use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
@@ -354,9 +355,14 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $logger = clone $logger;
         $logger->pushHandler(new LoggerHandler($context->loggerProvider, level: $logLevel));
 
-        $tracerProviderBuilder->copyStateInto($tracerProvider);
-        $meterProviderBuilder->copyStateInto($meterProvider);
-        $loggerProviderBuilder->copyStateInto($loggerProvider);
+        $selfDiagnosticsContext = new SelfDiagnosticsContext(
+            $context->tracerProvider,
+            $context->meterProvider,
+            $context->loggerProvider,
+        );
+        $tracerProviderBuilder->copyStateInto($tracerProvider, $selfDiagnosticsContext);
+        $meterProviderBuilder->copyStateInto($meterProvider, $selfDiagnosticsContext);
+        $loggerProviderBuilder->copyStateInto($loggerProvider, $selfDiagnosticsContext);
 
         return new ConfigurationResult(
             $this->createPropagator($properties['propagator'], $context),

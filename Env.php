@@ -6,6 +6,7 @@ use Monolog\Logger;
 use Nevay\OTelSDK\Common\Provider\MultiProvider;
 use Nevay\OTelSDK\Common\Provider\NoopProvider;
 use Nevay\OTelSDK\Common\Resource;
+use Nevay\OTelSDK\Common\SelfDiagnosticsContext;
 use Nevay\OTelSDK\Configuration\Env\EnvResolver;
 use Nevay\OTelSDK\Configuration\Env\Loader;
 use Nevay\OTelSDK\Configuration\Env\LoaderRegistry;
@@ -120,9 +121,14 @@ final class Env {
         $logger = clone $logger;
         $logger->pushHandler(new LoggerHandler($context->loggerProvider, level: $logLevel));
 
-        $tracerProviderBuilder->copyStateInto($tracerProvider);
-        $meterProviderBuilder->copyStateInto($meterProvider);
-        $loggerProviderBuilder->copyStateInto($loggerProvider);
+        $selfDiagnosticsContext = new SelfDiagnosticsContext(
+            $context->tracerProvider,
+            $context->meterProvider,
+            $context->loggerProvider,
+        );
+        $tracerProviderBuilder->copyStateInto($tracerProvider, $selfDiagnosticsContext);
+        $meterProviderBuilder->copyStateInto($meterProvider, $selfDiagnosticsContext);
+        $loggerProviderBuilder->copyStateInto($loggerProvider, $selfDiagnosticsContext);
 
         return new ConfigurationResult(
             self::propagator($env, $registry, $context),
