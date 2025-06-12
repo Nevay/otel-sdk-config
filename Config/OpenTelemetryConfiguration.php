@@ -6,8 +6,6 @@ use Monolog\Logger;
 use Nevay\OTelSDK\Common\Attributes;
 use Nevay\OTelSDK\Common\AttributesLimitingFactory;
 use Nevay\OTelSDK\Common\Configurator\RuleConfiguratorBuilder;
-use Nevay\OTelSDK\Common\Provider\MultiProvider;
-use Nevay\OTelSDK\Common\Provider\NoopProvider;
 use Nevay\OTelSDK\Common\Resource;
 use Nevay\OTelSDK\Common\ResourceDetector;
 use Nevay\OTelSDK\Common\SelfDiagnosticsContext;
@@ -169,7 +167,6 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 new NoopTracerProvider(),
                 new NoopMeterProvider(),
                 new NoopLoggerProvider(),
-                new NoopProvider(),
                 $this->createConfigProperties($properties['instrumentation/development'], new Context(logger: $logger)),
                 $logger,
             );
@@ -369,11 +366,6 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             $tracerProvider,
             $meterProvider,
             $loggerProvider,
-            new MultiProvider([
-                $tracerProvider,
-                $meterProvider,
-                $loggerProvider,
-            ]),
             $this->createConfigProperties($properties['instrumentation/development'], $context),
             $logger,
         );

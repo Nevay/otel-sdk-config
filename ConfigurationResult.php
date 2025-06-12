@@ -1,7 +1,6 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration;
 
-use Nevay\OTelSDK\Common\Provider;
 use Nevay\OTelSDK\Logs\LoggerProviderInterface;
 use Nevay\OTelSDK\Metrics\MeterProviderInterface;
 use Nevay\OTelSDK\Trace\TracerProviderInterface;
@@ -15,7 +14,6 @@ final class ConfigurationResult {
     public readonly TracerProviderInterface $tracerProvider;
     public readonly MeterProviderInterface $meterProvider;
     public readonly LoggerProviderInterface $loggerProvider;
-    public readonly Provider $provider;
 
     public readonly ConfigProperties $configProperties;
 
@@ -30,13 +28,11 @@ final class ConfigurationResult {
         TracerProviderInterface $tracerProvider,
         MeterProviderInterface $meterProvider,
         LoggerProviderInterface $loggerProvider,
-        Provider $provider,
         ConfigProperties $configProperties,
         LoggerInterface $logger,
     ) {
         $this->logger = $logger;
         $this->configProperties = $configProperties;
-        $this->provider = $provider;
         $this->loggerProvider = $loggerProvider;
         $this->meterProvider = $meterProvider;
         $this->tracerProvider = $tracerProvider;

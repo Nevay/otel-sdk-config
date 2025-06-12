@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration;
 
+use Nevay\OTelSDK\Common\Provider\MultiProvider;
 use Nevay\OTelSDK\Configuration\Env\EnvResolver;
 use Nevay\OTelSDK\Configuration\Environment\EnvSourceReader;
 use Nevay\OTelSDK\Configuration\Environment\PhpIniEnvSource;
@@ -41,7 +42,11 @@ use function register_shutdown_function;
         // Re-register to trigger after normal shutdown functions
         register_shutdown_function(
             register_shutdown_function(...),
-            $config->provider->shutdown(...),
+            (new MultiProvider([
+                $config->tracerProvider,
+                $config->meterProvider,
+                $config->loggerProvider,
+            ]))->shutdown(...),
         );
 
         return $config;

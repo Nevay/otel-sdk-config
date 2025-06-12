@@ -3,8 +3,6 @@ namespace Nevay\OTelSDK\Configuration;
 
 use Monolog\Handler\ErrorLogHandler;
 use Monolog\Logger;
-use Nevay\OTelSDK\Common\Provider\MultiProvider;
-use Nevay\OTelSDK\Common\Provider\NoopProvider;
 use Nevay\OTelSDK\Common\Resource;
 use Nevay\OTelSDK\Common\SelfDiagnosticsContext;
 use Nevay\OTelSDK\Configuration\Env\EnvResolver;
@@ -65,7 +63,6 @@ final class Env {
                 new NoopTracerProvider(),
                 new NoopMeterProvider(),
                 new NoopLoggerProvider(),
-                new NoopProvider(),
                 self::configProperties($env, $registry, new Context(logger: $logger)),
                 $logger,
             );
@@ -135,11 +132,6 @@ final class Env {
             $tracerProvider,
             $meterProvider,
             $loggerProvider,
-            new MultiProvider([
-                $tracerProvider,
-                $meterProvider,
-                $loggerProvider,
-            ]),
             self::configProperties($env, $registry, $context),
             $logger,
         );
