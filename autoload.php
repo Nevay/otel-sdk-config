@@ -1,6 +1,8 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration;
 
+use Monolog\Handler\ErrorLogHandler;
+use Monolog\Logger;
 use Nevay\OTelSDK\Common\Provider\MultiProvider;
 use Nevay\OTelSDK\Configuration\Env\EnvResolver;
 use Nevay\OTelSDK\Configuration\Environment\EnvSourceReader;
@@ -50,7 +52,14 @@ use function register_shutdown_function;
         );
 
         return $config;
-    })->ignore();
+    });
+    $config = $config->catch(static function(Throwable $e): ?ConfigurationResult {
+        $logger = new Logger('otel');
+        $logger->pushHandler(new ErrorLogHandler());
+        $logger->error('Error during OpenTelemetry initialization: {exception}', ['exception' => $e]);
+
+        return null;
+    });
 
     Globals::registerInitializer(static function(Configurator $configurator) use ($config): Configurator {
         if ($config = $config->await()) {
@@ -69,7 +78,7 @@ use function register_shutdown_function;
     if (!$instrumentations->getIterator()->valid()) {
         return;
     }
-    if (!$config = $config->catch(static fn() => null)->await()) {
+    if (!$config = $config->await()) {
         return;
     }
 
