@@ -10,6 +10,7 @@ use Nevay\OTelSDK\Metrics\MetricExporter;
 use Nevay\OTelSDK\Metrics\MetricProducer;
 use Nevay\OTelSDK\Metrics\MetricReader;
 use Nevay\OTelSDK\Metrics\MetricReader\PeriodicExportingMetricReader;
+use Nevay\OTelSDK\Metrics\MetricReader\PullMetricReader;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 use function array_map;
@@ -33,7 +34,7 @@ final class MetricReaderPull implements ComponentProvider {
      * } $properties
      */
     public function createPlugin(array $properties, Context $context): MetricReader {
-        return new PeriodicExportingMetricReader(
+        return new PullMetricReader(
             metricExporter: $properties['exporter']->create($context),
             cardinalityLimits: new CardinalityLimitResolver(
                 default: $properties['cardinality_limits']['default'],
