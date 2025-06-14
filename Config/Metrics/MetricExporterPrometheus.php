@@ -4,6 +4,7 @@ namespace Nevay\OTelSDK\Configuration\Config\Metrics;
 use Amp\Dns;
 use Amp\Http\Server\SocketHttpServer;
 use Amp\Socket\InternetAddress;
+use Nevay\OTelSDK\Common\Attributes;
 use Nevay\OTelSDK\Configuration\ComponentProvider;
 use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
 use Nevay\OTelSDK\Configuration\Context;
@@ -27,6 +28,10 @@ final class MetricExporterPrometheus implements ComponentProvider {
      *     without_units: bool,
      *     without_type_suffix: bool,
      *     without_scope_info: bool,
+     *     with_resource_constant_labels: array{
+     *         included: ?list<string>,
+     *         excluded: ?list<string>,
+     *     },
      * } $properties
      */
     public function createPlugin(array $properties, Context $context): MetricExporter {
@@ -46,6 +51,11 @@ final class MetricExporterPrometheus implements ComponentProvider {
             withoutUnits: $properties['without_units'],
             withoutTypeSuffix: $properties['without_type_suffix'],
             withoutScopeInfo: $properties['without_scope_info'],
+            withResourceConstantLabels: Attributes::filterKeys(
+                include: $properties['with_resource_constant_labels']['included'] ?? [],
+                exclude: $properties['with_resource_constant_labels']['excluded'] ?? [],
+            ),
+            logger: $context->logger,
         );
     }
 
@@ -58,6 +68,12 @@ final class MetricExporterPrometheus implements ComponentProvider {
                 ->booleanNode('without_units')->defaultFalse()->end()
                 ->booleanNode('without_type_suffix')->defaultFalse()->end()
                 ->booleanNode('without_scope_info')->defaultFalse()->end()
+                ->arrayNode('with_resource_constant_labels')
+                    ->children()
+                        ->arrayNode('included')->defaultNull()->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()->end()
+                        ->arrayNode('excluded')->defaultNull()->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()->end()
+                    ->end()
+                ->end()
             ->end()
         ;
 
