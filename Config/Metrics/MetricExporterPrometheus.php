@@ -2,6 +2,8 @@
 namespace Nevay\OTelSDK\Configuration\Config\Metrics;
 
 use Amp\Dns;
+use Amp\Http\Server\DefaultErrorHandler;
+use Amp\Http\Server\Driver\SocketClientFactory;
 use Amp\Http\Server\SocketHttpServer;
 use Amp\Socket\InternetAddress;
 use Nevay\OTelSDK\Common\Attributes;
@@ -10,6 +12,8 @@ use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
 use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Configuration\Validation;
 use Nevay\OTelSDK\Metrics\MetricExporter;
+use Nevay\OTelSDK\Prometheus\Internal\HttpServer\HttpServerClosable;
+use Nevay\OTelSDK\Prometheus\Internal\Socket\UnreferencedServerSocketFactory;
 use Nevay\OTelSDK\Prometheus\PrometheusMetricExporter;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
@@ -35,7 +39,12 @@ final class MetricExporterPrometheus implements ComponentProvider {
      * } $properties
      */
     public function createPlugin(array $properties, Context $context): MetricExporter {
-        $server = SocketHttpServer::createForDirectAccess($context->logger, allowedMethods: ['GET']);
+        $server = new SocketHttpServer(
+            $context->logger,
+            new UnreferencedServerSocketFactory(),
+            new SocketClientFactory($context->logger),
+            allowedMethods: ['GET'],
+        );
 
         $host = $properties['host'];
         $port = $properties['port'];
@@ -46,8 +55,8 @@ final class MetricExporterPrometheus implements ComponentProvider {
             port: $port,
         ));
 
-        return new PrometheusMetricExporter(
-            server: $server,
+        $exporter = new PrometheusMetricExporter(
+            server: new HttpServerClosable($server),
             withoutUnits: $properties['without_units'],
             withoutTypeSuffix: $properties['without_type_suffix'],
             withoutScopeInfo: $properties['without_scope_info'],
@@ -57,6 +66,9 @@ final class MetricExporterPrometheus implements ComponentProvider {
             ),
             logger: $context->logger,
         );
+        $server->start($exporter, new DefaultErrorHandler());
+
+        return $exporter;
     }
 
     public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
