@@ -4,7 +4,6 @@ namespace Nevay\OTelSDK\Configuration;
 use Monolog\Handler\ErrorLogHandler;
 use Monolog\Logger;
 use Nevay\OTelSDK\Common\Resource;
-use Nevay\OTelSDK\Common\SelfDiagnosticsContext;
 use Nevay\OTelSDK\Configuration\Env\EnvReader;
 use Nevay\OTelSDK\Configuration\Env\EnvSourceReader;
 use Nevay\OTelSDK\Configuration\Env\PhpIniEnvSource;
@@ -123,10 +122,11 @@ final class Env {
         self::meterProvider($meterProviderBuilder, $env, $registry, $context);
         self::loggerProvider($loggerProviderBuilder, $env, $registry, $context);
 
-        $selfDiagnosticsContext = new SelfDiagnosticsContext(
+        $selfDiagnosticsContext = new Context(
             $context->tracerProvider,
             $context->meterProvider,
             $context->loggerProvider,
+            $logger,
         );
         $tracerProviderBuilder->copyStateInto($tracerProvider, $selfDiagnosticsContext);
         $meterProviderBuilder->copyStateInto($meterProvider, $selfDiagnosticsContext);

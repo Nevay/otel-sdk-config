@@ -8,7 +8,6 @@ use Nevay\OTelSDK\Common\AttributesLimitingFactory;
 use Nevay\OTelSDK\Common\Configurator\RuleConfiguratorBuilder;
 use Nevay\OTelSDK\Common\Resource;
 use Nevay\OTelSDK\Common\ResourceDetector;
-use Nevay\OTelSDK\Common\SelfDiagnosticsContext;
 use Nevay\OTelSDK\Configuration\ConfigurationResult;
 use Nevay\OTelSDK\Configuration\Internal\LoggerHandler;
 use Nevay\OTelSDK\Configuration\Internal\Util;
@@ -363,10 +362,11 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         // </editor-fold>
 
-        $selfDiagnosticsContext = new SelfDiagnosticsContext(
+        $selfDiagnosticsContext = new Context(
             $context->tracerProvider,
             $context->meterProvider,
             $context->loggerProvider,
+            $logger,
         );
         $tracerProviderBuilder->copyStateInto($tracerProvider, $selfDiagnosticsContext);
         $meterProviderBuilder->copyStateInto($meterProvider, $selfDiagnosticsContext);
