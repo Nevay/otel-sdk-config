@@ -1,16 +1,19 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\Config\Logs;
 
-use Nevay\OTelSDK\Configuration\ComponentPlugin;
-use Nevay\OTelSDK\Configuration\ComponentProvider;
-use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
-use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Logs\LogRecordExporter;
 use Nevay\OTelSDK\Logs\LogRecordProcessor;
 use Nevay\OTelSDK\Logs\LogRecordProcessor\BatchLogRecordProcessor;
+use OpenTelemetry\API\Configuration\Config\ComponentPlugin;
+use OpenTelemetry\API\Configuration\Config\ComponentProvider;
+use OpenTelemetry\API\Configuration\Config\ComponentProviderRegistry;
+use OpenTelemetry\API\Configuration\Context;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
+/**
+ * @implements ComponentProvider<LogRecordProcessor>
+ */
 final class LogRecordProcessorBatch implements ComponentProvider {
 
     /**

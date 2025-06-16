@@ -1,10 +1,11 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\Config\Instrumentation;
 
-use Nevay\OTelSDK\Configuration\ComponentProvider;
-use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
-use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Configuration\Internal\Util;
 use Nevay\OTelSDK\Configuration\Validation;
+use OpenTelemetry\API\Configuration\Config\ComponentProvider;
+use OpenTelemetry\API\Configuration\Config\ComponentProviderRegistry;
+use OpenTelemetry\API\Configuration\Context;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\GeneralInstrumentationConfiguration;
 use OpenTelemetry\API\Instrumentation\Configuration\General\HttpConfig;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
@@ -36,10 +37,10 @@ final class InstrumentationConfigurationHttp implements ComponentProvider {
         $node
             ->children()
                 ->arrayNode('request_captured_headers')
-                    ->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()
+                    ->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()
                 ->end()
                 ->arrayNode('response_captured_headers')
-                    ->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()
+                    ->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()
                 ->end()
             ->end()
         ;

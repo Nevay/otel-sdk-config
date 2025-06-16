@@ -3,10 +3,7 @@ namespace Nevay\OTelSDK\Configuration\Config\Metrics;
 
 use Amp\ByteStream\StreamException;
 use Amp\ByteStream\WritableResourceStream;
-use Nevay\OTelSDK\Configuration\ComponentProvider;
-use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
-use Nevay\OTelSDK\Configuration\Config\Util;
-use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Configuration\Internal\Util;
 use Nevay\OTelSDK\Configuration\Validation;
 use Nevay\OTelSDK\Metrics\Aggregation\Base2ExponentialBucketHistogramAggregation;
 use Nevay\OTelSDK\Metrics\Aggregation\DefaultAggregation;
@@ -16,6 +13,9 @@ use Nevay\OTelSDK\Metrics\MetricExporter;
 use Nevay\OTelSDK\Metrics\TemporalityResolvers;
 use Nevay\OTelSDK\Otlp\OtlpStreamMetricExporter;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
+use OpenTelemetry\API\Configuration\Config\ComponentProvider;
+use OpenTelemetry\API\Configuration\Config\ComponentProviderRegistry;
+use OpenTelemetry\API\Configuration\Context;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 use function Amp\ByteStream\getStderr;
@@ -23,6 +23,9 @@ use function Amp\ByteStream\getStdout;
 use function error_get_last;
 use function fopen;
 
+/**
+ * @implements ComponentProvider<MetricExporter>
+ */
 #[PackageDependency('tbachert/otel-sdk-otlpexporter', '^0.1')]
 #[PackageDependency('amphp/byte-stream', '^2.0')]
 final class MetricExporterOtlpFile implements ComponentProvider {
@@ -61,7 +64,7 @@ final class MetricExporterOtlpFile implements ComponentProvider {
             ->children()
                 ->scalarNode('output_stream')
                     ->defaultValue('stdout')
-                    ->validate()->always(Validation::ensureString())->end()
+                    ->validate()->always(Util::ensureString())->end()
                     ->validate()->ifNotInArray(['stdout', 'stderr'])->then(Util::ensurePath())->end()
                 ->end()
                 ->enumNode('temporality_preference')

@@ -4,12 +4,13 @@ namespace Nevay\OTelSDK\Configuration;
 use Monolog\Handler\ErrorLogHandler;
 use Monolog\Logger;
 use Nevay\OTelSDK\Common\Provider\MultiProvider;
-use Nevay\OTelSDK\Configuration\Env\EnvResolver;
-use Nevay\OTelSDK\Configuration\Environment\EnvSourceReader;
-use Nevay\OTelSDK\Configuration\Environment\PhpIniEnvSource;
-use Nevay\OTelSDK\Configuration\Environment\ServerEnvSource;
-use Nevay\OTelSDK\Configuration\EnvSource\EnvSourceProvider;
-use Nevay\OTelSDK\Configuration\EnvSource\LazyEnvSource;
+use Nevay\OTelSDK\Configuration\Env\EnvSourceProvider;
+use Nevay\OTelSDK\Configuration\Env\EnvSourceReader;
+use Nevay\OTelSDK\Configuration\Env\LazyEnvSource;
+use Nevay\OTelSDK\Configuration\Env\PhpIniEnvSource;
+use Nevay\OTelSDK\Configuration\Env\ServerEnvSource;
+use Nevay\OTelSDK\Configuration\Internal\ConfigEnv\EnvResolver;
+use Nevay\OTelSDK\Configuration\Internal\Util;
 use Nevay\SPI\ServiceLoader;
 use OpenTelemetry\API\Globals;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation;
@@ -33,8 +34,8 @@ use function register_shutdown_function;
         $envReader = new EnvSourceReader($envSources);
         $env = new EnvResolver($envReader);
 
-        if (($configFile = $env->path('OTEL_EXPERIMENTAL_CONFIG_FILE')) !== null) {
-            $config = Config::loadFile($configFile, envReader: $envReader);
+        if (($configFile = $env->string('OTEL_EXPERIMENTAL_CONFIG_FILE')) !== null) {
+            $config = Config::loadFile(Util::makePathAbsolute($configFile), envReader: $envReader);
         } elseif ($env->bool('OTEL_PHP_AUTOLOAD_ENABLED')) {
             $config = Env::load(envReader: $envReader);
         } else {

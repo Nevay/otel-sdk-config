@@ -3,11 +3,14 @@ namespace Nevay\OTelSDK\Configuration;
 
 use Exception;
 use Nevay\OTelSDK\Configuration\Config\OpenTelemetryConfiguration;
-use Nevay\OTelSDK\Configuration\Environment\EnvReader;
-use Nevay\OTelSDK\Configuration\Environment\EnvSourceReader;
-use Nevay\OTelSDK\Configuration\Environment\PhpIniEnvSource;
-use Nevay\OTelSDK\Configuration\Environment\ServerEnvSource;
+use Nevay\OTelSDK\Configuration\Env\EnvReader;
+use Nevay\OTelSDK\Configuration\Env\EnvSourceReader;
+use Nevay\OTelSDK\Configuration\Env\PhpIniEnvSource;
+use Nevay\OTelSDK\Configuration\Env\ServerEnvSource;
+use Nevay\OTelSDK\Configuration\Internal\Config\ConfigurationFactory;
 use Nevay\SPI\ServiceLoader;
+use OpenTelemetry\API\Configuration\Config\ComponentProvider;
+use OpenTelemetry\API\Configuration\Context;
 use WeakMap;
 
 final class Config {

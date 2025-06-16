@@ -1,14 +1,17 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\Config\Trace;
 
-use Nevay\OTelSDK\Configuration\ComponentProvider;
-use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
-use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Trace\Sampler;
 use Nevay\OTelSDK\Trace\Sampler\TraceIdRatioBasedSampler;
+use OpenTelemetry\API\Configuration\Config\ComponentProvider;
+use OpenTelemetry\API\Configuration\Config\ComponentProviderRegistry;
+use OpenTelemetry\API\Configuration\Context;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
+/**
+ * @implements ComponentProvider<Sampler>
+ */
 final class SamplerTraceIdRatioBased implements ComponentProvider {
 
     /**

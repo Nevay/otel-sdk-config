@@ -9,15 +9,11 @@ use Nevay\OTelSDK\Common\Configurator\RuleConfiguratorBuilder;
 use Nevay\OTelSDK\Common\Resource;
 use Nevay\OTelSDK\Common\ResourceDetector;
 use Nevay\OTelSDK\Common\SelfDiagnosticsContext;
-use Nevay\OTelSDK\Configuration\ComponentPlugin;
-use Nevay\OTelSDK\Configuration\ComponentProvider;
-use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
 use Nevay\OTelSDK\Configuration\ConfigurationResult;
-use Nevay\OTelSDK\Configuration\Context;
-use Nevay\OTelSDK\Configuration\Logging\LoggerHandler;
-use Nevay\OTelSDK\Configuration\SelfDiagnostics\DisableSelfDiagnosticsConfigurator;
+use Nevay\OTelSDK\Configuration\Internal\LoggerHandler;
+use Nevay\OTelSDK\Configuration\Internal\Util;
 use Nevay\OTelSDK\Configuration\SelfDiagnostics;
-use Nevay\OTelSDK\Configuration\Validation;
+use Nevay\OTelSDK\Configuration\SelfDiagnostics\DisableSelfDiagnosticsConfigurator;
 use Nevay\OTelSDK\Logs\LoggerConfig;
 use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
 use Nevay\OTelSDK\Logs\LogRecordProcessor;
@@ -35,7 +31,11 @@ use Nevay\OTelSDK\Trace\Sampler;
 use Nevay\OTelSDK\Trace\SpanProcessor;
 use Nevay\OTelSDK\Trace\TracerConfig;
 use Nevay\OTelSDK\Trace\TracerProviderBuilder;
+use OpenTelemetry\API\Configuration\Config\ComponentPlugin;
+use OpenTelemetry\API\Configuration\Config\ComponentProvider;
+use OpenTelemetry\API\Configuration\Config\ComponentProviderRegistry;
 use OpenTelemetry\API\Configuration\ConfigProperties;
+use OpenTelemetry\API\Configuration\Context;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\ConfigurationRegistry;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\GeneralInstrumentationConfiguration;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\InstrumentationConfiguration;
@@ -44,6 +44,12 @@ use OpenTelemetry\Context\Propagation\NoopTextMapPropagator;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeBuilder;
+use function array_key_exists;
+use function explode;
+use function is_array;
+use function is_string;
+use function rawurldecode;
+use function trim;
 
 final class OpenTelemetryConfiguration implements ComponentProvider {
 
@@ -160,14 +166,22 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         $logger = new Logger('otel');
         $logger->pushHandler(new ErrorLogHandler(level: $logLevel));
+        $logger->debug('Initializing OTelSDK from declarative config');
+
+        $context = new Context(logger: $logger);
 
         if ($properties['disabled']) {
+            $propagator = $this->createPropagator($properties['propagator'], $context);
+            $configProperties = $this->createConfigProperties($properties['instrumentation/development'], $context);
+
+            $logger->debug('Initialized OTelSDK from declarative config', ['disabled' => true]);
+
             return new ConfigurationResult(
-                $this->createPropagator($properties['propagator'], new Context(logger: $logger)),
+                $propagator,
                 new NoopTracerProvider(),
                 new NoopMeterProvider(),
                 new NoopLoggerProvider(),
-                $this->createConfigProperties($properties['instrumentation/development'], new Context(logger: $logger)),
+                $configProperties,
                 $logger,
             );
         }
@@ -349,9 +363,6 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         // </editor-fold>
 
-        $logger = clone $logger;
-        $logger->pushHandler(new LoggerHandler($context->loggerProvider, level: $logLevel));
-
         $selfDiagnosticsContext = new SelfDiagnosticsContext(
             $context->tracerProvider,
             $context->meterProvider,
@@ -361,12 +372,19 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $meterProviderBuilder->copyStateInto($meterProvider, $selfDiagnosticsContext);
         $loggerProviderBuilder->copyStateInto($loggerProvider, $selfDiagnosticsContext);
 
+        $propagator = $this->createPropagator($properties['propagator'], $context);
+        $configProperties = $this->createConfigProperties($properties['instrumentation/development'], $context);
+
+        $logger->debug('Initialized OTelSDK from declarative config');
+        $logger = clone $logger;
+        $logger->pushHandler(new LoggerHandler($context->loggerProvider, level: $logLevel));
+
         return new ConfigurationResult(
-            $this->createPropagator($properties['propagator'], $context),
+            $propagator,
             $tracerProvider,
             $meterProvider,
             $loggerProvider,
-            $this->createConfigProperties($properties['instrumentation/development'], $context),
+            $configProperties,
             $logger,
         );
     }
@@ -417,11 +435,11 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 ->scalarNode('file_format')
                     ->isRequired()
                     ->example('0.4')
-                    ->validate()->always(Validation::ensureString())->end()
+                    ->validate()->always(Util::ensureString())->end()
                     ->validate()->ifNotInArray(['0.4'])->thenInvalid('unsupported version')->end()
                 ->end()
                 ->booleanNode('disabled')->defaultFalse()->end()
-                ->scalarNode('log_level')->defaultValue('info')->validate()->always(Validation::ensureString())->end()->end()
+                ->scalarNode('log_level')->defaultValue('info')->validate()->always(Util::ensureString())->end()->end()
                 ->append($this->getResourceConfig($registry, $builder))
                 ->append($this->getAttributeLimitsConfig($builder))
                 ->append($this->getPropagatorConfig($registry, $builder))
@@ -442,26 +460,26 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 ->arrayNode('attributes')
                     ->arrayPrototype()
                         ->children()
-                            ->scalarNode('name')->isRequired()->validate()->always(Validation::ensureString())->end()->end()
+                            ->scalarNode('name')->isRequired()->validate()->always(Util::ensureString())->end()->end()
                             ->variableNode('value')->isRequired()->end()
-                            ->scalarNode('type')->defaultValue('string')->validate()->always(Validation::ensureString())->end()->end()
+                            ->scalarNode('type')->defaultValue('string')->validate()->always(Util::ensureString())->end()->end()
                         ->end()
                     ->end()
                 ->end()
-                ->scalarNode('attributes_list')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
+                ->scalarNode('attributes_list')->defaultNull()->validate()->always(Util::ensureString())->end()->end()
                 ->arrayNode('detection/development')
                     ->addDefaultsIfNotSet()
                     ->children()
                         ->arrayNode('attributes')
                             ->children()
-                                ->arrayNode('included')->defaultNull()->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()->end()
-                                ->arrayNode('excluded')->defaultNull()->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()->end()
+                                ->arrayNode('included')->defaultNull()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
+                                ->arrayNode('excluded')->defaultNull()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
                             ->end()
                         ->end()
                         ->append($registry->componentList('detectors', ResourceDetector::class))
                     ->end()
                 ->end()
-                ->scalarNode('schema_url')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
+                ->scalarNode('schema_url')->defaultNull()->validate()->always(Util::ensureString())->end()->end()
             ->end();
 
         return $node;
@@ -485,19 +503,19 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             ->beforeNormalization()
                 ->ifArray()
                 ->then(static function(array $value): array {
-                    if (!isset($value['composite_list']) || !\is_string($value['composite_list']) || \trim($value['composite_list'], " \t") === '') {
+                    if (!isset($value['composite_list']) || !is_string($value['composite_list']) || trim($value['composite_list'], " \t") === '') {
                         return $value;
                     }
-                    if (isset($value['composite']) && !\is_array($value['composite'])) {
+                    if (isset($value['composite']) && !is_array($value['composite'])) {
                         return $value;
                     }
 
                     // Entries are appended to .composite with duplicates filtered out.
-                    foreach (\explode(',', $value['composite_list']) as $entry) {
-                        $name = \rawurldecode(\trim($entry, " \t"));
+                    foreach (explode(',', $value['composite_list']) as $entry) {
+                        $name = rawurldecode(trim($entry, " \t"));
 
                         foreach ($value['composite'] ?? [] as $propagator) {
-                            if (\is_array($propagator) && \array_key_exists($name, $propagator)) {
+                            if (is_array($propagator) && array_key_exists($name, $propagator)) {
                                 continue 2;
                             }
                         }
@@ -515,7 +533,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             ->addDefaultsIfNotSet()
             ->children()
                 ->append($registry->componentList('composite', TextMapPropagatorInterface::class))
-                ->scalarNode('composite_list')->validate()->always(Validation::ensureString())->end()->end()
+                ->scalarNode('composite_list')->validate()->always(Util::ensureString())->end()->end()
             ->end()
         ;
 
@@ -552,7 +570,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                         ->arrayNode('tracers')
                             ->arrayPrototype()
                                 ->children()
-                                    ->scalarNode('name')->isRequired()->cannotBeEmpty()->validate()->always(Validation::ensureString())->end()->end()
+                                    ->scalarNode('name')->isRequired()->cannotBeEmpty()->validate()->always(Util::ensureString())->end()->end()
                                     ->arrayNode('config')
                                         ->isRequired()
                                         ->children()
@@ -581,12 +599,12 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                             ->arrayNode('stream')
                                 ->addDefaultsIfNotSet()
                                 ->children()
-                                    ->scalarNode('name')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
-                                    ->scalarNode('description')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
+                                    ->scalarNode('name')->defaultNull()->validate()->always(Util::ensureString())->end()->end()
+                                    ->scalarNode('description')->defaultNull()->validate()->always(Util::ensureString())->end()->end()
                                     ->arrayNode('attribute_keys')
                                         ->children()
-                                            ->arrayNode('included')->defaultNull()->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()->end()
-                                            ->arrayNode('excluded')->defaultNull()->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()->end()
+                                            ->arrayNode('included')->defaultNull()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
+                                            ->arrayNode('excluded')->defaultNull()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
                                         ->end()
                                     ->end()
                                     ->append($registry->component('aggregation', Aggregation::class))
@@ -608,11 +626,11 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                                         ])
                                         ->defaultNull()
                                     ->end()
-                                    ->scalarNode('instrument_name')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
-                                    ->scalarNode('unit')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
-                                    ->scalarNode('meter_name')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
-                                    ->scalarNode('meter_version')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
-                                    ->scalarNode('meter_schema_url')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
+                                    ->scalarNode('instrument_name')->defaultNull()->validate()->always(Util::ensureString())->end()->end()
+                                    ->scalarNode('unit')->defaultNull()->validate()->always(Util::ensureString())->end()->end()
+                                    ->scalarNode('meter_name')->defaultNull()->validate()->always(Util::ensureString())->end()->end()
+                                    ->scalarNode('meter_version')->defaultNull()->validate()->always(Util::ensureString())->end()->end()
+                                    ->scalarNode('meter_schema_url')->defaultNull()->validate()->always(Util::ensureString())->end()->end()
                                 ->end()
                             ->end()
                         ->end()
@@ -632,7 +650,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                         ->arrayNode('meters')
                             ->arrayPrototype()
                                 ->children()
-                                    ->scalarNode('name')->isRequired()->cannotBeEmpty()->validate()->always(Validation::ensureString())->end()->end()
+                                    ->scalarNode('name')->isRequired()->cannotBeEmpty()->validate()->always(Util::ensureString())->end()->end()
                                     ->arrayNode('config')
                                         ->isRequired()
                                         ->children()
@@ -675,7 +693,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                         ->arrayNode('loggers')
                             ->arrayPrototype()
                                 ->children()
-                                    ->scalarNode('name')->isRequired()->cannotBeEmpty()->validate()->always(Validation::ensureString())->end()->end()
+                                    ->scalarNode('name')->isRequired()->cannotBeEmpty()->validate()->always(Util::ensureString())->end()->end()
                                     ->arrayNode('config')
                                         ->isRequired()
                                         ->children()

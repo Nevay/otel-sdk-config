@@ -11,15 +11,18 @@
         "amphp/log": "^2.0",
         "composer/semver": "^3.0",
         "monolog/monolog": "^1.26 || ^2.1 || ^3",
-        "open-telemetry/api": "^1.0",
+        "open-telemetry/api": "^1.4",
         "psr/log": "^1 || ^2 || ^3",
         "symfony/config": "^5.4 || ^6.4 || ^7.0",
         "tbachert/otel-sdk-common": "^0.1",
-        "tbachert/otel-sdk-configuration": "^0.2",
         "tbachert/otel-sdk-logs": "^0.1",
         "tbachert/otel-sdk-metrics": "^0.1",
         "tbachert/otel-sdk-trace": "^0.1",
         "tbachert/spi": "^0.2 || ^1.0"
+    },
+    "suggest": {
+        "ext-yaml": "Allows loading config from yaml files",
+        "symfony/yaml": "Allows loading config from yaml files"
     },
     "autoload": {
         "psr-4": {
@@ -34,11 +37,11 @@
             "dev-main": "0.1.x-dev"
         },
         "spi": {
-            "Nevay\\OTelSDK\\Configuration\\EnvSource\\EnvSourceProvider": [
-                "Nevay\\OTelSDK\\Configuration\\EnvSource\\SymfonyDotenvProvider",
-                "Nevay\\OTelSDK\\Configuration\\EnvSource\\VlucasPhpdotenvProvider"
+            "Nevay\\OTelSDK\\Configuration\\Env\\EnvSourceProvider": [
+                "Nevay\\OTelSDK\\Configuration\\Env\\SymfonyDotenvProvider",
+                "Nevay\\OTelSDK\\Configuration\\Env\\VlucasPhpdotenvProvider"
             ],
-            "Nevay\\OTelSDK\\Configuration\\ComponentProvider": [
+            "OpenTelemetry\\API\\Configuration\\Config\\ComponentProvider": [
                 "Nevay\\OTelSDK\\Configuration\\Config\\Propagator\\TextMapPropagatorB3",
                 "Nevay\\OTelSDK\\Configuration\\Config\\Propagator\\TextMapPropagatorB3Multi",
                 "Nevay\\OTelSDK\\Configuration\\Config\\Propagator\\TextMapPropagatorBaggage",
@@ -81,31 +84,31 @@
                 "Nevay\\OTelSDK\\Configuration\\Config\\Instrumentation\\InstrumentationConfigurationHttp",
                 "Nevay\\OTelSDK\\Configuration\\Config\\Instrumentation\\InstrumentationConfigurationPeer"
             ],
-            "Nevay\\OTelSDK\\Configuration\\Env\\Loader": [
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Propagator\\TextMapPropagatorLoaderB3",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Propagator\\TextMapPropagatorLoaderB3Multi",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Propagator\\TextMapPropagatorLoaderBaggage",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Propagator\\TextMapPropagatorLoaderJaeger",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Propagator\\TextMapPropagatorLoaderTraceContext",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Trace\\SamplerLoaderAlwaysOff",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Trace\\SamplerLoaderAlwaysOn",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Trace\\SamplerLoaderParentBasedAlwaysOff",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Trace\\SamplerLoaderParentBasedAlwaysOn",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Trace\\SamplerLoaderParentBasedTraceIdRatio",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Trace\\SamplerLoaderTraceIdRatio",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Trace\\SpanProcessorLoaderConsole",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Trace\\SpanProcessorLoaderNone",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Trace\\SpanProcessorLoaderOtlp",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Metrics\\ExemplarFilterLoaderAlwaysOff",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Metrics\\ExemplarFilterLoaderAlwaysOn",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Metrics\\ExemplarFilterLoaderTraceBased",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Metrics\\MetricReaderLoaderConsole",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Metrics\\MetricReaderLoaderNone",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Metrics\\MetricReaderLoaderOtlp",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Metrics\\MetricReaderLoaderPrometheus",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Logs\\LogRecordProcessorLoaderConsole",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Logs\\LogRecordProcessorLoaderNone",
-                "Nevay\\OTelSDK\\Configuration\\Env\\EnvLoaders\\Logs\\LogRecordProcessorLoaderOtlp"
+            "OpenTelemetry\\API\\Configuration\\ConfigEnv\\EnvComponentLoader": [
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Propagator\\TextMapPropagatorLoaderB3",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Propagator\\TextMapPropagatorLoaderB3Multi",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Propagator\\TextMapPropagatorLoaderBaggage",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Propagator\\TextMapPropagatorLoaderJaeger",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Propagator\\TextMapPropagatorLoaderTraceContext",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SamplerLoaderAlwaysOff",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SamplerLoaderAlwaysOn",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SamplerLoaderParentBasedAlwaysOff",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SamplerLoaderParentBasedAlwaysOn",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SamplerLoaderParentBasedTraceIdRatio",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SamplerLoaderTraceIdRatio",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SpanProcessorLoaderConsole",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SpanProcessorLoaderNone",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SpanProcessorLoaderOtlp",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Metrics\\ExemplarFilterLoaderAlwaysOff",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Metrics\\ExemplarFilterLoaderAlwaysOn",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Metrics\\ExemplarFilterLoaderTraceBased",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Metrics\\MetricReaderLoaderConsole",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Metrics\\MetricReaderLoaderNone",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Metrics\\MetricReaderLoaderOtlp",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Metrics\\MetricReaderLoaderPrometheus",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Logs\\LogRecordProcessorLoaderConsole",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Logs\\LogRecordProcessorLoaderNone",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Logs\\LogRecordProcessorLoaderOtlp"
             ]
         }
     }

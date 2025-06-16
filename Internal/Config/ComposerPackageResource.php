@@ -1,0 +1,33 @@
+<?php declare(strict_types=1);
+namespace Nevay\OTelSDK\Configuration\Internal\Config;
+
+use Composer\InstalledVersions;
+use Symfony\Component\Config\Resource\SelfCheckingResourceInterface;
+
+/**
+ * @internal
+ */
+final class ComposerPackageResource implements SelfCheckingResourceInterface {
+
+    public readonly string $packageName;
+    public readonly string|false $version;
+
+    public function __construct(string $packageName) {
+        $this->packageName = $packageName;
+        $this->version = self::getVersion($packageName);
+    }
+
+    public function isFresh(int $timestamp): bool {
+        return $this->version === self::getVersion($this->packageName);
+    }
+
+    public function __toString(): string {
+        return 'composer.' . $this->packageName;
+    }
+
+    private static function getVersion(string $packageName): string|false {
+        return InstalledVersions::isInstalled($packageName)
+            ? InstalledVersions::getVersion($packageName)
+            : false;
+    }
+}

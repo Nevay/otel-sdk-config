@@ -8,18 +8,21 @@ use Amp\Socket\Certificate;
 use Amp\Socket\ClientTlsContext;
 use Amp\Socket\ConnectContext;
 use League\Uri;
-use Nevay\OTelSDK\Configuration\ComponentProvider;
-use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
-use Nevay\OTelSDK\Configuration\Config\Util;
-use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Configuration\Internal\Util;
 use Nevay\OTelSDK\Configuration\Validation;
 use Nevay\OTelSDK\Otlp\OtlpHttpSpanExporter;
 use Nevay\OTelSDK\Otlp\ProtobufFormat;
 use Nevay\OTelSDK\Trace\SpanExporter;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
+use OpenTelemetry\API\Configuration\Config\ComponentProvider;
+use OpenTelemetry\API\Configuration\Config\ComponentProviderRegistry;
+use OpenTelemetry\API\Configuration\Context;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
+/**
+ * @implements ComponentProvider<SpanExporter>
+ */
 #[PackageDependency('tbachert/otel-sdk-otlpexporter', '^0.1')]
 #[PackageDependency('amphp/http-client', '^5.0')]
 #[PackageDependency('amphp/socket', '^2.0')]
@@ -75,19 +78,19 @@ final class SpanExporterOtlp implements ComponentProvider {
         $node = $builder->arrayNode('otlp_http');
         $node
             ->children()
-                ->scalarNode('endpoint')->defaultValue('http://localhost:4318/v1/traces')->validate()->always(Validation::ensureString())->end()->end()
+                ->scalarNode('endpoint')->defaultValue('http://localhost:4318/v1/traces')->validate()->always(Util::ensureString())->end()->end()
                 ->scalarNode('certificate_file')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
                 ->scalarNode('client_key_file')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
                 ->scalarNode('client_certificate_file')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
                 ->arrayNode('headers')
                     ->arrayPrototype()
                         ->children()
-                            ->scalarNode('name')->isRequired()->validate()->always(Validation::ensureString())->end()->end()
-                            ->scalarNode('value')->isRequired()->validate()->always(Validation::ensureString())->end()->end()
+                            ->scalarNode('name')->isRequired()->validate()->always(Util::ensureString())->end()->end()
+                            ->scalarNode('value')->isRequired()->validate()->always(Util::ensureString())->end()->end()
                         ->end()
                     ->end()
                 ->end()
-                ->scalarNode('headers_list')->defaultNull()->validate()->always(Validation::ensureString())->end()->end()
+                ->scalarNode('headers_list')->defaultNull()->validate()->always(Util::ensureString())->end()->end()
                 ->enumNode('compression')->values(['gzip'])->defaultNull()->end()
                 ->integerNode('timeout')->min(0)->defaultValue(10000)->end()
                 ->enumNode('encoding')

@@ -7,18 +7,22 @@ use Amp\Http\Server\Driver\SocketClientFactory;
 use Amp\Http\Server\SocketHttpServer;
 use Amp\Socket\InternetAddress;
 use Nevay\OTelSDK\Common\Attributes;
-use Nevay\OTelSDK\Configuration\ComponentProvider;
-use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
-use Nevay\OTelSDK\Configuration\Context;
+use Nevay\OTelSDK\Configuration\Internal\Util;
 use Nevay\OTelSDK\Configuration\Validation;
 use Nevay\OTelSDK\Metrics\MetricExporter;
 use Nevay\OTelSDK\Prometheus\Internal\HttpServer\HttpServerClosable;
 use Nevay\OTelSDK\Prometheus\Internal\Socket\UnreferencedServerSocketFactory;
 use Nevay\OTelSDK\Prometheus\PrometheusMetricExporter;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
+use OpenTelemetry\API\Configuration\Config\ComponentProvider;
+use OpenTelemetry\API\Configuration\Config\ComponentProviderRegistry;
+use OpenTelemetry\API\Configuration\Context;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
+/**
+ * @implements ComponentProvider<MetricExporter>
+ */
 #[PackageDependency('tbachert/otel-sdk-prometheusexporter', '^0.1')]
 #[PackageDependency('amphp/http-server', '^3.0')]
 #[PackageDependency('amphp/socket', '^2.0')]
@@ -75,15 +79,15 @@ final class MetricExporterPrometheus implements ComponentProvider {
         $node = $builder->arrayNode('prometheus/development');
         $node
             ->children()
-                ->scalarNode('host')->defaultValue('localhost')->validate()->always(Validation::ensureString())->end()->end()
+                ->scalarNode('host')->defaultValue('localhost')->validate()->always(Util::ensureString())->end()->end()
                 ->integerNode('port')->defaultValue(9464)->end()
                 ->booleanNode('without_units')->defaultFalse()->end()
                 ->booleanNode('without_type_suffix')->defaultFalse()->end()
                 ->booleanNode('without_scope_info')->defaultFalse()->end()
                 ->arrayNode('with_resource_constant_labels')
                     ->children()
-                        ->arrayNode('included')->defaultNull()->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()->end()
-                        ->arrayNode('excluded')->defaultNull()->scalarPrototype()->validate()->always(Validation::ensureString())->end()->end()->end()
+                        ->arrayNode('included')->defaultNull()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
+                        ->arrayNode('excluded')->defaultNull()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
                     ->end()
                 ->end()
             ->end()

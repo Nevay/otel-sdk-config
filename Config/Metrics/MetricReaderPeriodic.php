@@ -1,19 +1,22 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\Config\Metrics;
 
-use Nevay\OTelSDK\Configuration\ComponentPlugin;
-use Nevay\OTelSDK\Configuration\ComponentProvider;
-use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
 use Nevay\OTelSDK\Metrics\CardinalityLimitResolver\CardinalityLimitResolver;
-use Nevay\OTelSDK\Configuration\Context;
 use Nevay\OTelSDK\Metrics\MetricExporter;
 use Nevay\OTelSDK\Metrics\MetricProducer;
 use Nevay\OTelSDK\Metrics\MetricReader;
 use Nevay\OTelSDK\Metrics\MetricReader\PeriodicExportingMetricReader;
+use OpenTelemetry\API\Configuration\Config\ComponentPlugin;
+use OpenTelemetry\API\Configuration\Config\ComponentProvider;
+use OpenTelemetry\API\Configuration\Config\ComponentProviderRegistry;
+use OpenTelemetry\API\Configuration\Context;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 use function array_map;
 
+/**
+ * @implements ComponentProvider<MetricReader>
+ */
 final class MetricReaderPeriodic implements ComponentProvider {
 
     /**

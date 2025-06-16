@@ -2,14 +2,17 @@
 namespace Nevay\OTelSDK\Configuration\Config\Metrics;
 
 use InvalidArgumentException;
-use Nevay\OTelSDK\Configuration\ComponentProvider;
-use Nevay\OTelSDK\Configuration\ComponentProviderRegistry;
-use Nevay\OTelSDK\Configuration\Context;
-use Nevay\OTelSDK\Metrics\Aggregation\ExplicitBucketHistogramAggregation;
 use Nevay\OTelSDK\Metrics\Aggregation;
+use Nevay\OTelSDK\Metrics\Aggregation\ExplicitBucketHistogramAggregation;
+use OpenTelemetry\API\Configuration\Config\ComponentProvider;
+use OpenTelemetry\API\Configuration\Config\ComponentProviderRegistry;
+use OpenTelemetry\API\Configuration\Context;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
+/**
+ * @implements ComponentProvider<Aggregation>
+ */
 final class AggregationExplicitBucketHistogram implements ComponentProvider {
 
     /**
