@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\Config;
 
+use Composer\Semver\Semver;
 use Monolog\Handler\ErrorLogHandler;
 use Monolog\Logger;
 use Nevay\OTelSDK\Common\Attributes;
@@ -436,7 +437,10 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                     ->isRequired()
                     ->example('0.4')
                     ->validate()->always(Util::ensureString())->end()
-                    ->validate()->ifNotInArray(['0.4'])->thenInvalid('unsupported version')->end()
+                    ->validate()
+                        ->ifTrue(static fn(string $version): bool => !Semver::satisfies($version, '^0.4 <=0.4'))
+                        ->thenInvalid('unsupported version')
+                    ->end()
                 ->end()
                 ->booleanNode('disabled')->defaultFalse()->end()
                 ->scalarNode('log_level')->defaultValue('info')->validate()->always(Util::ensureString())->end()->end()
