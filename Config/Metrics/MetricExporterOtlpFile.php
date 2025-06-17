@@ -4,7 +4,6 @@ namespace Nevay\OTelSDK\Configuration\Config\Metrics;
 use Amp\ByteStream\StreamException;
 use Amp\ByteStream\WritableResourceStream;
 use Nevay\OTelSDK\Configuration\Internal\Util;
-use Nevay\OTelSDK\Configuration\Validation;
 use Nevay\OTelSDK\Metrics\Aggregation\Base2ExponentialBucketHistogramAggregation;
 use Nevay\OTelSDK\Metrics\Aggregation\DefaultAggregation;
 use Nevay\OTelSDK\Metrics\Aggregation\ExplicitBucketHistogramAggregation;

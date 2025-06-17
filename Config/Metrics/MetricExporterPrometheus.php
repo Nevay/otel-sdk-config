@@ -8,7 +8,6 @@ use Amp\Http\Server\SocketHttpServer;
 use Amp\Socket\InternetAddress;
 use Nevay\OTelSDK\Common\Attributes;
 use Nevay\OTelSDK\Configuration\Internal\Util;
-use Nevay\OTelSDK\Configuration\Validation;
 use Nevay\OTelSDK\Metrics\MetricExporter;
 use Nevay\OTelSDK\Prometheus\Internal\HttpServer\HttpServerClosable;
 use Nevay\OTelSDK\Prometheus\Internal\Socket\UnreferencedServerSocketFactory;

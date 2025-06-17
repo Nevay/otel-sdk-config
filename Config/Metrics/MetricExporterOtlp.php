@@ -9,7 +9,6 @@ use Amp\Socket\ClientTlsContext;
 use Amp\Socket\ConnectContext;
 use League\Uri;
 use Nevay\OTelSDK\Configuration\Internal\Util;
-use Nevay\OTelSDK\Configuration\Validation;
 use Nevay\OTelSDK\Metrics\Aggregation\Base2ExponentialBucketHistogramAggregation;
 use Nevay\OTelSDK\Metrics\Aggregation\DefaultAggregation;
 use Nevay\OTelSDK\Metrics\Aggregation\ExplicitBucketHistogramAggregation;

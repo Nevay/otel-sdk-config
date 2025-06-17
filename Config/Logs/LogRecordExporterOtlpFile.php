@@ -4,7 +4,6 @@ namespace Nevay\OTelSDK\Configuration\Config\Logs;
 use Amp\ByteStream\StreamException;
 use Amp\ByteStream\WritableResourceStream;
 use Nevay\OTelSDK\Configuration\Internal\Util;
-use Nevay\OTelSDK\Configuration\Validation;
 use Nevay\OTelSDK\Logs\LogRecordExporter;
 use Nevay\OTelSDK\Otlp\OtlpStreamLogRecordExporter;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;

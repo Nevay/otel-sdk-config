@@ -9,7 +9,6 @@ use Amp\Socket\ClientTlsContext;
 use Amp\Socket\ConnectContext;
 use League\Uri;
 use Nevay\OTelSDK\Configuration\Internal\Util;
-use Nevay\OTelSDK\Configuration\Validation;
 use Nevay\OTelSDK\Logs\LogRecordExporter;
 use Nevay\OTelSDK\Otlp\OtlpHttpLogRecordExporter;
 use Nevay\OTelSDK\Otlp\ProtobufFormat;

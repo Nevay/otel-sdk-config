@@ -4,7 +4,6 @@ namespace Nevay\OTelSDK\Configuration\Config\Trace;
 use Amp\ByteStream\StreamException;
 use Amp\ByteStream\WritableResourceStream;
 use Nevay\OTelSDK\Configuration\Internal\Util;
-use Nevay\OTelSDK\Configuration\Validation;
 use Nevay\OTelSDK\Otlp\OtlpStreamSpanExporter;
 use Nevay\OTelSDK\Trace\SpanExporter;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
