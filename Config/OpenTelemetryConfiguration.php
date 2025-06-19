@@ -438,7 +438,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                     ->example('0.4')
                     ->validate()->always(Util::ensureString())->end()
                     ->validate()
-                        ->ifTrue(static fn(string $version): bool => !Semver::satisfies($version, '^0.4 <=0.4'))
+                        ->ifTrue(static fn(string $version): bool => !Semver::satisfies($version, '^0.4 <=0.4 || ^1.0 <=1.0-rc.1'))
                         ->thenInvalid('unsupported version')
                     ->end()
                 ->end()
