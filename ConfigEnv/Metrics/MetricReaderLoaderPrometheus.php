@@ -2,13 +2,11 @@
 namespace Nevay\OTelSDK\Configuration\ConfigEnv\Metrics;
 
 use Amp\Dns;
-use Amp\Http\Server\DefaultErrorHandler;
 use Amp\Http\Server\Driver\SocketClientFactory;
 use Amp\Http\Server\SocketHttpServer;
 use Amp\Socket\InternetAddress;
 use Nevay\OTelSDK\Metrics\MetricReader;
 use Nevay\OTelSDK\Metrics\MetricReader\PullMetricReader;
-use Nevay\OTelSDK\Prometheus\Internal\HttpServer\HttpServerClosable;
 use Nevay\OTelSDK\Prometheus\Internal\Socket\UnreferencedServerSocketFactory;
 use Nevay\OTelSDK\Prometheus\PrometheusMetricExporter;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
@@ -43,11 +41,8 @@ final class MetricReaderLoaderPrometheus implements EnvComponentLoader {
             port: $port,
         ));
 
-        $exporter = new PrometheusMetricExporter(new HttpServerClosable($server));
-        $server->start($exporter, new DefaultErrorHandler());
-
         return new PullMetricReader(
-            metricExporter: $exporter,
+            metricExporter: new PrometheusMetricExporter($server),
             exportTimeoutMillis: $env->int('OTEL_METRIC_EXPORT_TIMEOUT') ?? 30000,
             tracerProvider: $context->tracerProvider,
             meterProvider: $context->meterProvider,

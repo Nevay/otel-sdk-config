@@ -2,14 +2,12 @@
 namespace Nevay\OTelSDK\Configuration\Config\Metrics;
 
 use Amp\Dns;
-use Amp\Http\Server\DefaultErrorHandler;
 use Amp\Http\Server\Driver\SocketClientFactory;
 use Amp\Http\Server\SocketHttpServer;
 use Amp\Socket\InternetAddress;
 use Nevay\OTelSDK\Common\Attributes;
 use Nevay\OTelSDK\Configuration\Internal\Util;
 use Nevay\OTelSDK\Metrics\MetricExporter;
-use Nevay\OTelSDK\Prometheus\Internal\HttpServer\HttpServerClosable;
 use Nevay\OTelSDK\Prometheus\Internal\Socket\UnreferencedServerSocketFactory;
 use Nevay\OTelSDK\Prometheus\PrometheusMetricExporter;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
@@ -58,8 +56,8 @@ final class MetricExporterPrometheus implements ComponentProvider {
             port: $port,
         ));
 
-        $exporter = new PrometheusMetricExporter(
-            server: new HttpServerClosable($server),
+        return new PrometheusMetricExporter(
+            server: $server,
             withoutUnits: $properties['without_units'],
             withoutTypeSuffix: $properties['without_type_suffix'],
             withoutScopeInfo: $properties['without_scope_info'],
@@ -69,9 +67,6 @@ final class MetricExporterPrometheus implements ComponentProvider {
             ),
             logger: $context->logger,
         );
-        $server->start($exporter, new DefaultErrorHandler());
-
-        return $exporter;
     }
 
     public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
