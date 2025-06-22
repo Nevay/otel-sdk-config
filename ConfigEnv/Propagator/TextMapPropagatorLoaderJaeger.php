@@ -12,7 +12,7 @@ use OpenTelemetry\Extension\Propagator\Jaeger\JaegerPropagator;
 /**
  * @implements EnvComponentLoader<TextMapPropagatorInterface>
  */
-#[PackageDependency('open-telemetry/extension-propagator-jaeger', '^0.0.2')]
+#[PackageDependency('open-telemetry/extension-propagator-jaeger', '^0.0.2 || ^0.0.3')]
 final class TextMapPropagatorLoaderJaeger implements EnvComponentLoader {
 
     public function load(EnvResolver $env, EnvComponentLoaderRegistry $registry, Context $context): TextMapPropagatorInterface {
