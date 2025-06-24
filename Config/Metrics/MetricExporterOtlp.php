@@ -14,9 +14,9 @@ use Nevay\OTelSDK\Metrics\Aggregation\DefaultAggregation;
 use Nevay\OTelSDK\Metrics\Aggregation\ExplicitBucketHistogramAggregation;
 use Nevay\OTelSDK\Metrics\InstrumentType;
 use Nevay\OTelSDK\Metrics\MetricExporter;
-use Nevay\OTelSDK\Metrics\TemporalityResolver;
 use Nevay\OTelSDK\Otlp\OtlpHttpMetricExporter;
 use Nevay\OTelSDK\Otlp\ProtobufFormat;
+use Nevay\OTelSDK\Otlp\OltpTemporality;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use OpenTelemetry\API\Configuration\Config\ComponentProvider;
 use OpenTelemetry\API\Configuration\Config\ComponentProviderRegistry;
@@ -76,9 +76,9 @@ final class MetricExporterOtlp implements ComponentProvider {
             headers: Util::parseMapList($properties['headers'], $properties['headers_list']),
             timeout: $properties['timeout'] / 1e3,
             temporalityResolver: match ($properties['temporality_preference']) {
-                'cumulative' => TemporalityResolver::Cumulative,
-                'delta' => TemporalityResolver::Delta,
-                'lowmemory' => TemporalityResolver::LowMemory,
+                'cumulative' => OltpTemporality::Cumulative,
+                'delta' => OltpTemporality::Delta,
+                'lowmemory' => OltpTemporality::LowMemory,
             },
             aggregation: (new DefaultAggregation())->with(InstrumentType::Histogram, match ($properties['default_histogram_aggregation']) {
                 'explicit_bucket_histogram' => new ExplicitBucketHistogramAggregation(),
