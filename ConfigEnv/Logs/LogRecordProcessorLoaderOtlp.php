@@ -11,6 +11,7 @@ use League\Uri;
 use Nevay\OTelSDK\Configuration\Internal\Util;
 use Nevay\OTelSDK\Logs\LogRecordProcessor;
 use Nevay\OTelSDK\Logs\LogRecordProcessor\BatchLogRecordProcessor;
+use Nevay\OTelSDK\Otlp\OtlpGrpcLogRecordExporter;
 use Nevay\OTelSDK\Otlp\OtlpHttpLogRecordExporter;
 use Nevay\OTelSDK\Otlp\ProtobufFormat;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
@@ -45,20 +46,34 @@ final class LogRecordProcessorLoaderOtlp implements EnvComponentLoader {
             ->usingPool(new UnlimitedConnectionPool(new DefaultConnectionFactory(connectContext: (new ConnectContext())->withTlsContext($tlsContext))))
             ->build();
 
+        $format = match ($env->string('OTEL_EXPORTER_OTLP_LOGS_PROTOCOL') ?? $env->string('OTEL_EXPORTER_OTLP_PROTOCOL') ?? 'http/protobuf') {
+            'http/protobuf' => ProtobufFormat::Protobuf,
+            'http/json' => ProtobufFormat::Json,
+            'grpc' => null,
+        };
+        $compression = $env->string('OTEL_EXPORTER_OTLP_LOGS_COMPRESSION') ?? $env->string('OTEL_EXPORTER_OTLP_COMPRESSION');
+        $headers = $env->map('OTEL_EXPORTER_OTLP_LOGS_HEADERS') ?? $env->map('OTEL_EXPORTER_OTLP_HEADERS') ?? [];
+        $timeout = ($env->int('OTEL_EXPORTER_OTLP_LOGS_TIMEOUT') ?? $env->int('OTEL_EXPORTER_OTLP_TIMEOUT') ?? 10000) / 1e3;
 
         return new BatchLogRecordProcessor(
-            logRecordExporter: new OtlpHttpLogRecordExporter(
-                client: $client,
-                endpoint: Uri\Http::new($env->string('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT') ?? ($env->string('OTEL_EXPORTER_OTLP_ENDPOINT') ?? 'http://localhost:4318') . '/v1/logs'),
-                format: match ($env->string('OTEL_EXPORTER_OTLP_LOGS_PROTOCOL') ?? $env->string('OTEL_EXPORTER_OTLP_PROTOCOL') ?? 'http/protobuf') {
-                    'http/protobuf' => ProtobufFormat::Protobuf,
-                    'http/json' => ProtobufFormat::Json,
-                },
-                compression: $env->string('OTEL_EXPORTER_OTLP_LOGS_COMPRESSION') ?? $env->string('OTEL_EXPORTER_OTLP_COMPRESSION'),
-                headers: $env->map('OTEL_EXPORTER_OTLP_LOGS_HEADERS') ?? $env->map('OTEL_EXPORTER_OTLP_HEADERS') ?? [],
-                timeout: ($env->int('OTEL_EXPORTER_OTLP_LOGS_TIMEOUT') ?? $env->int('OTEL_EXPORTER_OTLP_TIMEOUT') ?? 10000) / 1e3,
-                logger: $context->logger,
-            ),
+            logRecordExporter: $format
+                ? new OtlpHttpLogRecordExporter(
+                    client: $client,
+                    endpoint: Uri\Http::new($env->string('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT') ?? ($env->string('OTEL_EXPORTER_OTLP_ENDPOINT') ?? 'http://localhost:4318') . '/v1/logs'),
+                    format: $format,
+                    compression: $compression,
+                    headers: $headers,
+                    timeout: $timeout,
+                    logger: $context->logger,
+                )
+                : new OtlpGrpcLogRecordExporter(
+                    client: $client,
+                    endpoint: Uri\Http::new($env->string('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT') ?? $env->string('OTEL_EXPORTER_OTLP_ENDPOINT') ?? 'http://localhost:4317'),
+                    compression: $compression,
+                    headers: $headers,
+                    timeout: $timeout,
+                    logger: $context->logger,
+                ),
             maxQueueSize: $env->int('OTEL_BLRP_MAX_QUEUE_SIZE') ?? 2048,
             scheduledDelayMillis: $env->int('OTEL_BLRP_SCHEDULE_DELAY') ?? 5000,
             exportTimeoutMillis: $env->int('OTEL_BLRP_EXPORT_TIMEOUT') ?? 30000,
