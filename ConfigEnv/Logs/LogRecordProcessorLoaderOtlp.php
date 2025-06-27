@@ -64,6 +64,7 @@ final class LogRecordProcessorLoaderOtlp implements EnvComponentLoader {
                     compression: $compression,
                     headers: $headers,
                     timeout: $timeout,
+                    meterProvider: $context->meterProvider,
                     logger: $context->logger,
                 )
                 : new OtlpGrpcLogRecordExporter(
@@ -72,6 +73,7 @@ final class LogRecordProcessorLoaderOtlp implements EnvComponentLoader {
                     compression: $compression,
                     headers: $headers,
                     timeout: $timeout,
+                    meterProvider: $context->meterProvider,
                     logger: $context->logger,
                 ),
             maxQueueSize: $env->int('OTEL_BLRP_MAX_QUEUE_SIZE') ?? 2048,

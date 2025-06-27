@@ -81,6 +81,7 @@ final class MetricReaderLoaderOtlp implements EnvComponentLoader {
                     timeout: $timeout,
                     temporalityResolver: $temporalityResolver,
                     aggregation: $aggregation,
+                    meterProvider: $context->meterProvider,
                     logger: $context->logger,
                 )
                 : new OtlpGrpcMetricExporter(
@@ -91,6 +92,7 @@ final class MetricReaderLoaderOtlp implements EnvComponentLoader {
                     timeout: $timeout,
                     temporalityResolver: $temporalityResolver,
                     aggregation: $aggregation,
+                    meterProvider: $context->meterProvider,
                     logger: $context->logger,
                 ),
             exportIntervalMillis: $env->int('OTEL_METRIC_EXPORT_INTERVAL') ?? 60000,
