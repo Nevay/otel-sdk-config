@@ -14,7 +14,7 @@ final class SymfonyDotenvProvider implements EnvSourceProvider {
         $backup = [$_SERVER, $_ENV];
         $env = [];
         try {
-            (new Dotenv())->bootEnv(Util::makePathAbsolute('/.env'));
+            (new Dotenv())->bootEnv(Util::makePathAbsolute('.env'));
             $env = $_SERVER;
         } catch (PathException) {
         } finally {
