@@ -6,6 +6,7 @@ use LogicException;
 use OpenTelemetry\API\Configuration\ConfigEnv\EnvComponentLoader;
 use OpenTelemetry\API\Configuration\ConfigEnv\EnvResolver;
 use OpenTelemetry\API\Configuration\Context;
+use ReflectionClass;
 use ReflectionIntersectionType;
 use ReflectionMethod;
 use ReflectionNamedType;
@@ -14,6 +15,7 @@ use ReflectionUnionType;
 use function array_map;
 use function implode;
 use function sprintf;
+use function strtolower;
 
 /**
  * @internal
@@ -35,8 +37,20 @@ final class EnvComponentLoaderRegistry implements \OpenTelemetry\API\Configurati
         return $this;
     }
 
+    /**
+     * @param class-string $type
+     * @param class-string $attribute
+     */
+    public function loaderHasAttribute(string $type, string $name, string $attribute): bool {
+        if (!$loader = $this->loaders[$type][$name] ?? $this->loaders[$type][strtolower($name)] ?? null) {
+            return false;
+        }
+
+        return (new ReflectionClass($loader))->getAttributes($attribute) !== [];
+    }
+
     public function load(string $type, string $name, EnvResolver $env, Context $context): mixed {
-        if (!$loader = $this->loaders[$type][$name] ?? null) {
+        if (!$loader = $this->loaders[$type][$name] ?? $this->loaders[$type][strtolower($name)] ?? null) {
             throw new InvalidArgumentException(sprintf('Loader for %s %s not found', $type, $name));
         }
 

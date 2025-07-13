@@ -1,9 +1,13 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration;
 
+use InvalidArgumentException;
 use Monolog\Handler\ErrorLogHandler;
 use Monolog\Logger;
 use Nevay\OTelSDK\Common\Resource;
+use Nevay\OTelSDK\Configuration\ConfigEnv\Attributes\AssociateWithPullMetricReader;
+use Nevay\OTelSDK\Configuration\ConfigEnv\Attributes\AssociateWithSimpleLogRecordProcessor;
+use Nevay\OTelSDK\Configuration\ConfigEnv\Attributes\AssociateWithSimpleSpanProcessor;
 use Nevay\OTelSDK\Configuration\Env\EnvReader;
 use Nevay\OTelSDK\Configuration\Env\EnvSourceReader;
 use Nevay\OTelSDK\Configuration\Env\PhpIniEnvSource;
@@ -14,15 +18,21 @@ use Nevay\OTelSDK\Configuration\Internal\ConfigEnv\EnvResolver;
 use Nevay\OTelSDK\Configuration\Internal\LoggerHandler;
 use Nevay\OTelSDK\Configuration\SelfDiagnostics\DisableSelfDiagnosticsConfigurator;
 use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
-use Nevay\OTelSDK\Logs\LogRecordProcessor;
+use Nevay\OTelSDK\Logs\LogRecordExporter;
+use Nevay\OTelSDK\Logs\LogRecordProcessor\BatchLogRecordProcessor;
+use Nevay\OTelSDK\Logs\LogRecordProcessor\SimpleLogRecordProcessor;
 use Nevay\OTelSDK\Logs\NoopLoggerProvider;
 use Nevay\OTelSDK\Metrics\ExemplarFilter;
 use Nevay\OTelSDK\Metrics\MeterProviderBuilder;
-use Nevay\OTelSDK\Metrics\MetricReader;
+use Nevay\OTelSDK\Metrics\MetricExporter;
+use Nevay\OTelSDK\Metrics\MetricReader\PeriodicExportingMetricReader;
+use Nevay\OTelSDK\Metrics\MetricReader\PullMetricReader;
 use Nevay\OTelSDK\Metrics\NoopMeterProvider;
 use Nevay\OTelSDK\Trace\NoopTracerProvider;
 use Nevay\OTelSDK\Trace\Sampler;
-use Nevay\OTelSDK\Trace\SpanProcessor;
+use Nevay\OTelSDK\Trace\SpanExporter;
+use Nevay\OTelSDK\Trace\SpanProcessor\BatchSpanProcessor;
+use Nevay\OTelSDK\Trace\SpanProcessor\SimpleSpanProcessor;
 use Nevay\OTelSDK\Trace\TracerProviderBuilder;
 use Nevay\SPI\ServiceLoader;
 use OpenTelemetry\API\Configuration\ConfigEnv\EnvComponentLoader;
@@ -33,7 +43,8 @@ use OpenTelemetry\API\Instrumentation\AutoInstrumentation\GeneralInstrumentation
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\InstrumentationConfiguration;
 use OpenTelemetry\Context\Propagation\MultiTextMapPropagator;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
-use function array_unique;
+use function strcasecmp;
+use function strtolower;
 
 final class Env {
 
@@ -151,8 +162,12 @@ final class Env {
 
     private static function propagator(EnvResolver $env, EnvComponentLoaderRegistry $registry, Context $context): TextMapPropagatorInterface {
         $propagators = [];
-        foreach (array_unique($env->list('OTEL_PROPAGATORS') ?? ['tracecontext', 'baggage']) as $name) {
-            $propagators[] = $registry->load(TextMapPropagatorInterface::class, $name, $env, $context);
+        foreach ($env->list('OTEL_PROPAGATORS') ?? ['tracecontext', 'baggage'] as $name) {
+            try {
+                $propagators[strtolower($name)] ??= $registry->load(TextMapPropagatorInterface::class, $name, $env, $context);
+            } catch (InvalidArgumentException $e) {
+                $context->logger->warning('Failed loading propagator: {exception}', ['propagator' => $name, 'exception' => $e]);
+            }
         }
 
         return new MultiTextMapPropagator($propagators);
@@ -176,17 +191,115 @@ final class Env {
         $tracerProviderBuilder->setLinkCountLimit($env->int('OTEL_SPAN_LINK_COUNT_LIMIT'));
         $tracerProviderBuilder->setEventAttributeLimits($env->int('OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT'));
         $tracerProviderBuilder->setLinkAttributeLimits($env->int('OTEL_LINK_ATTRIBUTE_COUNT_LIMIT'));
-        $tracerProviderBuilder->setSampler($registry->load(Sampler::class, $env->string('OTEL_TRACES_SAMPLER') ?? 'parentbased_always_on', $env, $context));
-        $tracerProviderBuilder->addSpanProcessor($registry->load(SpanProcessor::class, $env->string('OTEL_TRACES_EXPORTER') ?? 'otlp', $env, $context));
+
+        $samplerName = $env->string('OTEL_TRACES_SAMPLER') ?? 'parentbased_always_on';
+        try {
+            $tracerProviderBuilder->setSampler($registry->load(Sampler::class, $samplerName, $env, $context));
+        } catch (InvalidArgumentException $e) {
+            $context->logger->warning('Failed loading sampler: {exception}', ['sampler' => $samplerName, 'exception' => $e]);
+        }
+
+        foreach ($env->list('OTEL_TRACES_EXPORTER') ?? ['otlp'] as $exporterName) {
+            if (!strcasecmp($exporterName, 'none')) {
+                continue;
+            }
+
+            try {
+                $exporter = $registry->load(SpanExporter::class, $exporterName, $env, $context);
+            } catch (InvalidArgumentException $e) {
+                $context->logger->warning('Failed loading span exporter: {exception}', ['exporter' => $exporterName, 'exception' => $e]);
+                continue;
+            }
+
+            $tracerProviderBuilder->addSpanProcessor($registry->loaderHasAttribute(SpanExporter::class, $exporterName, AssociateWithSimpleSpanProcessor::class)
+                ? new SimpleSpanProcessor(
+                    spanExporter: $exporter,
+                    tracerProvider: $context->tracerProvider,
+                    meterProvider: $context->meterProvider,
+                    logger: $context->logger,
+                )
+                : new BatchSpanProcessor(
+                    spanExporter: $exporter,
+                    maxQueueSize: $env->int('OTEL_BSP_MAX_QUEUE_SIZE') ?? 2048,
+                    scheduledDelayMillis: $env->int('OTEL_BSP_SCHEDULE_DELAY') ?? 5000,
+                    exportTimeoutMillis: $env->int('OTEL_BSP_EXPORT_TIMEOUT') ?? 30000,
+                    maxExportBatchSize: $env->int('OTEL_BSP_MAX_EXPORT_BATCH_SIZE') ?? 512,
+                    tracerProvider: $context->tracerProvider,
+                    meterProvider: $context->meterProvider,
+                    logger: $context->logger,
+                )
+            );
+        }
     }
 
     private static function meterProvider(MeterProviderBuilder $meterProviderBuilder, EnvResolver $env, EnvComponentLoaderRegistry $registry, Context $context): void {
         $meterProviderBuilder->setExemplarFilter($registry->load(ExemplarFilter::class, $env->string('OTEL_METRICS_EXEMPLAR_FILTER') ?? 'trace_based', $env, $context));
-        $meterProviderBuilder->addMetricReader($registry->load(MetricReader::class, $env->string('OTEL_METRICS_EXPORTER') ?? 'otlp', $env, $context));
+
+        foreach ($env->list('OTEL_METRICS_EXPORTER') ?? ['otlp'] as $exporterName) {
+            if (!strcasecmp($exporterName, 'none')) {
+                continue;
+            }
+
+            try {
+                $exporter = $registry->load(MetricExporter::class, $exporterName, $env, $context);
+            } catch (InvalidArgumentException $e) {
+                $context->logger->warning('Failed loading metric exporter: {exception}', ['exporter' => $exporterName, 'exception' => $e]);
+                continue;
+            }
+
+            $meterProviderBuilder->addMetricReader($registry->loaderHasAttribute(MetricExporter::class, $exporterName, AssociateWithPullMetricReader::class)
+                ? new PullMetricReader(
+                    metricExporter: $exporter,
+                    exportTimeoutMillis: $env->int('OTEL_METRIC_EXPORT_TIMEOUT') ?? 30000,
+                    tracerProvider: $context->tracerProvider,
+                    meterProvider: $context->meterProvider,
+                    logger: $context->logger,
+                )
+                : new PeriodicExportingMetricReader(
+                    metricExporter: $exporter,
+                    exportIntervalMillis: $env->int('OTEL_METRIC_EXPORT_INTERVAL') ?? 60000,
+                    exportTimeoutMillis: $env->int('OTEL_METRIC_EXPORT_TIMEOUT') ?? 30000,
+                    tracerProvider: $context->tracerProvider,
+                    meterProvider: $context->meterProvider,
+                    logger: $context->logger,
+                )
+            );
+        }
     }
 
     private static function loggerProvider(LoggerProviderBuilder $loggerProviderBuilder, EnvResolver $env, EnvComponentLoaderRegistry $registry, Context $context): void {
         $loggerProviderBuilder->setLogRecordAttributeLimits($env->int('OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT'), $env->int('OTEL_LOGRECORD_ATTRIBUTE_VALUE_LENGTH_LIMIT'));
-        $loggerProviderBuilder->addLogRecordProcessor($registry->load(LogRecordProcessor::class, $env->string('OTEL_LOGS_EXPORTER') ?? 'otlp', $env, $context));
+
+        foreach ($env->list('OTEL_LOGS_EXPORTER') ?? ['otlp'] as $exporterName) {
+            if (!strcasecmp($exporterName, 'none')) {
+                continue;
+            }
+
+            try {
+                $exporter = $registry->load(LogRecordExporter::class, $exporterName, $env, $context);
+            } catch (InvalidArgumentException $e) {
+                $context->logger->warning('Failed loading logrecord exporter: {exception}', ['exporter' => $exporterName, 'exception' => $e]);
+                continue;
+            }
+
+            $loggerProviderBuilder->addLogRecordProcessor($registry->loaderHasAttribute(LogRecordExporter::class, $exporterName, AssociateWithSimpleLogRecordProcessor::class)
+                ? new SimpleLogRecordProcessor(
+                    logRecordExporter: $exporter,
+                    tracerProvider: $context->tracerProvider,
+                    meterProvider: $context->meterProvider,
+                    logger: $context->logger,
+                )
+                : new BatchLogRecordProcessor(
+                    logRecordExporter: $exporter,
+                    maxQueueSize: $env->int('OTEL_BLRP_MAX_QUEUE_SIZE') ?? 2048,
+                    scheduledDelayMillis: $env->int('OTEL_BLRP_SCHEDULE_DELAY') ?? 5000,
+                    exportTimeoutMillis: $env->int('OTEL_BLRP_EXPORT_TIMEOUT') ?? 30000,
+                    maxExportBatchSize: $env->int('OTEL_BLRP_MAX_EXPORT_BATCH_SIZE') ?? 512,
+                    tracerProvider: $context->tracerProvider,
+                    meterProvider: $context->meterProvider,
+                    logger: $context->logger,
+                )
+            );
+        }
     }
 }

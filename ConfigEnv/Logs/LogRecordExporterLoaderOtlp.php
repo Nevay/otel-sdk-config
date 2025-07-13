@@ -9,8 +9,7 @@ use Amp\Socket\ClientTlsContext;
 use Amp\Socket\ConnectContext;
 use League\Uri;
 use Nevay\OTelSDK\Configuration\Internal\Util;
-use Nevay\OTelSDK\Logs\LogRecordProcessor;
-use Nevay\OTelSDK\Logs\LogRecordProcessor\BatchLogRecordProcessor;
+use Nevay\OTelSDK\Logs\LogRecordExporter;
 use Nevay\OTelSDK\Otlp\OtlpGrpcLogRecordExporter;
 use Nevay\OTelSDK\Otlp\OtlpHttpLogRecordExporter;
 use Nevay\OTelSDK\Otlp\ProtobufFormat;
@@ -21,15 +20,15 @@ use OpenTelemetry\API\Configuration\ConfigEnv\EnvResolver;
 use OpenTelemetry\API\Configuration\Context;
 
 /**
- * @implements EnvComponentLoader<LogRecordProcessor>
+ * @implements EnvComponentLoader<LogRecordExporter>
  */
 #[PackageDependency('tbachert/otel-sdk-otlpexporter', '^0.1')]
 #[PackageDependency('amphp/http-client', '^5.0')]
 #[PackageDependency('amphp/socket', '^2.0')]
 #[PackageDependency('league/uri', '^7.0')]
-final class LogRecordProcessorLoaderOtlp implements EnvComponentLoader {
+final class LogRecordExporterLoaderOtlp implements EnvComponentLoader {
 
-    public function load(EnvResolver $env, EnvComponentLoaderRegistry $registry, Context $context): LogRecordProcessor {
+    public function load(EnvResolver $env, EnvComponentLoaderRegistry $registry, Context $context): LogRecordExporter {
         $tlsContext = new ClientTlsContext();
         if ($clientCertificate = $env->string('OTEL_EXPORTER_OTLP_LOGS_CLIENT_CERTIFICATE') ?? $env->string('OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE')) {
             $tlsContext = $tlsContext->withCertificate(new Certificate(
@@ -55,35 +54,27 @@ final class LogRecordProcessorLoaderOtlp implements EnvComponentLoader {
         $headers = $env->map('OTEL_EXPORTER_OTLP_LOGS_HEADERS') ?? $env->map('OTEL_EXPORTER_OTLP_HEADERS') ?? [];
         $timeout = ($env->int('OTEL_EXPORTER_OTLP_LOGS_TIMEOUT') ?? $env->int('OTEL_EXPORTER_OTLP_TIMEOUT') ?? 10000) / 1e3;
 
-        return new BatchLogRecordProcessor(
-            logRecordExporter: $format
-                ? new OtlpHttpLogRecordExporter(
-                    client: $client,
-                    endpoint: Uri\Http::new($env->string('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT') ?? ($env->string('OTEL_EXPORTER_OTLP_ENDPOINT') ?? 'http://localhost:4318') . '/v1/logs'),
-                    format: $format,
-                    compression: $compression,
-                    headers: $headers,
-                    timeout: $timeout,
-                    meterProvider: $context->meterProvider,
-                    logger: $context->logger,
-                )
-                : new OtlpGrpcLogRecordExporter(
-                    client: $client,
-                    endpoint: Uri\Http::new($env->string('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT') ?? $env->string('OTEL_EXPORTER_OTLP_ENDPOINT') ?? 'http://localhost:4317'),
-                    compression: $compression,
-                    headers: $headers,
-                    timeout: $timeout,
-                    meterProvider: $context->meterProvider,
-                    logger: $context->logger,
-                ),
-            maxQueueSize: $env->int('OTEL_BLRP_MAX_QUEUE_SIZE') ?? 2048,
-            scheduledDelayMillis: $env->int('OTEL_BLRP_SCHEDULE_DELAY') ?? 5000,
-            exportTimeoutMillis: $env->int('OTEL_BLRP_EXPORT_TIMEOUT') ?? 30000,
-            maxExportBatchSize: $env->int('OTEL_BLRP_MAX_EXPORT_BATCH_SIZE') ?? 512,
-            tracerProvider: $context->tracerProvider,
-            meterProvider: $context->meterProvider,
-            logger: $context->logger,
-        );
+        return $format
+            ? new OtlpHttpLogRecordExporter(
+                client: $client,
+                endpoint: Uri\Http::new($env->string('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT') ?? ($env->string('OTEL_EXPORTER_OTLP_ENDPOINT') ?? 'http://localhost:4318') . '/v1/logs'),
+                format: $format,
+                compression: $compression,
+                headers: $headers,
+                timeout: $timeout,
+                meterProvider: $context->meterProvider,
+                logger: $context->logger,
+            )
+            : new OtlpGrpcLogRecordExporter(
+                client: $client,
+                endpoint: Uri\Http::new($env->string('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT') ?? $env->string('OTEL_EXPORTER_OTLP_ENDPOINT') ?? 'http://localhost:4317'),
+                compression: $compression,
+                headers: $headers,
+                timeout: $timeout,
+                meterProvider: $context->meterProvider,
+                logger: $context->logger,
+            )
+        ;
     }
 
     public function name(): string {

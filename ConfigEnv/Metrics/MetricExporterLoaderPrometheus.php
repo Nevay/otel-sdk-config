@@ -5,8 +5,8 @@ use Amp\Dns;
 use Amp\Http\Server\Driver\SocketClientFactory;
 use Amp\Http\Server\SocketHttpServer;
 use Amp\Socket\InternetAddress;
-use Nevay\OTelSDK\Metrics\MetricReader;
-use Nevay\OTelSDK\Metrics\MetricReader\PullMetricReader;
+use Nevay\OTelSDK\Configuration\ConfigEnv\Attributes\AssociateWithPullMetricReader;
+use Nevay\OTelSDK\Metrics\MetricExporter;
 use Nevay\OTelSDK\Prometheus\Internal\Socket\UnreferencedServerSocketFactory;
 use Nevay\OTelSDK\Prometheus\PrometheusMetricExporter;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
@@ -16,15 +16,16 @@ use OpenTelemetry\API\Configuration\ConfigEnv\EnvResolver;
 use OpenTelemetry\API\Configuration\Context;
 
 /**
- * @implements EnvComponentLoader<MetricReader>
+ * @implements EnvComponentLoader<MetricExporter>
  */
 #[PackageDependency('tbachert/otel-sdk-prometheusexporter', '^0.1')]
 #[PackageDependency('amphp/http-server', '^3.0')]
 #[PackageDependency('amphp/socket', '^2.0')]
 #[PackageDependency('amphp/dns', '^2.0')]
-final class MetricReaderLoaderPrometheus implements EnvComponentLoader {
+#[AssociateWithPullMetricReader]
+final class MetricExporterLoaderPrometheus implements EnvComponentLoader {
 
-    public function load(EnvResolver $env, EnvComponentLoaderRegistry $registry, Context $context): MetricReader {
+    public function load(EnvResolver $env, EnvComponentLoaderRegistry $registry, Context $context): MetricExporter {
         $server = new SocketHttpServer(
             $context->logger,
             new UnreferencedServerSocketFactory(),
@@ -41,13 +42,7 @@ final class MetricReaderLoaderPrometheus implements EnvComponentLoader {
             port: $port,
         ));
 
-        return new PullMetricReader(
-            metricExporter: new PrometheusMetricExporter($server),
-            exportTimeoutMillis: $env->int('OTEL_METRIC_EXPORT_TIMEOUT') ?? 30000,
-            tracerProvider: $context->tracerProvider,
-            meterProvider: $context->meterProvider,
-            logger: $context->logger,
-        );
+        return new PrometheusMetricExporter($server);
     }
 
     public function name(): string {

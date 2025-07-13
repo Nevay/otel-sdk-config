@@ -98,19 +98,16 @@
                 "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SamplerLoaderParentBasedAlwaysOn",
                 "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SamplerLoaderParentBasedTraceIdRatio",
                 "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SamplerLoaderTraceIdRatio",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SpanProcessorLoaderConsole",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SpanProcessorLoaderNone",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SpanProcessorLoaderOtlp",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SpanExporterLoaderConsole",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SpanExporterLoaderOtlp",
                 "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Metrics\\ExemplarFilterLoaderAlwaysOff",
                 "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Metrics\\ExemplarFilterLoaderAlwaysOn",
                 "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Metrics\\ExemplarFilterLoaderTraceBased",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Metrics\\MetricReaderLoaderConsole",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Metrics\\MetricReaderLoaderNone",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Metrics\\MetricReaderLoaderOtlp",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Metrics\\MetricReaderLoaderPrometheus",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Logs\\LogRecordProcessorLoaderConsole",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Logs\\LogRecordProcessorLoaderNone",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Logs\\LogRecordProcessorLoaderOtlp"
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Metrics\\MetricExporterLoaderConsole",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Metrics\\MetricExporterLoaderOtlp",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Metrics\\MetricExporterLoaderPrometheus",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Logs\\LogRecordExporterLoaderConsole",
+                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Logs\\LogRecordExporterLoaderOtlp"
             ]
         }
     }

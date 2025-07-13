@@ -33,6 +33,11 @@ final class EnvResolver implements \OpenTelemetry\API\Configuration\ConfigEnv\En
         if (in_array($value, $values, true)) {
             return $value;
         }
+        foreach ($values as $candidate) {
+            if (!strcasecmp($value, $candidate)) {
+                return $candidate;
+            }
+        }
 
         $this->logger->warning('Invalid environment variable value for "{name}", expected any of {values}, got {value}', [
             'name' => $name,

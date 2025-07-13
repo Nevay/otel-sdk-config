@@ -13,8 +13,7 @@ use Nevay\OTelSDK\Metrics\Aggregation\Base2ExponentialBucketHistogramAggregation
 use Nevay\OTelSDK\Metrics\Aggregation\DefaultAggregation;
 use Nevay\OTelSDK\Metrics\Aggregation\ExplicitBucketHistogramAggregation;
 use Nevay\OTelSDK\Metrics\InstrumentType;
-use Nevay\OTelSDK\Metrics\MetricReader;
-use Nevay\OTelSDK\Metrics\MetricReader\PeriodicExportingMetricReader;
+use Nevay\OTelSDK\Metrics\MetricExporter;
 use Nevay\OTelSDK\Otlp\OtlpGrpcMetricExporter;
 use Nevay\OTelSDK\Otlp\OtlpHttpMetricExporter;
 use Nevay\OTelSDK\Otlp\ProtobufFormat;
@@ -27,15 +26,15 @@ use OpenTelemetry\API\Configuration\Context;
 use function strtolower;
 
 /**
- * @implements EnvComponentLoader<MetricReader>
+ * @implements EnvComponentLoader<MetricExporter>
  */
 #[PackageDependency('tbachert/otel-sdk-otlpexporter', '^0.1')]
 #[PackageDependency('amphp/http-client', '^5.0')]
 #[PackageDependency('amphp/socket', '^2.0')]
 #[PackageDependency('league/uri', '^7.0')]
-final class MetricReaderLoaderOtlp implements EnvComponentLoader {
+final class MetricExporterLoaderOtlp implements EnvComponentLoader {
 
-    public function load(EnvResolver $env, EnvComponentLoaderRegistry $registry, Context $context): MetricReader {
+    public function load(EnvResolver $env, EnvComponentLoaderRegistry $registry, Context $context): MetricExporter {
         $tlsContext = new ClientTlsContext();
         if ($clientCertificate = $env->string('OTEL_EXPORTER_OTLP_METRICS_CLIENT_CERTIFICATE') ?? $env->string('OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE')) {
             $tlsContext = $tlsContext->withCertificate(new Certificate(
@@ -70,37 +69,31 @@ final class MetricReaderLoaderOtlp implements EnvComponentLoader {
             'base2_exponential_bucket_histogram' => new Base2ExponentialBucketHistogramAggregation(),
         });
 
-        return new PeriodicExportingMetricReader(
-            metricExporter: $format
-                ? new OtlpHttpMetricExporter(
-                    client: $client,
-                    endpoint: Uri\Http::new($env->string('OTEL_EXPORTER_OTLP_METRICS_ENDPOINT') ?? ($env->string('OTEL_EXPORTER_OTLP_ENDPOINT') ?? 'http://localhost:4318') . '/v1/metrics'),
-                    format: $format,
-                    compression: $compression,
-                    headers: $headers,
-                    timeout: $timeout,
-                    temporalityResolver: $temporalityResolver,
-                    aggregation: $aggregation,
-                    meterProvider: $context->meterProvider,
-                    logger: $context->logger,
-                )
-                : new OtlpGrpcMetricExporter(
-                    client: $client,
-                    endpoint: Uri\Http::new($env->string('OTEL_EXPORTER_OTLP_METRICS_ENDPOINT') ?? $env->string('OTEL_EXPORTER_OTLP_ENDPOINT') ?? 'http://localhost:4317'),
-                    compression: $compression,
-                    headers: $headers,
-                    timeout: $timeout,
-                    temporalityResolver: $temporalityResolver,
-                    aggregation: $aggregation,
-                    meterProvider: $context->meterProvider,
-                    logger: $context->logger,
-                ),
-            exportIntervalMillis: $env->int('OTEL_METRIC_EXPORT_INTERVAL') ?? 60000,
-            exportTimeoutMillis: $env->int('OTEL_METRIC_EXPORT_TIMEOUT') ?? 30000,
-            tracerProvider: $context->tracerProvider,
-            meterProvider: $context->meterProvider,
-            logger: $context->logger,
-        );
+        return $format
+            ? new OtlpHttpMetricExporter(
+                client: $client,
+                endpoint: Uri\Http::new($env->string('OTEL_EXPORTER_OTLP_METRICS_ENDPOINT') ?? ($env->string('OTEL_EXPORTER_OTLP_ENDPOINT') ?? 'http://localhost:4318') . '/v1/metrics'),
+                format: $format,
+                compression: $compression,
+                headers: $headers,
+                timeout: $timeout,
+                temporalityResolver: $temporalityResolver,
+                aggregation: $aggregation,
+                meterProvider: $context->meterProvider,
+                logger: $context->logger,
+            )
+            : new OtlpGrpcMetricExporter(
+                client: $client,
+                endpoint: Uri\Http::new($env->string('OTEL_EXPORTER_OTLP_METRICS_ENDPOINT') ?? $env->string('OTEL_EXPORTER_OTLP_ENDPOINT') ?? 'http://localhost:4317'),
+                compression: $compression,
+                headers: $headers,
+                timeout: $timeout,
+                temporalityResolver: $temporalityResolver,
+                aggregation: $aggregation,
+                meterProvider: $context->meterProvider,
+                logger: $context->logger,
+            )
+        ;
     }
 
     public function name(): string {
