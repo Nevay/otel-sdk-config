@@ -2,6 +2,7 @@
 namespace Nevay\OTelSDK\Configuration\Config\Resource;
 
 use Nevay\OTelSDK\Common\ResourceDetector;
+use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use OpenTelemetry\API\Configuration\Config\ComponentProvider;
 use OpenTelemetry\API\Configuration\Config\ComponentProviderRegistry;
 use OpenTelemetry\API\Configuration\Context;
@@ -11,6 +12,7 @@ use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 /**
  * @implements ComponentProvider<ResourceDetector>
  */
+#[PackageDependency('tbachert/otel-sdk-resourcedetectors', '^0.1')]
 final class ResourceDetectorService implements ComponentProvider {
 
     public function createPlugin(array $properties, Context $context): ResourceDetector {
