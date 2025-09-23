@@ -96,7 +96,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *              tracers: list<array{
      *                  name: string,
      *                  config: array{
-     *                      disabled?: bool,
+     *                      disabled?: ?bool,
      *                  }
      *              }>,
      *          },
@@ -131,7 +131,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *             meters: list<array{
      *                 name: string,
      *                 config: array{
-     *                     disabled?: bool,
+     *                     disabled?: ?bool,
      *                 }
      *             }>,
      *         },
@@ -145,11 +145,15 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *         "logger_configurator/development": array{
      *             default_config: array{
      *                 disabled: bool,
+     *                 minimum_severity: int,
+     *                 trace_based: bool,
      *             },
      *             loggers: list<array{
      *                 name: string,
      *                 config: array{
-     *                     disabled?: bool,
+     *                     disabled?: ?bool,
+     *                     minimum_severity?: ?int,
+     *                     trace_based?: ?bool,
      *                 }
      *             }>,
      *         },
@@ -278,9 +282,21 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         if ($properties['logger_provider']['logger_configurator/development']['default_config']['disabled']) {
             $builder->withRule(static fn(LoggerConfig $config) => $config->disabled = true);
         }
+        if ($minimumSeverity = $properties['logger_provider']['logger_configurator/development']['default_config']['minimum_severity']) {
+            $builder->withRule(static fn(LoggerConfig $config) => $config->minimumSeverity = $minimumSeverity);
+        }
+        if ($properties['logger_provider']['logger_configurator/development']['default_config']['trace_based']) {
+            $builder->withRule(static fn(LoggerConfig $config) => $config->traceBased = true);
+        }
         foreach ($properties['logger_provider']['logger_configurator/development']['loggers'] as ['name' => $name, 'config' => $config]) {
             if (($disabled = $config['disabled'] ?? null) !== null) {
                 $builder->withRule(static fn(LoggerConfig $config) => $config->disabled = $disabled, name: $name);
+            }
+            if (($minimumSeverity = $config['minimum_severity'] ?? null) !== null) {
+                $builder->withRule(static fn(LoggerConfig $config) => $config->minimumSeverity = $minimumSeverity, name: $name);
+            }
+            if (($traceBased = $config['trace_based'] ?? null) !== null) {
+                $builder->withRule(static fn(LoggerConfig $config) => $config->traceBased = $traceBased, name: $name);
             }
         }
         $loggerProviderBuilder->addLoggerConfigurator($builder->toConfigurator());
@@ -691,6 +707,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                             ->addDefaultsIfNotSet()
                             ->children()
                                 ->booleanNode('disabled')->defaultFalse()->end()
+                                ->integerNode('minimum_severity')->defaultValue(0)->end()
+                                ->booleanNode('trace_based')->defaultFalse()->end()
                             ->end()
                         ->end()
                         ->arrayNode('loggers')
@@ -701,6 +719,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                                         ->isRequired()
                                         ->children()
                                             ->booleanNode('disabled')->treatNullLike(null)->end()
+                                            ->integerNode('minimum_severity')->treatNullLike(null)->end()
+                                            ->booleanNode('trace_based')->treatNullLike(true)->end()
                                         ->end()
                                     ->end()
                                 ->end()
