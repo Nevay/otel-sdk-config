@@ -10,6 +10,7 @@ use Nevay\OTelSDK\Configuration\Internal\Util;
 use Nevay\OTelSDK\Metrics\MetricExporter;
 use Nevay\OTelSDK\Prometheus\Internal\Socket\UnreferencedServerSocketFactory;
 use Nevay\OTelSDK\Prometheus\PrometheusMetricExporter;
+use Nevay\OTelSDK\Prometheus\TranslationStrategy;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use OpenTelemetry\API\Configuration\Config\ComponentProvider;
 use OpenTelemetry\API\Configuration\Config\ComponentProviderRegistry;
@@ -30,13 +31,12 @@ final class MetricExporterPrometheus implements ComponentProvider {
      * @param array{
      *     host: string,
      *     port: int,
-     *     without_units: bool,
-     *     without_type_suffix: bool,
      *     without_scope_info: bool,
      *     with_resource_constant_labels: array{
      *         included: ?list<string>,
      *         excluded: ?list<string>,
      *     },
+     *     translation_strategy: 'UnderscoreEscapingWithSuffixes'|'UnderscoreEscapingWithoutSuffixes'|'NoUTF8EscapingWithSuffixes'|'NoTranslation',
      * } $properties
      */
     public function createPlugin(array $properties, Context $context): MetricExporter {
@@ -58,13 +58,17 @@ final class MetricExporterPrometheus implements ComponentProvider {
 
         return new PrometheusMetricExporter(
             server: $server,
-            withoutUnits: $properties['without_units'],
-            withoutTypeSuffix: $properties['without_type_suffix'],
             withoutScopeInfo: $properties['without_scope_info'],
             withResourceConstantLabels: Attributes::filterKeys(
                 include: $properties['with_resource_constant_labels']['included'] ?? [],
                 exclude: $properties['with_resource_constant_labels']['excluded'] ?? [],
             ),
+            translationStrategy: match ($properties['translation_strategy']) {
+                'UnderscoreEscapingWithSuffixes' => TranslationStrategy::UnderscoreEscapingWithSuffixes,
+                'UnderscoreEscapingWithoutSuffixes' => TranslationStrategy::UnderscoreEscapingWithoutSuffixes,
+                'NoUTF8EscapingWithSuffixes' => TranslationStrategy::NoUTF8EscapingWithSuffixes,
+                'NoTranslation' => TranslationStrategy::NoTranslation,
+            },
             logger: $context->logger,
         );
     }
@@ -75,14 +79,21 @@ final class MetricExporterPrometheus implements ComponentProvider {
             ->children()
                 ->scalarNode('host')->defaultValue('localhost')->validate()->always(Util::ensureString())->end()->end()
                 ->integerNode('port')->defaultValue(9464)->end()
-                ->booleanNode('without_units')->defaultFalse()->end()
-                ->booleanNode('without_type_suffix')->defaultFalse()->end()
                 ->booleanNode('without_scope_info')->defaultFalse()->end()
                 ->arrayNode('with_resource_constant_labels')
                     ->children()
                         ->arrayNode('included')->defaultNull()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
                         ->arrayNode('excluded')->defaultNull()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
                     ->end()
+                ->end()
+                ->enumNode('translation_strategy')
+                    ->defaultValue('UnderscoreEscapingWithSuffixes')
+                    ->values([
+                        'UnderscoreEscapingWithSuffixes',
+                        'UnderscoreEscapingWithoutSuffixes',
+                        'NoUTF8EscapingWithSuffixes',
+                        'NoTranslation',
+                    ])
                 ->end()
             ->end()
         ;

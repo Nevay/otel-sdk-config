@@ -336,7 +336,6 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 meterName: $view['selector']['meter_name'],
                 meterVersion: $view['selector']['meter_version'],
                 meterSchemaUrl: $view['selector']['meter_schema_url'],
-
             );
         }
         foreach ($properties['meter_provider']['readers'] as $reader) {
@@ -435,7 +434,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             ->children()
                 ->scalarNode('file_format')
                     ->isRequired()
-                    ->example('0.4')
+                    ->example('1.0-rc.1')
                     ->validate()->always(Util::ensureString())->end()
                     ->validate()
                         ->ifTrue(static fn(string $version): bool => !Semver::satisfies($version, '^0.4 <=0.4 || ^1.0 <=1.0-rc.1'))
