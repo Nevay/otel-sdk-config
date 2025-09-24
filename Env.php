@@ -133,15 +133,9 @@ final class Env {
         self::meterProvider($meterProviderBuilder, $env, $registry, $context);
         self::loggerProvider($loggerProviderBuilder, $env, $registry, $context);
 
-        $selfDiagnosticsContext = new Context(
-            $context->tracerProvider,
-            $context->meterProvider,
-            $context->loggerProvider,
-            $logger,
-        );
-        $tracerProviderBuilder->copyStateInto($tracerProvider, $selfDiagnosticsContext);
-        $meterProviderBuilder->copyStateInto($meterProvider, $selfDiagnosticsContext);
-        $loggerProviderBuilder->copyStateInto($loggerProvider, $selfDiagnosticsContext);
+        $tracerProviderBuilder->copyStateInto($tracerProvider, $context);
+        $meterProviderBuilder->copyStateInto($meterProvider, $context);
+        $loggerProviderBuilder->copyStateInto($loggerProvider, $context);
 
         $propagator = self::propagator($env, $registry, $context);
         $configProperties = self::configProperties($env, $registry, $context);
