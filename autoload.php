@@ -66,6 +66,7 @@ use function register_shutdown_function;
         if ($config = $config->await()) {
             $configurator = $configurator
                 ->withPropagator($config->propagator)
+                ->withResponsePropagator($config->responsePropagator)
                 ->withTracerProvider($config->tracerProvider)
                 ->withMeterProvider($config->meterProvider)
                 ->withLoggerProvider($config->loggerProvider)
@@ -89,6 +90,7 @@ use function register_shutdown_function;
         meterProvider: $config->meterProvider,
         loggerProvider: $config->loggerProvider,
         propagator: $config->propagator,
+        responsePropagator: $config->responsePropagator,
     );
     foreach ($instrumentations as $instrumentation) {
         try {

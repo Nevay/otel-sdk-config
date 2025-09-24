@@ -39,8 +39,11 @@ use OpenTelemetry\API\Configuration\Context;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\ConfigurationRegistry;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\GeneralInstrumentationConfiguration;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\InstrumentationConfiguration;
+use OpenTelemetry\Context\Propagation\MultiResponsePropagator;
 use OpenTelemetry\Context\Propagation\MultiTextMapPropagator;
+use OpenTelemetry\Context\Propagation\NoopResponsePropagator;
 use OpenTelemetry\Context\Propagation\NoopTextMapPropagator;
+use OpenTelemetry\Context\Propagation\ResponsePropagatorInterface;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeBuilder;
@@ -77,6 +80,9 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *     },
      *     propagator: array{
      *         composite: list<ComponentPlugin<TextMapPropagatorInterface>>,
+     *     },
+     *     "response_propagator/development": array{
+     *         composite: list<ComponentPlugin<ResponsePropagatorInterface>>,
      *     },
      *     tracer_provider: array{
      *         limits: array{
@@ -176,12 +182,14 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         if ($properties['disabled']) {
             $propagator = $this->createPropagator($properties['propagator'], $context);
+            $responsePropagator = $this->createResponsePropagator($properties['response_propagator/development'], $context);
             $configProperties = $this->createConfigProperties($properties['instrumentation/development'], $context);
 
             $logger->debug('Initialized OTelSDK from declarative config', ['disabled' => true]);
 
             return new ConfigurationResult(
                 $propagator,
+                $responsePropagator,
                 new NoopTracerProvider(),
                 new NoopMeterProvider(),
                 new NoopLoggerProvider(),
@@ -383,6 +391,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $loggerProviderBuilder->copyStateInto($loggerProvider, $context);
 
         $propagator = $this->createPropagator($properties['propagator'], $context);
+        $responsePropagator = $this->createResponsePropagator($properties['response_propagator/development'], $context);
         $configProperties = $this->createConfigProperties($properties['instrumentation/development'], $context);
 
         $logger->debug('Initialized OTelSDK from declarative config');
@@ -391,6 +400,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         return new ConfigurationResult(
             $propagator,
+            $responsePropagator,
             $tracerProvider,
             $meterProvider,
             $loggerProvider,
@@ -415,6 +425,24 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         }
 
         return new MultiTextMapPropagator($propagators);
+    }
+
+    /**
+     * @param array{
+     *     composite: list<ComponentPlugin<ResponsePropagatorInterface>>,
+     * } $properties
+     */
+    private function createResponsePropagator(array $properties, Context $context): ResponsePropagatorInterface {
+        if (!$properties['composite']) {
+            return NoopResponsePropagator::getInstance();
+        }
+
+        $propagators = [];
+        foreach ($properties['composite'] as $propagator) {
+            $propagators[] = $propagator->create($context);
+        }
+
+        return new MultiResponsePropagator($propagators);
     }
 
     /**
@@ -455,7 +483,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 ->scalarNode('log_level')->defaultValue('info')->validate()->always(Util::ensureString())->end()->end()
                 ->append($this->getResourceConfig($registry, $builder))
                 ->append($this->getAttributeLimitsConfig($builder))
-                ->append($this->getPropagatorConfig($registry, $builder))
+                ->append($this->getPropagatorConfig($registry, $builder, 'propagator', TextMapPropagatorInterface::class))
+                ->append($this->getPropagatorConfig($registry, $builder, 'response_propagator/development', ResponsePropagatorInterface::class))
                 ->append($this->getTracerProviderConfig($registry, $builder))
                 ->append($this->getMeterProviderConfig($registry, $builder))
                 ->append($this->getLoggerProviderConfig($registry, $builder))
@@ -510,8 +539,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         return $node;
     }
 
-    private function getPropagatorConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
-        $node = $builder->arrayNode('propagator');
+    private function getPropagatorConfig(ComponentProviderRegistry $registry, NodeBuilder $builder, string $name, string $type): ArrayNodeDefinition {
+        $node = $builder->arrayNode($name);
         $node
             ->beforeNormalization()
                 ->ifArray()
@@ -545,7 +574,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $node
             ->addDefaultsIfNotSet()
             ->children()
-                ->append($registry->componentList('composite', TextMapPropagatorInterface::class))
+                ->append($registry->componentList('composite', $type))
                 ->scalarNode('composite_list')->validate()->always(Util::ensureString())->end()->end()
             ->end()
         ;

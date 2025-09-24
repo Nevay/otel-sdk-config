@@ -41,7 +41,9 @@ use OpenTelemetry\API\Configuration\Context;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\ConfigurationRegistry;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\GeneralInstrumentationConfiguration;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\InstrumentationConfiguration;
+use OpenTelemetry\Context\Propagation\MultiResponsePropagator;
 use OpenTelemetry\Context\Propagation\MultiTextMapPropagator;
+use OpenTelemetry\Context\Propagation\ResponsePropagatorInterface;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
 use function strcasecmp;
 use function strtolower;
@@ -72,12 +74,14 @@ final class Env {
 
         if ($env->bool('OTEL_SDK_DISABLED') ?? false) {
             $propagator = self::propagator($env, $registry, $context);
+            $responsePropagator = self::responsePropagator($env, $registry, $context);
             $configProperties = self::configProperties($env, $registry, $context);
 
             $logger->debug('Initialized OTelSDK from env', ['disabled' => true]);
 
             return new ConfigurationResult(
                 $propagator,
+                $responsePropagator,
                 new NoopTracerProvider(),
                 new NoopMeterProvider(),
                 new NoopLoggerProvider(),
@@ -138,6 +142,7 @@ final class Env {
         $loggerProviderBuilder->copyStateInto($loggerProvider, $context);
 
         $propagator = self::propagator($env, $registry, $context);
+        $responsePropagator = self::responsePropagator($env, $registry, $context);
         $configProperties = self::configProperties($env, $registry, $context);
 
         $logger->debug('Initialized OTelSDK from env');
@@ -146,6 +151,7 @@ final class Env {
 
         return new ConfigurationResult(
             $propagator,
+            $responsePropagator,
             $tracerProvider,
             $meterProvider,
             $loggerProvider,
@@ -165,6 +171,19 @@ final class Env {
         }
 
         return new MultiTextMapPropagator($propagators);
+    }
+
+    private static function responsePropagator(EnvResolver $env, EnvComponentLoaderRegistry $registry, Context $context): ResponsePropagatorInterface {
+        $propagators = [];
+        foreach ($env->list('OTEL_EXPERIMENTAL_RESPONSE_PROPAGATORS') ?? [] as $name) {
+            try {
+                $propagators[strtolower($name)] ??= $registry->load(ResponsePropagatorInterface::class, $name, $env, $context);
+            } catch (InvalidArgumentException $e) {
+                $context->logger->warning('Failed loading response propagator: {exception}', ['propagator' => $name, 'exception' => $e]);
+            }
+        }
+
+        return new MultiResponsePropagator($propagators);
     }
 
     private static function configProperties(EnvResolver $env, EnvComponentLoaderRegistry $registry, Context $context): ConfigProperties {
