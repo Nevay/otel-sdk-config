@@ -39,6 +39,7 @@ use OpenTelemetry\API\Configuration\Context;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\ConfigurationRegistry;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\GeneralInstrumentationConfiguration;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\InstrumentationConfiguration;
+use OpenTelemetry\API\Logs\Severity;
 use OpenTelemetry\Context\Propagation\MultiResponsePropagator;
 use OpenTelemetry\Context\Propagation\MultiTextMapPropagator;
 use OpenTelemetry\Context\Propagation\NoopResponsePropagator;
@@ -177,6 +178,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $logger = new Logger('otel');
         $logger->pushHandler(new ErrorLogHandler(level: $logLevel));
         $logger->debug('Initializing OTelSDK from declarative config');
+        $severity = Severity::fromPsr3($logLevel)->value;
 
         $context = new Context(logger: $logger);
 
@@ -290,7 +292,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             ->withRule(static fn(LoggerConfig $config) => $config->disabled = $disabled)
             ->withRule(static fn(LoggerConfig $config) => $config->minimumSeverity = $minimumSeverity)
             ->withRule(static fn(LoggerConfig $config) => $config->traceBased = $traceBased)
-            ->withRule(static fn(LoggerConfig $config) => $config->disabled = true, filter: Diagnostics::isSelfDiagnostics(...));
+            ->withRule(static fn(LoggerConfig $config) => $config->disabled = true, filter: Diagnostics::isSelfDiagnostics(...))
+            ->withRule(static fn(LoggerConfig $config) => $config->minimumSeverity = $severity, filter: Diagnostics::isSelfDiagnostics(...));
 
         foreach ($properties['logger_provider']['logger_configurator/development']['loggers'] as ['name' => $name, 'config' => $config]) {
             if (($disabled = $config['disabled'] ?? null) !== null) {

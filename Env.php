@@ -45,6 +45,7 @@ use OpenTelemetry\API\Configuration\Context;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\ConfigurationRegistry;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\GeneralInstrumentationConfiguration;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\InstrumentationConfiguration;
+use OpenTelemetry\API\Logs\Severity;
 use OpenTelemetry\Context\Propagation\MultiResponsePropagator;
 use OpenTelemetry\Context\Propagation\MultiTextMapPropagator;
 use OpenTelemetry\Context\Propagation\ResponsePropagatorInterface;
@@ -67,6 +68,7 @@ final class Env {
         $logger = new Logger('otel');
         $logger->pushHandler(new ErrorLogHandler(level: $logLevel));
         $logger->debug('Initializing OTelSDK from env');
+        $severity = Severity::fromPsr3($logLevel)->value;
 
         $registry = new EnvComponentLoaderRegistry();
         foreach (ServiceLoader::load(EnvComponentLoader::class) as $loader) {
@@ -129,6 +131,7 @@ final class Env {
             ->toConfigurator());
         $loggerProviderBuilder->addLoggerConfigurator((new RuleConfiguratorBuilder())
             ->withRule(static fn(LoggerConfig $config) => $config->disabled = true, filter: Diagnostics::isSelfDiagnostics(...))
+            ->withRule(static fn(LoggerConfig $config) => $config->minimumSeverity = $severity, filter: Diagnostics::isSelfDiagnostics(...))
             ->toConfigurator());
 
         $tracerProvider = $tracerProviderBuilder->buildBase($logger);
