@@ -13,7 +13,7 @@ use Nevay\OTelSDK\Configuration\ConfigurationResult;
 use Nevay\OTelSDK\Configuration\Internal\LoggerHandler;
 use Nevay\OTelSDK\Configuration\Internal\Util;
 use Nevay\OTelSDK\Configuration\SelfDiagnostics;
-use Nevay\OTelSDK\Configuration\SelfDiagnostics\DisableSelfDiagnosticsConfigurator;
+use Nevay\OTelSDK\Configuration\SelfDiagnostics\Diagnostics;
 use Nevay\OTelSDK\Logs\LoggerConfig;
 use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
 use Nevay\OTelSDK\Logs\LogRecordProcessor;
@@ -259,15 +259,11 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         // <editor-fold desc="configurator">
 
-        $configurator = new DisableSelfDiagnosticsConfigurator();
-        $tracerProviderBuilder->addTracerConfigurator($configurator);
-        $meterProviderBuilder->addMeterConfigurator($configurator);
-        $loggerProviderBuilder->addLoggerConfigurator($configurator);
+        $disabled = $properties['tracer_provider']['tracer_configurator/development']['default_config']['disabled'];
+        $builder = (new RuleConfiguratorBuilder())
+            ->withRule(static fn(TracerConfig $config) => $config->disabled = $disabled)
+            ->withRule(static fn(TracerConfig $config) => $config->disabled = true, filter: Diagnostics::isSelfDiagnostics(...));
 
-        $builder = new RuleConfiguratorBuilder();
-        if ($properties['tracer_provider']['tracer_configurator/development']['default_config']['disabled']) {
-            $builder->withRule(static fn(TracerConfig $config) => $config->disabled = true);
-        }
         foreach ($properties['tracer_provider']['tracer_configurator/development']['tracers'] as ['name' => $name, 'config' => $config]) {
             if (($disabled = $config['disabled'] ?? null) !== null) {
                 $builder->withRule(static fn(TracerConfig $config) => $config->disabled = $disabled, name: $name);
@@ -275,10 +271,11 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         }
         $tracerProviderBuilder->addTracerConfigurator($builder->toConfigurator());
 
-        $builder = new RuleConfiguratorBuilder();
-        if ($properties['meter_provider']['meter_configurator/development']['default_config']['disabled']) {
-            $builder->withRule(static fn(MeterConfig $config) => $config->disabled = true);
-        }
+        $disabled = $properties['meter_provider']['meter_configurator/development']['default_config']['disabled'];
+        $builder = (new RuleConfiguratorBuilder())
+            ->withRule(static fn(MeterConfig $config) => $config->disabled = $disabled)
+            ->withRule(static fn(MeterConfig $config) => $config->disabled = true, filter: Diagnostics::isSelfDiagnostics(...));
+
         foreach ($properties['meter_provider']['meter_configurator/development']['meters'] as ['name' => $name, 'config' => $config]) {
             if (($disabled = $config['disabled'] ?? null) !== null) {
                 $builder->withRule(static fn(MeterConfig $config) => $config->disabled = $disabled, name: $name);
@@ -286,16 +283,15 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         }
         $meterProviderBuilder->addMeterConfigurator($builder->toConfigurator());
 
-        $builder = new RuleConfiguratorBuilder();
-        if ($properties['logger_provider']['logger_configurator/development']['default_config']['disabled']) {
-            $builder->withRule(static fn(LoggerConfig $config) => $config->disabled = true);
-        }
-        if ($minimumSeverity = $properties['logger_provider']['logger_configurator/development']['default_config']['minimum_severity']) {
-            $builder->withRule(static fn(LoggerConfig $config) => $config->minimumSeverity = $minimumSeverity);
-        }
-        if ($properties['logger_provider']['logger_configurator/development']['default_config']['trace_based']) {
-            $builder->withRule(static fn(LoggerConfig $config) => $config->traceBased = true);
-        }
+        $disabled = $properties['logger_provider']['logger_configurator/development']['default_config']['disabled'];
+        $minimumSeverity = $properties['logger_provider']['logger_configurator/development']['default_config']['minimum_severity'];
+        $traceBased = $properties['logger_provider']['logger_configurator/development']['default_config']['trace_based'];
+        $builder = (new RuleConfiguratorBuilder())
+            ->withRule(static fn(LoggerConfig $config) => $config->disabled = $disabled)
+            ->withRule(static fn(LoggerConfig $config) => $config->minimumSeverity = $minimumSeverity)
+            ->withRule(static fn(LoggerConfig $config) => $config->traceBased = $traceBased)
+            ->withRule(static fn(LoggerConfig $config) => $config->disabled = true, filter: Diagnostics::isSelfDiagnostics(...));
+
         foreach ($properties['logger_provider']['logger_configurator/development']['loggers'] as ['name' => $name, 'config' => $config]) {
             if (($disabled = $config['disabled'] ?? null) !== null) {
                 $builder->withRule(static fn(LoggerConfig $config) => $config->disabled = $disabled, name: $name);

@@ -4,6 +4,7 @@ namespace Nevay\OTelSDK\Configuration;
 use InvalidArgumentException;
 use Monolog\Handler\ErrorLogHandler;
 use Monolog\Logger;
+use Nevay\OTelSDK\Common\Configurator\RuleConfiguratorBuilder;
 use Nevay\OTelSDK\Common\Resource;
 use Nevay\OTelSDK\Configuration\ConfigEnv\Attributes\AssociateWithPullMetricReader;
 use Nevay\OTelSDK\Configuration\ConfigEnv\Attributes\AssociateWithSimpleLogRecordProcessor;
@@ -16,13 +17,15 @@ use Nevay\OTelSDK\Configuration\Internal\ConfigEnv\DebugEnvReader;
 use Nevay\OTelSDK\Configuration\Internal\ConfigEnv\EnvComponentLoaderRegistry;
 use Nevay\OTelSDK\Configuration\Internal\ConfigEnv\EnvResolver;
 use Nevay\OTelSDK\Configuration\Internal\LoggerHandler;
-use Nevay\OTelSDK\Configuration\SelfDiagnostics\DisableSelfDiagnosticsConfigurator;
+use Nevay\OTelSDK\Configuration\SelfDiagnostics\Diagnostics;
+use Nevay\OTelSDK\Logs\LoggerConfig;
 use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
 use Nevay\OTelSDK\Logs\LogRecordExporter;
 use Nevay\OTelSDK\Logs\LogRecordProcessor\BatchLogRecordProcessor;
 use Nevay\OTelSDK\Logs\LogRecordProcessor\SimpleLogRecordProcessor;
 use Nevay\OTelSDK\Logs\NoopLoggerProvider;
 use Nevay\OTelSDK\Metrics\ExemplarFilter;
+use Nevay\OTelSDK\Metrics\MeterConfig;
 use Nevay\OTelSDK\Metrics\MeterProviderBuilder;
 use Nevay\OTelSDK\Metrics\MetricExporter;
 use Nevay\OTelSDK\Metrics\MetricReader\PeriodicExportingMetricReader;
@@ -33,6 +36,7 @@ use Nevay\OTelSDK\Trace\Sampler;
 use Nevay\OTelSDK\Trace\SpanExporter;
 use Nevay\OTelSDK\Trace\SpanProcessor\BatchSpanProcessor;
 use Nevay\OTelSDK\Trace\SpanProcessor\SimpleSpanProcessor;
+use Nevay\OTelSDK\Trace\TracerConfig;
 use Nevay\OTelSDK\Trace\TracerProviderBuilder;
 use Nevay\SPI\ServiceLoader;
 use OpenTelemetry\API\Configuration\ConfigEnv\EnvComponentLoader;
@@ -117,10 +121,15 @@ final class Env {
 
         // </editor-fold>
 
-        $configurator = new DisableSelfDiagnosticsConfigurator();
-        $tracerProviderBuilder->addTracerConfigurator($configurator);
-        $meterProviderBuilder->addMeterConfigurator($configurator);
-        $loggerProviderBuilder->addLoggerConfigurator($configurator);
+        $tracerProviderBuilder->addTracerConfigurator((new RuleConfiguratorBuilder())
+            ->withRule(static fn(TracerConfig $config) => $config->disabled = true, filter: Diagnostics::isSelfDiagnostics(...))
+            ->toConfigurator());
+        $meterProviderBuilder->addMeterConfigurator((new RuleConfiguratorBuilder())
+            ->withRule(static fn(MeterConfig $config) => $config->disabled = true, filter: Diagnostics::isSelfDiagnostics(...))
+            ->toConfigurator());
+        $loggerProviderBuilder->addLoggerConfigurator((new RuleConfiguratorBuilder())
+            ->withRule(static fn(LoggerConfig $config) => $config->disabled = true, filter: Diagnostics::isSelfDiagnostics(...))
+            ->toConfigurator());
 
         $tracerProvider = $tracerProviderBuilder->buildBase($logger);
         $meterProvider = $meterProviderBuilder->buildBase($logger);

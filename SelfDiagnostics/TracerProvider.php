@@ -14,7 +14,6 @@ final class TracerProvider implements TracerProviderInterface {
     ) {}
 
     public function getTracer(string $name, ?string $version = null, ?string $schemaUrl = null, iterable $attributes = []): TracerInterface {
-        return $this->tracerProvider->getTracer($name, $version, $schemaUrl,
-            DisableSelfDiagnosticsConfigurator::markAsSelfDiagnostics($attributes));
+        return $this->tracerProvider->getTracer($name, $version, $schemaUrl, Diagnostics::markAsSelfDiagnostics($attributes));
     }
 }

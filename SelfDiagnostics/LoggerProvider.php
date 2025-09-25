@@ -14,8 +14,7 @@ final class LoggerProvider implements LoggerProviderInterface {
     ) {}
 
     public function getLogger(string $name, ?string $version = null, ?string $schemaUrl = null, iterable $attributes = []): LoggerInterface {
-        return $this->loggerProvider->getLogger($name, $version, $schemaUrl,
-            DisableSelfDiagnosticsConfigurator::markAsSelfDiagnostics($attributes));
+        return $this->loggerProvider->getLogger($name, $version, $schemaUrl, Diagnostics::markAsSelfDiagnostics($attributes));
     }
 }
 
