@@ -50,6 +50,7 @@ use OpenTelemetry\Context\Propagation\MultiResponsePropagator;
 use OpenTelemetry\Context\Propagation\MultiTextMapPropagator;
 use OpenTelemetry\Context\Propagation\ResponsePropagatorInterface;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
+use function array_values;
 use function strcasecmp;
 use function strtolower;
 
@@ -182,7 +183,7 @@ final class Env {
             }
         }
 
-        return new MultiTextMapPropagator($propagators);
+        return new MultiTextMapPropagator(array_values($propagators));
     }
 
     private static function responsePropagator(EnvResolver $env, EnvComponentLoaderRegistry $registry, Context $context): ResponsePropagatorInterface {
@@ -195,7 +196,7 @@ final class Env {
             }
         }
 
-        return new MultiResponsePropagator($propagators);
+        return new MultiResponsePropagator(array_values($propagators));
     }
 
     private static function configProperties(EnvResolver $env, EnvComponentLoaderRegistry $registry, Context $context): ConfigProperties {
