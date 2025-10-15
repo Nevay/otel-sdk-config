@@ -6,7 +6,7 @@ use Nevay\OTelSDK\Jaeger\ComposableJaegerRemoteSampler;
 use Nevay\OTelSDK\Jaeger\GrpcSamplingManager;
 use Nevay\OTelSDK\Trace\Sampler;
 use Nevay\OTelSDK\Trace\Sampler\Composable\ComposableSampler;
-use Nevay\OTelSDK\Trace\Sampler\Composable\ComposableTraceIdRatioBasedSampler;
+use Nevay\OTelSDK\Trace\Sampler\Composable\ComposableProbabilitySampler;
 use Nevay\OTelSDK\Trace\Sampler\CompositeSampler;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use OpenTelemetry\API\Configuration\Config\ComponentPlugin;
@@ -33,7 +33,7 @@ final class SamplerJaegerRemote implements ComponentProvider {
         return new CompositeSampler(
             sampler: new ComposableJaegerRemoteSampler(
                 serviceName: '',
-                initialSampler: $properties['initial_sampler']?->create($context) ?? new ComposableTraceIdRatioBasedSampler(0.001),
+                initialSampler: $properties['initial_sampler']?->create($context) ?? new ComposableProbabilitySampler(0.001),
                 samplingManager: new GrpcSamplingManager($properties['endpoint']),
                 pollingIntervalMillis: $properties['interval'],
                 logger: $context->logger,

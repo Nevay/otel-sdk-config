@@ -5,7 +5,7 @@ use Nevay\OTelSDK\Jaeger\ComposableJaegerRemoteSampler;
 use Nevay\OTelSDK\Jaeger\GrpcSamplingManager;
 use Nevay\OTelSDK\Trace\Sampler;
 use Nevay\OTelSDK\Trace\Sampler\Composable\ComposableParentThresholdSampler;
-use Nevay\OTelSDK\Trace\Sampler\Composable\ComposableTraceIdRatioBasedSampler;
+use Nevay\OTelSDK\Trace\Sampler\Composable\ComposableProbabilitySampler;
 use Nevay\OTelSDK\Trace\Sampler\CompositeSampler;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use OpenTelemetry\API\Configuration\ConfigEnv\EnvComponentLoader;
@@ -30,7 +30,7 @@ final class SamplerLoaderParentBasedJaegerRemote implements EnvComponentLoader {
             sampler: new ComposableParentThresholdSampler(
                 rootSampler: new ComposableJaegerRemoteSampler(
                     serviceName: '',
-                    initialSampler: new ComposableTraceIdRatioBasedSampler($initialSamplingRate),
+                    initialSampler: new ComposableProbabilitySampler($initialSamplingRate),
                     samplingManager: new GrpcSamplingManager($endpoint),
                     pollingIntervalMillis: $pollingIntervalMs,
                     logger: $context->logger,
