@@ -207,13 +207,11 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         // <editor-fold desc="resource and attribute_limits">
 
-        $resource = Resource::create(
+        $resources = [];
+        $resources[] = Resource::create(
             Util::parseMapList($properties['resource']['attributes'], $properties['resource']['attributes_list']),
             $properties['resource']['schema_url'],
         );
-        $tracerProviderBuilder->addResource($resource);
-        $meterProviderBuilder->addResource($resource);
-        $loggerProviderBuilder->addResource($resource);
 
         $attributesFactory = AttributesLimitingFactory::create(
             attributeKeyFilter: Attributes::filterKeys(
@@ -229,15 +227,14 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 $resource->schemaUrl,
             );
 
-            $tracerProviderBuilder->addResource($resource);
-            $meterProviderBuilder->addResource($resource);
-            $loggerProviderBuilder->addResource($resource);
+            $resources[] = $resource;
         }
+        $resources[] = Resource::default();
 
-        $default = Resource::default();
-        $tracerProviderBuilder->addResource($default);
-        $meterProviderBuilder->addResource($default);
-        $loggerProviderBuilder->addResource($default);
+        $resource = Resource::mergeAll(...$resources);
+        $tracerProviderBuilder->addResource($resource);
+        $meterProviderBuilder->addResource($resource);
+        $loggerProviderBuilder->addResource($resource);
 
         $attributeCountLimit = $properties['attribute_limits']['attribute_count_limit'];
         $attributeValueLengthLimit = $properties['attribute_limits']['attribute_value_length_limit'];

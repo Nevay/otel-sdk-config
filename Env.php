@@ -107,12 +107,11 @@ final class Env {
         if (($serviceName = $env->string('OTEL_SERVICE_NAME')) !== null) {
             $attributes['service.name'] = $serviceName;
         }
-        $resource = Resource::create($attributes);
-        $tracerProviderBuilder->addResource($resource);
-        $meterProviderBuilder->addResource($resource);
-        $loggerProviderBuilder->addResource($resource);
+        $resources = [];
+        $resources[] = Resource::create($attributes);
+        $resources[] = Resource::detect();
 
-        $resource = Resource::detect();
+        $resource = Resource::mergeAll(...$resources);
         $tracerProviderBuilder->addResource($resource);
         $meterProviderBuilder->addResource($resource);
         $loggerProviderBuilder->addResource($resource);
