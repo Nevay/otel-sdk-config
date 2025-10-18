@@ -14,6 +14,9 @@ use function trim;
 use const FILTER_VALIDATE_FLOAT;
 use const FILTER_VALIDATE_INT;
 
+/**
+ * @internal
+ */
 final class EnvResolver implements \OpenTelemetry\API\Configuration\ConfigEnv\EnvResolver {
 
     public function __construct(
