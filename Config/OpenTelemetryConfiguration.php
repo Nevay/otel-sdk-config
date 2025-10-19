@@ -289,9 +289,9 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         // </editor-fold>
 
-        $tracerProvider = $tracerProviderBuilder->buildBase($logger);
-        $meterProvider = $meterProviderBuilder->buildBase($logger);
-        $loggerProvider = $loggerProviderBuilder->buildBase($logger);
+        $tracerProvider = TracerProviderBuilder::buildBase($logger);
+        $meterProvider = MeterProviderBuilder::buildBase($logger);
+        $loggerProvider = LoggerProviderBuilder::buildBase($logger);
 
         $context = new Context(
             tracerProvider: new SelfDiagnostics\TracerProvider($tracerProvider),
