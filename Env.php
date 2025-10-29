@@ -112,9 +112,9 @@ final class Env {
         $resources[] = Resource::detect();
 
         $resource = Resource::mergeAll(...$resources);
-        $tracerProviderBuilder->addResource($resource);
-        $meterProviderBuilder->addResource($resource);
-        $loggerProviderBuilder->addResource($resource);
+        $tracerProviderBuilder->setResource($resource);
+        $meterProviderBuilder->setResource($resource);
+        $loggerProviderBuilder->setResource($resource);
 
         $attributeCountLimit = $env->int('OTEL_ATTRIBUTE_COUNT_LIMIT');
         $attributeValueLengthLimit = $env->int('OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT');
@@ -123,13 +123,13 @@ final class Env {
 
         // </editor-fold>
 
-        $tracerProviderBuilder->addTracerConfigurator((new RuleConfiguratorBuilder())
+        $tracerProviderBuilder->setTracerConfigurator((new RuleConfiguratorBuilder())
             ->withRule(static fn(TracerConfig $config) => $config->disabled = true, filter: Diagnostics::isSelfDiagnostics(...))
             ->toConfigurator());
-        $meterProviderBuilder->addMeterConfigurator((new RuleConfiguratorBuilder())
+        $meterProviderBuilder->setMeterConfigurator((new RuleConfiguratorBuilder())
             ->withRule(static fn(MeterConfig $config) => $config->disabled = true, filter: Diagnostics::isSelfDiagnostics(...))
             ->toConfigurator());
-        $loggerProviderBuilder->addLoggerConfigurator((new RuleConfiguratorBuilder())
+        $loggerProviderBuilder->setLoggerConfigurator((new RuleConfiguratorBuilder())
             ->withRule(static fn(LoggerConfig $config) => $config->disabled = true, filter: Diagnostics::isSelfDiagnostics(...))
             ->withRule(static fn(LoggerConfig $config) => $config->minimumSeverity = $severity, filter: Diagnostics::isSelfDiagnostics(...))
             ->toConfigurator());

@@ -232,9 +232,9 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $resources[] = Resource::default();
 
         $resource = Resource::mergeAll(...$resources);
-        $tracerProviderBuilder->addResource($resource);
-        $meterProviderBuilder->addResource($resource);
-        $loggerProviderBuilder->addResource($resource);
+        $tracerProviderBuilder->setResource($resource);
+        $meterProviderBuilder->setResource($resource);
+        $loggerProviderBuilder->setResource($resource);
 
         $attributeCountLimit = $properties['attribute_limits']['attribute_count_limit'];
         $attributeValueLengthLimit = $properties['attribute_limits']['attribute_value_length_limit'];
@@ -266,7 +266,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         foreach ($properties['tracer_provider']['tracer_configurator/development']['tracers'] as $config) {
             $builder->withRule($this->createTracerConfigurator($config['config'] ?? []), name: $config['name'] ?? null);
         }
-        $tracerProviderBuilder->addTracerConfigurator($builder->toConfigurator());
+        $tracerProviderBuilder->setTracerConfigurator($builder->toConfigurator());
 
         $builder = (new RuleConfiguratorBuilder())
             ->withRule($this->createMeterConfigurator($properties['meter_provider']['meter_configurator/development']['default_config'] ?? []))
@@ -275,7 +275,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         foreach ($properties['meter_provider']['meter_configurator/development']['meters'] as $config) {
             $builder->withRule($this->createMeterConfigurator($config['config'] ?? []), name: $config['name'] ?? null);
         }
-        $meterProviderBuilder->addMeterConfigurator($builder->toConfigurator());
+        $meterProviderBuilder->setMeterConfigurator($builder->toConfigurator());
 
         $builder = (new RuleConfiguratorBuilder())
             ->withRule($this->createLoggerConfigurator($properties['logger_provider']['logger_configurator/development']['default_config'] ?? []))
@@ -285,7 +285,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         foreach ($properties['logger_provider']['logger_configurator/development']['loggers'] as $config) {
             $builder->withRule($this->createLoggerConfigurator($config['config'] ?? []), name: $config['name'] ?? null);
         }
-        $loggerProviderBuilder->addLoggerConfigurator($builder->toConfigurator());
+        $loggerProviderBuilder->setLoggerConfigurator($builder->toConfigurator());
 
         // </editor-fold>
 
