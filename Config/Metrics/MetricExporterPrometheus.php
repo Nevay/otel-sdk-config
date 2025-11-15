@@ -32,6 +32,7 @@ final class MetricExporterPrometheus implements ComponentProvider {
      *     host: string,
      *     port: int,
      *     without_scope_info: bool,
+     *     without_target_info: bool,
      *     with_resource_constant_labels: array{
      *         included: ?list<string>,
      *         excluded: ?list<string>,
@@ -59,6 +60,7 @@ final class MetricExporterPrometheus implements ComponentProvider {
         return new PrometheusMetricExporter(
             server: $server,
             withoutScopeInfo: $properties['without_scope_info'],
+            withoutTargetInfo: $properties['without_target_info'],
             withResourceConstantLabels: Attributes::filterKeys(
                 include: $properties['with_resource_constant_labels']['included'] ?? [],
                 exclude: $properties['with_resource_constant_labels']['excluded'] ?? [],
@@ -80,6 +82,7 @@ final class MetricExporterPrometheus implements ComponentProvider {
                 ->scalarNode('host')->defaultValue('localhost')->validate()->always(Util::ensureString())->end()->end()
                 ->integerNode('port')->defaultValue(9464)->end()
                 ->booleanNode('without_scope_info')->defaultFalse()->end()
+                ->booleanNode('without_target_info')->defaultFalse()->end()
                 ->arrayNode('with_resource_constant_labels')
                     ->children()
                         ->arrayNode('included')->defaultNull()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
