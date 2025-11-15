@@ -144,6 +144,7 @@ final class Env {
             loggerProvider: new SelfDiagnostics\LoggerProvider($loggerProvider),
             logger: $logger,
         );
+        $context = $context->withExtension($resource, Resource::class);
 
         self::tracerProvider($tracerProviderBuilder, $env, $registry, $context);
         self::meterProvider($meterProviderBuilder, $env, $registry, $context);

@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\ConfigEnv\Trace;
 
+use Nevay\OTelSDK\Common\Resource;
 use Nevay\OTelSDK\Jaeger\ComposableJaegerRemoteSampler;
 use Nevay\OTelSDK\Jaeger\GrpcSamplingManager;
 use Nevay\OTelSDK\Trace\Sampler;
@@ -26,10 +27,12 @@ final class SamplerLoaderParentBasedJaegerRemote implements EnvComponentLoader {
         $pollingIntervalMs = (int) ($params['pollingIntervalMs'] ?? 60000);
         $initialSamplingRate = (float) ($params['initialSamplingRate'] ?? 0.001);
 
+        $serviceName = $context->getExtension(Resource::class)?->attributes->get('service.name') ?? '';
+
         return new CompositeSampler(
             sampler: new ComposableParentThresholdSampler(
                 rootSampler: new ComposableJaegerRemoteSampler(
-                    serviceName: '',
+                    serviceName: $serviceName,
                     initialSampler: new ComposableProbabilitySampler($initialSamplingRate),
                     samplingManager: new GrpcSamplingManager($endpoint),
                     pollingIntervalMillis: $pollingIntervalMs,

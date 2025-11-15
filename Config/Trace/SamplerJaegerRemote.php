@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\Config\Trace;
 
+use Nevay\OTelSDK\Common\Resource;
 use Nevay\OTelSDK\Configuration\Internal\Util;
 use Nevay\OTelSDK\Jaeger\GrpcSamplingManager;
 use Nevay\OTelSDK\Jaeger\JaegerRemoteSampler;
@@ -27,8 +28,10 @@ final class SamplerJaegerRemote implements ComponentProvider {
      * } $properties
      */
     public function createPlugin(array $properties, Context $context): Sampler {
+        $serviceName = $context->getExtension(Resource::class)?->attributes->get('service.name') ?? '';
+
         return new JaegerRemoteSampler(
-            serviceName: '',
+            serviceName: $serviceName,
             initialSampler: $properties['initial_sampler']?->create($context),
             samplingManager: new GrpcSamplingManager($properties['endpoint']),
             pollingIntervalMillis: $properties['interval'],
