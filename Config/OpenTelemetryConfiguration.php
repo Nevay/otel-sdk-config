@@ -102,8 +102,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *                  disabled?: bool,
      *              },
      *              tracers: list<array{
-     *                  name?: string,
-     *                  config?: array{
+     *                  name: string,
+     *                  config: array{
      *                      disabled?: ?bool,
      *                  }
      *              }>,
@@ -137,8 +137,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *                 disabled?: bool,
      *             },
      *             meters: list<array{
-     *                 name?: string,
-     *                 config?: array{
+     *                 name: string,
+     *                 config: array{
      *                     disabled?: ?bool,
      *                 }
      *             }>,
@@ -152,13 +152,13 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *         processors: list<ComponentPlugin<LogRecordProcessor>>,
      *         "logger_configurator/development": array{
      *             default_config?: array{
-     *                 disabled: bool,
-     *                 minimum_severity: int,
-     *                 trace_based: bool,
+     *                 disabled?: bool,
+     *                 minimum_severity?: int,
+     *                 trace_based?: bool,
      *             },
      *             loggers: list<array{
-     *                 name?: string,
-     *                 config?: array{
+     *                 name: string,
+     *                 config: array{
      *                     disabled?: ?bool,
      *                     minimum_severity?: ?int,
      *                     trace_based?: ?bool,
@@ -264,7 +264,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             ->withRule(static fn(TracerConfig $config) => $config->disabled = true, filter: Diagnostics::isSelfDiagnostics(...));
 
         foreach ($properties['tracer_provider']['tracer_configurator/development']['tracers'] as $config) {
-            $builder->withRule($this->createTracerConfigurator($config['config'] ?? []), name: $config['name'] ?? null);
+            $builder->withRule($this->createTracerConfigurator($config['config']), name: $config['name']);
         }
         $tracerProviderBuilder->setTracerConfigurator($builder->toConfigurator());
 
@@ -273,7 +273,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             ->withRule(static fn(MeterConfig $config) => $config->disabled = true, filter: Diagnostics::isSelfDiagnostics(...));
 
         foreach ($properties['meter_provider']['meter_configurator/development']['meters'] as $config) {
-            $builder->withRule($this->createMeterConfigurator($config['config'] ?? []), name: $config['name'] ?? null);
+            $builder->withRule($this->createMeterConfigurator($config['config']), name: $config['name']);
         }
         $meterProviderBuilder->setMeterConfigurator($builder->toConfigurator());
 
@@ -283,7 +283,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             ->withRule(static fn(LoggerConfig $config) => $config->minimumSeverity = $severity, filter: Diagnostics::isSelfDiagnostics(...));
 
         foreach ($properties['logger_provider']['logger_configurator/development']['loggers'] as $config) {
-            $builder->withRule($this->createLoggerConfigurator($config['config'] ?? []), name: $config['name'] ?? null);
+            $builder->withRule($this->createLoggerConfigurator($config['config']), name: $config['name']);
         }
         $loggerProviderBuilder->setLoggerConfigurator($builder->toConfigurator());
 
@@ -644,8 +644,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                             ->addDefaultChildrenIfNoneSet()
                             ->arrayPrototype()
                                 ->children()
-                                    ->scalarNode('name')->cannotBeEmpty()->validate()->always(Util::ensureString())->end()->end()
-                                    ->append($this->getTracerConfiguratorConfig($builder, 'config'))
+                                    ->scalarNode('name')->isRequired()->cannotBeEmpty()->validate()->always(Util::ensureString())->end()->end()
+                                    ->append($this->getTracerConfiguratorConfig($builder, 'config')->isRequired())
                                 ->end()
                             ->end()
                         ->end()
@@ -726,8 +726,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                             ->addDefaultChildrenIfNoneSet()
                             ->arrayPrototype()
                                 ->children()
-                                    ->scalarNode('name')->cannotBeEmpty()->validate()->always(Util::ensureString())->end()->end()
-                                    ->append($this->getMeterConfiguratorConfig($builder, 'config'))
+                                    ->scalarNode('name')->isRequired()->cannotBeEmpty()->validate()->always(Util::ensureString())->end()->end()
+                                    ->append($this->getMeterConfiguratorConfig($builder, 'config')->isRequired())
                                 ->end()
                             ->end()
                         ->end()
@@ -771,8 +771,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                             ->addDefaultChildrenIfNoneSet()
                             ->arrayPrototype()
                                 ->children()
-                                    ->scalarNode('name')->cannotBeEmpty()->validate()->always(Util::ensureString())->end()->end()
-                                    ->append($this->getLoggerConfiguratorConfig($builder, 'config'))
+                                    ->scalarNode('name')->isRequired()->cannotBeEmpty()->validate()->always(Util::ensureString())->end()->end()
+                                    ->append($this->getLoggerConfiguratorConfig($builder, 'config')->isRequired())
                                 ->end()
                             ->end()
                         ->end()
