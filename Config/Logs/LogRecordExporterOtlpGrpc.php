@@ -30,9 +30,12 @@ final class LogRecordExporterOtlpGrpc implements ComponentProvider {
     /**
      * @param array{
      *     endpoint: string,
-     *     certificate_file: ?string,
-     *     client_key_file: ?string,
-     *     client_certificate_file: ?string,
+     *     tls: array{
+     *         ca_file: ?string,
+     *         cert_file: ?string,
+     *         key_file: ?string,
+     *         insecure: bool,
+     *     },
      *     headers: list<array{
      *         name: string,
      *         value: string,
@@ -40,15 +43,14 @@ final class LogRecordExporterOtlpGrpc implements ComponentProvider {
      *     headers_list: ?string,
      *     compression: 'gzip'|null,
      *     timeout: int<0, max>,
-     *     insecure: ?bool,
      * } $properties
      */
     public function createPlugin(array $properties, Context $context): LogRecordExporter {
         $tlsContext = new ClientTlsContext();
-        if ($clientCertificate = $properties['client_certificate_file']) {
-            $tlsContext = $tlsContext->withCertificate(new Certificate($clientCertificate, $properties['client_key_file']));
+        if ($clientCertificate = $properties['tls']['cert_file']) {
+            $tlsContext = $tlsContext->withCertificate(new Certificate($clientCertificate, $properties['tls']['key_file']));
         }
-        if ($certificate = $properties['certificate_file']) {
+        if ($certificate = $properties['tls']['ca_file']) {
             $tlsContext = $tlsContext->withCaPath($certificate);
         }
 
@@ -73,9 +75,15 @@ final class LogRecordExporterOtlpGrpc implements ComponentProvider {
         $node
             ->children()
                 ->scalarNode('endpoint')->defaultValue('http://localhost:4317')->validate()->always(Util::ensureString())->end()->end()
-                ->scalarNode('certificate_file')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
-                ->scalarNode('client_key_file')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
-                ->scalarNode('client_certificate_file')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
+                ->arrayNode('tls')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->scalarNode('ca_file')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
+                        ->scalarNode('cert_file')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
+                        ->scalarNode('key_file')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
+                        ->booleanNode('insecure')->defaultFalse()->end()
+                    ->end()
+                ->end()
                 ->arrayNode('headers')
                     ->arrayPrototype()
                         ->children()
@@ -87,7 +95,6 @@ final class LogRecordExporterOtlpGrpc implements ComponentProvider {
                 ->scalarNode('headers_list')->defaultNull()->validate()->always(Util::ensureString())->end()->end()
                 ->enumNode('compression')->values(['gzip'])->defaultNull()->end()
                 ->integerNode('timeout')->min(0)->defaultValue(10000)->end()
-                ->booleanNode('insecure')->defaultNull()->end()
             ->end()
         ;
 

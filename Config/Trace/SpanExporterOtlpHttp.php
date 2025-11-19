@@ -1,5 +1,5 @@
 <?php declare(strict_types=1);
-namespace Nevay\OTelSDK\Configuration\Config\Metrics;
+namespace Nevay\OTelSDK\Configuration\Config\Trace;
 
 use Amp\Http\Client\Connection\DefaultConnectionFactory;
 use Amp\Http\Client\Connection\UnlimitedConnectionPool;
@@ -9,14 +9,9 @@ use Amp\Socket\ClientTlsContext;
 use Amp\Socket\ConnectContext;
 use League\Uri;
 use Nevay\OTelSDK\Configuration\Internal\Util;
-use Nevay\OTelSDK\Metrics\Aggregation\Base2ExponentialBucketHistogramAggregation;
-use Nevay\OTelSDK\Metrics\Aggregation\DefaultAggregation;
-use Nevay\OTelSDK\Metrics\Aggregation\ExplicitBucketHistogramAggregation;
-use Nevay\OTelSDK\Metrics\InstrumentType;
-use Nevay\OTelSDK\Metrics\MetricExporter;
-use Nevay\OTelSDK\Otlp\OtlpHttpMetricExporter;
-use Nevay\OTelSDK\Otlp\OtlpTemporality;
+use Nevay\OTelSDK\Otlp\OtlpHttpSpanExporter;
 use Nevay\OTelSDK\Otlp\ProtobufFormat;
+use Nevay\OTelSDK\Trace\SpanExporter;
 use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use OpenTelemetry\API\Configuration\Config\ComponentProvider;
 use OpenTelemetry\API\Configuration\Config\ComponentProviderRegistry;
@@ -25,20 +20,22 @@ use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 
 /**
- * @implements ComponentProvider<MetricExporter>
+ * @implements ComponentProvider<SpanExporter>
  */
 #[PackageDependency('tbachert/otel-sdk-otlpexporter', '^0.1')]
 #[PackageDependency('amphp/http-client', '^5.0')]
 #[PackageDependency('amphp/socket', '^2.0')]
 #[PackageDependency('league/uri', '^7.0')]
-final class MetricExporterOtlp implements ComponentProvider {
+final class SpanExporterOtlpHttp implements ComponentProvider {
 
     /**
      * @param array{
      *     endpoint: string,
-     *     certificate_file: ?string,
-     *     client_key_file: ?string,
-     *     client_certificate_file: ?string,
+     *     tls: array{
+     *         ca_file: ?string,
+     *         cert_file: ?string,
+     *         key_file: ?string,
+     *     },
      *     headers: list<array{
      *         name: string,
      *         value: string,
@@ -47,16 +44,14 @@ final class MetricExporterOtlp implements ComponentProvider {
      *     compression: 'gzip'|null,
      *     timeout: int<0, max>,
      *     encoding: 'protobuf'|'json',
-     *     temporality_preference: 'cumulative'|'delta'|'lowmemory',
-     *     default_histogram_aggregation: 'explicit_bucket_histogram'|'base2_exponential_bucket_histogram',
      * } $properties
      */
-    public function createPlugin(array $properties, Context $context): MetricExporter {
+    public function createPlugin(array $properties, Context $context): SpanExporter {
         $tlsContext = new ClientTlsContext();
-        if ($clientCertificate = $properties['client_certificate_file']) {
-            $tlsContext = $tlsContext->withCertificate(new Certificate($clientCertificate, $properties['client_key_file']));
+        if ($clientCertificate = $properties['tls']['cert_file']) {
+            $tlsContext = $tlsContext->withCertificate(new Certificate($clientCertificate, $properties['tls']['key_file']));
         }
-        if ($certificate = $properties['certificate_file']) {
+        if ($certificate = $properties['tls']['ca_file']) {
             $tlsContext = $tlsContext->withCaPath($certificate);
         }
 
@@ -65,7 +60,7 @@ final class MetricExporterOtlp implements ComponentProvider {
             ->usingPool(new UnlimitedConnectionPool(new DefaultConnectionFactory(connectContext: (new ConnectContext())->withTlsContext($tlsContext))))
             ->build();
 
-        return new OtlpHttpMetricExporter(
+        return new OtlpHttpSpanExporter(
             client: $client,
             endpoint: Uri\Http::new($properties['endpoint']),
             format: match ($properties['encoding']) {
@@ -75,15 +70,6 @@ final class MetricExporterOtlp implements ComponentProvider {
             compression: $properties['compression'],
             headers: Util::parseMapList($properties['headers'], $properties['headers_list']),
             timeout: $properties['timeout'] / 1e3,
-            temporalityResolver: match ($properties['temporality_preference']) {
-                'cumulative' => OtlpTemporality::Cumulative,
-                'delta' => OtlpTemporality::Delta,
-                'lowmemory' => OtlpTemporality::LowMemory,
-            },
-            aggregation: (new DefaultAggregation())->with(InstrumentType::Histogram, match ($properties['default_histogram_aggregation']) {
-                'explicit_bucket_histogram' => new ExplicitBucketHistogramAggregation(),
-                'base2_exponential_bucket_histogram' => new Base2ExponentialBucketHistogramAggregation(),
-            }),
             meterProvider: $context->meterProvider,
             logger: $context->logger,
         );
@@ -93,10 +79,15 @@ final class MetricExporterOtlp implements ComponentProvider {
         $node = $builder->arrayNode('otlp_http');
         $node
             ->children()
-                ->scalarNode('endpoint')->defaultValue('http://localhost:4318/v1/metrics')->validate()->always(Util::ensureString())->end()->end()
-                ->scalarNode('certificate_file')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
-                ->scalarNode('client_key_file')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
-                ->scalarNode('client_certificate_file')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
+                ->scalarNode('endpoint')->defaultValue('http://localhost:4318/v1/traces')->validate()->always(Util::ensureString())->end()->end()
+                ->arrayNode('tls')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->scalarNode('ca_file')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
+                        ->scalarNode('cert_file')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
+                        ->scalarNode('key_file')->defaultNull()->validate()->always(Util::ensurePath())->end()->end()
+                    ->end()
+                ->end()
                 ->arrayNode('headers')
                     ->arrayPrototype()
                         ->children()
@@ -106,19 +97,11 @@ final class MetricExporterOtlp implements ComponentProvider {
                     ->end()
                 ->end()
                 ->scalarNode('headers_list')->defaultNull()->validate()->always(Util::ensureString())->end()->end()
-                ->enumNode('compression')->values(['gzip'])->defaultNull()->validate()->always(Util::ensureString())->end()->end()
+                ->enumNode('compression')->values(['gzip'])->defaultNull()->end()
                 ->integerNode('timeout')->min(0)->defaultValue(10000)->end()
                 ->enumNode('encoding')
                     ->values(['protobuf', 'json'])
                     ->defaultValue('protobuf')
-                ->end()
-                ->enumNode('temporality_preference')
-                    ->values(['cumulative', 'delta', 'lowmemory'])
-                    ->defaultValue('cumulative')
-                ->end()
-                ->enumNode('default_histogram_aggregation')
-                    ->values(['explicit_bucket_histogram', 'base2_exponential_bucket_histogram'])
-                    ->defaultValue('explicit_bucket_histogram')
                 ->end()
             ->end()
         ;
