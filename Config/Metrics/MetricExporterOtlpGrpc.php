@@ -22,6 +22,8 @@ use OpenTelemetry\API\Configuration\Config\ComponentProviderRegistry;
 use OpenTelemetry\API\Configuration\Context;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeBuilder;
+use function parse_url;
+use const PHP_URL_SCHEME;
 
 /**
  * @implements ComponentProvider<MetricExporter>
@@ -59,6 +61,14 @@ final class MetricExporterOtlpGrpc implements ComponentProvider {
         }
         if ($certificate = $properties['tls']['ca_file']) {
             $tlsContext = $tlsContext->withCaPath($certificate);
+        }
+
+        if (parse_url($properties['endpoint'], PHP_URL_SCHEME) === null) {
+            $scheme = $properties['tls']['insecure']
+                ? 'http'
+                : 'https';
+
+            $properties['endpoint'] = $scheme . '://' . $properties['endpoint'];
         }
 
         $client = (new HttpClientBuilder())
