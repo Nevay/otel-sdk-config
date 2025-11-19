@@ -47,8 +47,10 @@ use OpenTelemetry\Context\Propagation\NoopResponsePropagator;
 use OpenTelemetry\Context\Propagation\NoopTextMapPropagator;
 use OpenTelemetry\Context\Propagation\ResponsePropagatorInterface;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
+use ReflectionEnumBackedCase;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeBuilder;
+use function array_column;
 use function array_key_exists;
 use function explode;
 use function is_array;
@@ -787,7 +789,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $node
             ->children()
                 ->booleanNode('disabled')->end()
-                ->integerNode('minimum_severity')->end()
+                ->enumNode('minimum_severity')->values(array_column(Severity::cases(), 'name'))->validate()->always(static fn(string $severity): int => (new ReflectionEnumBackedCase(Severity::class, $severity))->getBackingValue())->end()->end()
                 ->booleanNode('trace_based')->end()
             ->end()
         ;
