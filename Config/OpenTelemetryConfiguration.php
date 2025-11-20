@@ -10,6 +10,8 @@ use Nevay\OTelSDK\Common\AttributesLimitingFactory;
 use Nevay\OTelSDK\Common\Configurator\RuleConfiguratorBuilder;
 use Nevay\OTelSDK\Common\Resource;
 use Nevay\OTelSDK\Common\ResourceDetector;
+use Nevay\OTelSDK\Common\Schema\StaticResourceTransformer;
+use Nevay\OTelSDK\Common\Schema\TransformationException;
 use Nevay\OTelSDK\Configuration\ConfigurationResult;
 use Nevay\OTelSDK\Configuration\Internal\LoggerHandler;
 use Nevay\OTelSDK\Configuration\Internal\Util;
@@ -233,6 +235,15 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         }
         $resources[] = Resource::default();
 
+        $transformer = StaticResourceTransformer::opentelemetrySchema();
+        foreach ($resources as $key => $resource) {
+            if ($resource->schemaUrl !== null) {
+                $schemaUrl ??= $resource->schemaUrl;
+                try {
+                    $resources[$key] = $transformer->transformResource($resource, $schemaUrl);
+                } catch (TransformationException) {}
+            }
+        }
         $resource = Resource::mergeAll(...$resources);
         $tracerProviderBuilder->setResource($resource);
         $meterProviderBuilder->setResource($resource);

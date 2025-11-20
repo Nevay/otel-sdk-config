@@ -6,6 +6,9 @@ use Monolog\Handler\ErrorLogHandler;
 use Monolog\Logger;
 use Nevay\OTelSDK\Common\Configurator\RuleConfiguratorBuilder;
 use Nevay\OTelSDK\Common\Resource;
+use Nevay\OTelSDK\Common\ResourceDetector;
+use Nevay\OTelSDK\Common\Schema\StaticResourceTransformer;
+use Nevay\OTelSDK\Common\Schema\TransformationException;
 use Nevay\OTelSDK\Configuration\ConfigEnv\Attributes\AssociateWithPullMetricReader;
 use Nevay\OTelSDK\Configuration\ConfigEnv\Attributes\AssociateWithSimpleLogRecordProcessor;
 use Nevay\OTelSDK\Configuration\ConfigEnv\Attributes\AssociateWithSimpleSpanProcessor;
@@ -109,8 +112,20 @@ final class Env {
         }
         $resources = [];
         $resources[] = Resource::create($attributes);
-        $resources[] = Resource::detect();
+        foreach (ServiceLoader::load(ResourceDetector::class) as $detector) {
+            $resources[] = $detector->getResource();
+        }
+        $resources[] = Resource::default();
 
+        $transformer = StaticResourceTransformer::opentelemetrySchema();
+        foreach ($resources as $key => $resource) {
+            if ($resource->schemaUrl !== null) {
+                $schemaUrl ??= $resource->schemaUrl;
+                try {
+                    $resources[$key] = $transformer->transformResource($resource, $schemaUrl);
+                } catch (TransformationException) {}
+            }
+        }
         $resource = Resource::mergeAll(...$resources);
         $tracerProviderBuilder->setResource($resource);
         $meterProviderBuilder->setResource($resource);
