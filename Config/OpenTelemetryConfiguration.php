@@ -67,17 +67,17 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *     file_format: string,
      *     disabled: bool,
      *     log_level: string,
-     *     resource: array{
-     *         attributes: list<array{
+     *     resource?: array{
+     *         attributes?: non-empty-list<array{
      *             name: string,
      *             value: mixed,
      *         }>,
-     *         attributes_list: ?string,
-     *         schema_url: ?string,
-     *         "detection/development": array{
-     *             included: ?list<string>,
-     *             excluded: ?list<string>,
-     *             detectors: list<ComponentPlugin<ResourceDetector>>,
+     *         attributes_list?: ?string,
+     *         schema_url?: ?string,
+     *         "detection/development"?: array{
+     *             included?: non-empty-list<string>,
+     *             excluded?: non-empty-list<string>,
+     *             detectors?: non-empty-list<ComponentPlugin<ResourceDetector>>,
      *         },
      *     },
      *     attribute_limits: array{
@@ -213,8 +213,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         $resources = [];
         $resources[] = Resource::create(
-            Util::parseMapList($properties['resource']['attributes'], $properties['resource']['attributes_list']),
-            $properties['resource']['schema_url'],
+            Util::parseMapList($properties['resource']['attributes'] ?? [], $properties['resource']['attributes_list'] ?? null),
+            $properties['resource']['schema_url'] ?? null,
         );
 
         $attributesFactory = AttributesLimitingFactory::create(
@@ -223,7 +223,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 exclude: $properties['resource']['detection/development']['attributes']['excluded'] ?? [],
             ),
         );
-        foreach ($properties['resource']['detection/development']['detectors'] as $detector) {
+        foreach ($properties['resource']['detection/development']['detectors'] ?? [] as $detector) {
             $detector = $detector->create(new Context(logger: $logger));
             $resource = $detector->getResource();
             $resource = new Resource(
@@ -547,31 +547,30 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
     private function getResourceConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
         $node = $builder->arrayNode('resource');
         $node
-            ->addDefaultsIfNotSet()
             ->children()
                 ->arrayNode('attributes')
+                    ->requiresAtLeastOneElement()
                     ->arrayPrototype()
                         ->children()
                             ->scalarNode('name')->isRequired()->validate()->always(Util::ensureString())->end()->end()
                             ->variableNode('value')->isRequired()->end()
-                            ->scalarNode('type')->defaultValue('string')->validate()->always(Util::ensureString())->end()->end()
+                            ->scalarNode('type')->validate()->always(Util::ensureString())->end()->end()
                         ->end()
                     ->end()
                 ->end()
-                ->scalarNode('attributes_list')->defaultNull()->validate()->always(Util::ensureString())->end()->end()
+                ->scalarNode('attributes_list')->validate()->always(Util::ensureString())->end()->end()
                 ->arrayNode('detection/development')
-                    ->addDefaultsIfNotSet()
                     ->children()
                         ->arrayNode('attributes')
                             ->children()
-                                ->arrayNode('included')->defaultNull()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
-                                ->arrayNode('excluded')->defaultNull()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
+                                ->arrayNode('included')->requiresAtLeastOneElement()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
+                                ->arrayNode('excluded')->requiresAtLeastOneElement()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
                             ->end()
                         ->end()
-                        ->append($registry->componentList('detectors', ResourceDetector::class))
+                        ->append($registry->componentList('detectors', ResourceDetector::class)->requiresAtLeastOneElement())
                     ->end()
                 ->end()
-                ->scalarNode('schema_url')->defaultNull()->validate()->always(Util::ensureString())->end()->end()
+                ->scalarNode('schema_url')->validate()->always(Util::ensureString())->end()->end()
             ->end();
 
         return $node;
