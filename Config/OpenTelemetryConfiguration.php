@@ -84,11 +84,11 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *         attribute_value_length_limit: ?int<0, max>,
      *         attribute_count_limit: ?int<0, max>,
      *     },
-     *     propagator: array{
-     *         composite: list<ComponentPlugin<TextMapPropagatorInterface>>,
+     *     propagator?: array{
+     *         composite?: non-empty-list<ComponentPlugin<TextMapPropagatorInterface>>,
      *     },
-     *     "response_propagator/development": array{
-     *         composite: list<ComponentPlugin<ResponsePropagatorInterface>>,
+     *     "response_propagator/development"?: array{
+     *         composite?: non-empty-list<ComponentPlugin<ResponsePropagatorInterface>>,
      *     },
      *     tracer_provider: array{
      *         limits: array{
@@ -188,8 +188,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $context = new Context(logger: $logger);
 
         if ($properties['disabled']) {
-            $propagator = $this->createPropagator($properties['propagator'], $context);
-            $responsePropagator = $this->createResponsePropagator($properties['response_propagator/development'], $context);
+            $propagator = $this->createPropagator($properties['propagator'] ?? [], $context);
+            $responsePropagator = $this->createResponsePropagator($properties['response_propagator/development'] ?? [], $context);
             $configProperties = $this->createConfigProperties($properties['instrumentation/development'], $context);
 
             $logger->debug('Initialized OTelSDK from declarative config', ['disabled' => true]);
@@ -382,8 +382,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $meterProviderBuilder->copyStateInto($meterProvider, $context);
         $loggerProviderBuilder->copyStateInto($loggerProvider, $context);
 
-        $propagator = $this->createPropagator($properties['propagator'], $context);
-        $responsePropagator = $this->createResponsePropagator($properties['response_propagator/development'], $context);
+        $propagator = $this->createPropagator($properties['propagator'] ?? [], $context);
+        $responsePropagator = $this->createResponsePropagator($properties['response_propagator/development'] ?? [], $context);
         $configProperties = $this->createConfigProperties($properties['instrumentation/development'], $context);
 
         $logger->debug('Initialized OTelSDK from declarative config');
@@ -621,9 +621,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             ->end();
 
         $node
-            ->addDefaultsIfNotSet()
             ->children()
-                ->append($registry->componentList('composite', $type))
+                ->append($registry->componentList('composite', $type)->requiresAtLeastOneElement())
                 ->scalarNode('composite_list')->validate()->always(Util::ensureString())->end()->end()
             ->end()
         ;
