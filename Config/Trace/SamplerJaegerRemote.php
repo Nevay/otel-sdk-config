@@ -40,7 +40,7 @@ final class SamplerJaegerRemote implements ComponentProvider {
     }
 
     public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
-        $node = $builder->arrayNode('jaeger_remote');
+        $node = $builder->arrayNode('jaeger_remote/development');
         $node
             ->children()
                 ->scalarNode('endpoint')->defaultValue('http://localhost:5779')->validate()->always(Util::ensureString())->end()->end()
