@@ -37,7 +37,7 @@ final class MetricExporterPrometheus implements ComponentProvider {
      *         included: ?list<string>,
      *         excluded: ?list<string>,
      *     },
-     *     translation_strategy: 'UnderscoreEscapingWithSuffixes'|'UnderscoreEscapingWithoutSuffixes'|'NoUTF8EscapingWithSuffixes'|'NoTranslation',
+     *     translation_strategy: 'underscore_escaping_with_suffixes'|'underscore_escaping_without_suffixes'|'no_utf8_escaping_with_suffixes'|'no_translation',
      * } $properties
      */
     public function createPlugin(array $properties, Context $context): MetricExporter {
@@ -66,10 +66,10 @@ final class MetricExporterPrometheus implements ComponentProvider {
                 exclude: $properties['with_resource_constant_labels']['excluded'] ?? [],
             ),
             translationStrategy: match ($properties['translation_strategy']) {
-                'UnderscoreEscapingWithSuffixes' => TranslationStrategy::UnderscoreEscapingWithSuffixes,
-                'UnderscoreEscapingWithoutSuffixes' => TranslationStrategy::UnderscoreEscapingWithoutSuffixes,
-                'NoUTF8EscapingWithSuffixes' => TranslationStrategy::NoUTF8EscapingWithSuffixes,
-                'NoTranslation' => TranslationStrategy::NoTranslation,
+                'underscore_escaping_with_suffixes' => TranslationStrategy::UnderscoreEscapingWithSuffixes,
+                'underscore_escaping_without_suffixes' => TranslationStrategy::UnderscoreEscapingWithoutSuffixes,
+                'no_utf8_escaping_with_suffixes' => TranslationStrategy::NoUTF8EscapingWithSuffixes,
+                'no_translation' => TranslationStrategy::NoTranslation,
             },
             logger: $context->logger,
         );
@@ -90,12 +90,12 @@ final class MetricExporterPrometheus implements ComponentProvider {
                     ->end()
                 ->end()
                 ->enumNode('translation_strategy')
-                    ->defaultValue('UnderscoreEscapingWithSuffixes')
+                    ->defaultValue('underscore_escaping_with_suffixes')
                     ->values([
-                        'UnderscoreEscapingWithSuffixes',
-                        'UnderscoreEscapingWithoutSuffixes',
-                        'NoUTF8EscapingWithSuffixes',
-                        'NoTranslation',
+                        'underscore_escaping_with_suffixes',
+                        'underscore_escaping_without_suffixes',
+                        'no_utf8_escaping_with_suffixes',
+                        'no_translation',
                     ])
                 ->end()
             ->end()

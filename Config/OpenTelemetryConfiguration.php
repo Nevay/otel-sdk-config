@@ -58,6 +58,8 @@ use function explode;
 use function is_array;
 use function is_string;
 use function rawurldecode;
+use function strtolower;
+use function strtoupper;
 use function trim;
 
 final class OpenTelemetryConfiguration implements ComponentProvider {
@@ -403,11 +405,11 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
     /**
      * @param array{
-     *     composite: list<ComponentPlugin<TextMapPropagatorInterface>>,
+     *     composite?: list<ComponentPlugin<TextMapPropagatorInterface>>,
      * } $properties
      */
     private function createPropagator(array $properties, Context $context): TextMapPropagatorInterface {
-        if (!$properties['composite']) {
+        if (!isset($properties['composite'])) {
             return NoopTextMapPropagator::getInstance();
         }
 
@@ -421,11 +423,11 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
     /**
      * @param array{
-     *     composite: list<ComponentPlugin<ResponsePropagatorInterface>>,
+     *     composite?: list<ComponentPlugin<ResponsePropagatorInterface>>,
      * } $properties
      */
     private function createResponsePropagator(array $properties, Context $context): ResponsePropagatorInterface {
-        if (!$properties['composite']) {
+        if (!isset($properties['composite'])) {
             return NoopResponsePropagator::getInstance();
         }
 
@@ -522,10 +524,10 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             ->children()
                 ->scalarNode('file_format')
                     ->isRequired()
-                    ->example('1.0-rc.2')
+                    ->example('1.0-rc.3')
                     ->validate()->always(Util::ensureString())->end()
                     ->validate()
-                        ->ifTrue(static fn(string $version): bool => !Semver::satisfies($version, '^0.4 <=0.4 || ^1.0 <=1.0-rc.2'))
+                        ->ifTrue(static fn(string $version): bool => !Semver::satisfies($version, '^1.0-rc.3 <=1.0-rc.3'))
                         ->thenInvalid('unsupported version')
                     ->end()
                 ->end()
@@ -798,7 +800,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $node
             ->children()
                 ->booleanNode('disabled')->end()
-                ->enumNode('minimum_severity')->values(array_column(Severity::cases(), 'name'))->validate()->always(static fn(string $severity): int => (new ReflectionEnumBackedCase(Severity::class, $severity))->getBackingValue())->end()->end()
+                ->enumNode('minimum_severity')->values(array_map(strtolower(...), array_column(Severity::cases(), 'name')))->validate()->always(static fn(string $severity): int => (new ReflectionEnumBackedCase(Severity::class, strtoupper($severity)))->getBackingValue())->end()->end()
                 ->booleanNode('trace_based')->end()
             ->end()
         ;
