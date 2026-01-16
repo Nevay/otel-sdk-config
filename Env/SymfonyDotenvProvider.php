@@ -7,7 +7,7 @@ use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\Dotenv\Exception\PathException;
 use function array_diff_key;
 
-#[PackageDependency('symfony/dotenv', '^5.4 || ^6.4 || ^7.0')]
+#[PackageDependency('symfony/dotenv', '^5.4 || ^6.4 || ^7.0 || ^8.0')]
 final class SymfonyDotenvProvider implements EnvSourceProvider {
 
     public function getEnvSource(): EnvSource {
