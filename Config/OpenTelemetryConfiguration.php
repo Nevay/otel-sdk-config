@@ -276,7 +276,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         $builder = (new RuleConfiguratorBuilder())
             ->withRule($this->createTracerConfigurator($properties['tracer_provider']['tracer_configurator/development']['default_config'] ?? []))
-            ->withRule(static fn(TracerConfig $config) => $config->disabled = true, filter: Diagnostics::isSelfDiagnostics(...));
+            ->withRule(static fn(TracerConfig $config) => $config->enabled = false, filter: Diagnostics::isSelfDiagnostics(...));
 
         foreach ($properties['tracer_provider']['tracer_configurator/development']['tracers'] as $config) {
             $builder->withRule($this->createTracerConfigurator($config['config']), name: $config['name']);
@@ -285,7 +285,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         $builder = (new RuleConfiguratorBuilder())
             ->withRule($this->createMeterConfigurator($properties['meter_provider']['meter_configurator/development']['default_config'] ?? []))
-            ->withRule(static fn(MeterConfig $config) => $config->disabled = true, filter: Diagnostics::isSelfDiagnostics(...));
+            ->withRule(static fn(MeterConfig $config) => $config->enabled = false, filter: Diagnostics::isSelfDiagnostics(...));
 
         foreach ($properties['meter_provider']['meter_configurator/development']['meters'] as $config) {
             $builder->withRule($this->createMeterConfigurator($config['config']), name: $config['name']);
@@ -294,7 +294,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         $builder = (new RuleConfiguratorBuilder())
             ->withRule($this->createLoggerConfigurator($properties['logger_provider']['logger_configurator/development']['default_config'] ?? []))
-            ->withRule(static fn(LoggerConfig $config) => $config->disabled = true, filter: Diagnostics::isSelfDiagnostics(...))
+            ->withRule(static fn(LoggerConfig $config) => $config->enabled = false, filter: Diagnostics::isSelfDiagnostics(...))
             ->withRule(static fn(LoggerConfig $config) => $config->minimumSeverity = $severity, filter: Diagnostics::isSelfDiagnostics(...));
 
         foreach ($properties['logger_provider']['logger_configurator/development']['loggers'] as $config) {
@@ -460,52 +460,52 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
     /**
      * @param array{
-     *     disabled?: bool,
+     *     enabled?: bool,
      * } $properties
      * @return Closure(TracerConfig): void
      */
     private function createTracerConfigurator(array $properties): Closure {
-        $disabled = $properties['disabled'] ?? null;
+        $enabled = $properties['enabled'] ?? null;
 
-        return static function(TracerConfig $config) use ($disabled): void {
-            if ($disabled !== null) {
-                $config->disabled = $disabled;
+        return static function(TracerConfig $config) use ($enabled): void {
+            if ($enabled !== null) {
+                $config->enabled = $enabled;
             }
         };
     }
 
     /**
      * @param array{
-     *     disabled?: bool,
+     *     enabled?: bool,
      * } $properties
      * @return Closure(MeterConfig): void
      */
     private function createMeterConfigurator(array $properties): Closure {
-        $disabled = $properties['disabled'] ?? null;
+        $enabled = $properties['enabled'] ?? null;
 
-        return static function(MeterConfig $config) use ($disabled): void {
-            if ($disabled !== null) {
-                $config->disabled = $disabled;
+        return static function(MeterConfig $config) use ($enabled): void {
+            if ($enabled !== null) {
+                $config->enabled = $enabled;
             }
         };
     }
 
     /**
      * @param array{
-     *     disabled?: bool,
+     *     enabled?: bool,
      *     minimum_severity?: int,
      *     trace_based?: bool
      * } $properties
      * @return Closure(LoggerConfig): void
      */
     private function createLoggerConfigurator(array $properties): Closure {
-        $disabled = $properties['disabled'] ?? null;
+        $enabled = $properties['enabled'] ?? null;
         $minimumSeverity = $properties['minimum_severity'] ?? null;
         $traceBased = $properties['trace_based'] ?? null;
 
-        return static function(LoggerConfig $config) use ($disabled, $minimumSeverity, $traceBased): void {
-            if ($disabled !== null) {
-                $config->disabled = $disabled;
+        return static function(LoggerConfig $config) use ($enabled, $minimumSeverity, $traceBased): void {
+            if ($enabled !== null) {
+                $config->enabled = $enabled;
             }
             if ($minimumSeverity !== null) {
                 $config->minimumSeverity = $minimumSeverity;
@@ -674,7 +674,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $node = $builder->arrayNode($name);
         $node
             ->children()
-                ->booleanNode('disabled')->end()
+                ->booleanNode('enabled')->end()
             ->end()
         ;
 
@@ -755,7 +755,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $node = $builder->arrayNode($name);
         $node
             ->children()
-                ->booleanNode('disabled')->end()
+                ->booleanNode('enabled')->end()
             ->end()
         ;
 
@@ -799,7 +799,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $node = $builder->arrayNode($name);
         $node
             ->children()
-                ->booleanNode('disabled')->end()
+                ->booleanNode('enabled')->end()
                 ->enumNode('minimum_severity')->values(array_map(strtolower(...), array_column(Severity::cases(), 'name')))->validate()->always(static fn(string $severity): int => (new ReflectionEnumBackedCase(Severity::class, strtoupper($severity)))->getBackingValue())->end()->end()
                 ->booleanNode('trace_based')->end()
             ->end()

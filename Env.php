@@ -139,13 +139,13 @@ final class Env {
         // </editor-fold>
 
         $tracerProviderBuilder->setTracerConfigurator((new RuleConfiguratorBuilder())
-            ->withRule(static fn(TracerConfig $config) => $config->disabled = true, filter: Diagnostics::isSelfDiagnostics(...))
+            ->withRule(static fn(TracerConfig $config) => $config->enabled = false, filter: Diagnostics::isSelfDiagnostics(...))
             ->toConfigurator());
         $meterProviderBuilder->setMeterConfigurator((new RuleConfiguratorBuilder())
-            ->withRule(static fn(MeterConfig $config) => $config->disabled = true, filter: Diagnostics::isSelfDiagnostics(...))
+            ->withRule(static fn(MeterConfig $config) => $config->enabled = false, filter: Diagnostics::isSelfDiagnostics(...))
             ->toConfigurator());
         $loggerProviderBuilder->setLoggerConfigurator((new RuleConfiguratorBuilder())
-            ->withRule(static fn(LoggerConfig $config) => $config->disabled = true, filter: Diagnostics::isSelfDiagnostics(...))
+            ->withRule(static fn(LoggerConfig $config) => $config->enabled = false, filter: Diagnostics::isSelfDiagnostics(...))
             ->withRule(static fn(LoggerConfig $config) => $config->minimumSeverity = $severity, filter: Diagnostics::isSelfDiagnostics(...))
             ->toConfigurator());
 
