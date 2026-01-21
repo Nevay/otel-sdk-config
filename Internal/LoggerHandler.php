@@ -6,9 +6,8 @@ use Monolog\Handler\AbstractHandler;
 use Monolog\Level;
 use Monolog\LogRecord;
 use Monolog\Utils;
-use Nevay\OTelSDK\Common\StackTrace;
 use OpenTelemetry\API\Logs\LoggerProviderInterface;
-use OpenTelemetry\API\Logs\Map\Psr3;
+use OpenTelemetry\API\Logs\Severity;
 use Psr\Log\LogLevel;
 use Throwable;
 
@@ -29,28 +28,31 @@ final class LoggerHandler extends AbstractHandler {
             return false;
         }
 
+        $logger = $this->loggerProvider->getLogger($record['channel']);
+        $severity = Severity::fromPsr3($record['level'])->value;
+
+        if (!$logger->isEnabled(severityNumber: $severity)) {
+            return false;
+        }
+
         $formatted = (new NormalizerFormatter())->format($record);
-        $logRecord = new \OpenTelemetry\API\Logs\LogRecord();
+        $logRecord = $logger->logRecordBuilder();
         $logRecord
             ->setTimestamp((int) $record['datetime']->format('Uu') * 1000)
-            ->setSeverityNumber(Psr3::severityNumber($record['level_name']))
+            ->setSeverityNumber($severity)
             ->setSeverityText($record['level_name'])
             ->setBody($formatted['message'])
         ;
         $exception = $record['context']['exception'] ?? null;
         if ($exception instanceof Throwable) {
-            $logRecord
-                ->setAttribute('exception.type', $exception::class)
-                ->setAttribute('exception.message', $exception->getMessage())
-                ->setAttribute('exception.stacktrace', StackTrace::format($exception, StackTrace::DOT_SEPARATOR))
-            ;
+            $logRecord->setException($exception);
             unset($formatted['context']['exception']);
         }
 
         $logRecord->setAttribute('monolog.context', Utils::jsonEncode($formatted['context'], ignoreErrors: true));
         $logRecord->setAttribute('monolog.extra', Utils::jsonEncode($formatted['extra'], ignoreErrors: true));
 
-        $this->loggerProvider->getLogger($record['channel'])->emit($logRecord);
+        $logRecord->emit();
 
         return !$this->bubble;
     }
