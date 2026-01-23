@@ -58,6 +58,7 @@ use function explode;
 use function is_array;
 use function is_string;
 use function rawurldecode;
+use function strcasecmp;
 use function strtolower;
 use function strtoupper;
 use function trim;
@@ -606,6 +607,9 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                     // Entries are appended to .composite with duplicates filtered out.
                     foreach (explode(',', $value['composite_list']) as $entry) {
                         $name = rawurldecode(trim($entry, " \t"));
+                        if (!strcasecmp($name, 'none')) {
+                            continue;
+                        }
 
                         foreach ($value['composite'] ?? [] as $propagator) {
                             if (is_array($propagator) && array_key_exists($name, $propagator)) {

@@ -191,6 +191,10 @@ final class Env {
     private static function propagator(EnvResolver $env, EnvComponentLoaderRegistry $registry, Context $context): TextMapPropagatorInterface {
         $propagators = [];
         foreach ($env->list('OTEL_PROPAGATORS') ?? ['tracecontext', 'baggage'] as $name) {
+            if (!strcasecmp($name, 'none')) {
+                continue;
+            }
+
             try {
                 $propagators[strtolower($name)] ??= $registry->load(TextMapPropagatorInterface::class, $name, $env, $context);
             } catch (InvalidArgumentException $e) {
@@ -204,6 +208,10 @@ final class Env {
     private static function responsePropagator(EnvResolver $env, EnvComponentLoaderRegistry $registry, Context $context): ResponsePropagatorInterface {
         $propagators = [];
         foreach ($env->list('OTEL_EXPERIMENTAL_RESPONSE_PROPAGATORS') ?? [] as $name) {
+            if (!strcasecmp($name, 'none')) {
+                continue;
+            }
+
             try {
                 $propagators[strtolower($name)] ??= $registry->load(ResponsePropagatorInterface::class, $name, $env, $context);
             } catch (InvalidArgumentException $e) {
