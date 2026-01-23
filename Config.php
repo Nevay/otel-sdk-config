@@ -16,6 +16,20 @@ use WeakMap;
 final class Config {
 
     /**
+     * Loads SDK components from environment variables.
+     *
+     * @return ConfigurationResult created SDK components
+     * @throws Exception if the configuration is invalid
+     *
+     * @see https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/
+     */
+    public static function loadFromEnv(
+        ?EnvReader $envReader = null,
+    ): ConfigurationResult {
+        return Env::load($envReader);
+    }
+
+    /**
      * Loads SDK components from a configuration file.
      *
      * Requires either `symfony/yaml` or `ext-yaml`.
@@ -26,6 +40,8 @@ final class Config {
      *        freshness
      * @return ConfigurationResult created SDK components
      * @throws Exception if the configuration is invalid
+     *
+     * @see https://opentelemetry.io/docs/specs/otel/configuration/sdk/
      */
     public static function loadFile(
         string|array $configFile,
@@ -38,6 +54,17 @@ final class Config {
             ->create(new Context());
     }
 
+    /**
+     * Loads SDK components from the given array config.
+     *
+     * The array config structure matches the file-based structure.
+     *
+     * @param array $config config to load
+     * @return ConfigurationResult created SDK components
+     * @throws Exception if the configuration is invalid
+     *
+     * @see https://opentelemetry.io/docs/specs/otel/configuration/sdk/
+     */
     public static function load(
         array $config,
         ?EnvReader $envReader = null,

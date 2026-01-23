@@ -37,7 +37,7 @@ use function register_shutdown_function;
         if (($configFile = $env->string('OTEL_EXPERIMENTAL_CONFIG_FILE')) !== null) {
             $config = Config::loadFile(Util::makePathAbsolute($configFile), envReader: $envReader);
         } elseif ($env->bool('OTEL_PHP_AUTOLOAD_ENABLED')) {
-            $config = Env::load(envReader: $envReader);
+            $config = Config::loadFromEnv(envReader: $envReader);
         } else {
             return null;
         }

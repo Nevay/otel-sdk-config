@@ -57,6 +57,9 @@ use function array_values;
 use function strcasecmp;
 use function strtolower;
 
+/**
+ * @internal
+ */
 final class Env {
 
     public static function load(
