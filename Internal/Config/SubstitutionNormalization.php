@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\Internal\Config;
 
+use InvalidArgumentException;
 use Nevay\OTelSDK\Configuration\Env\EnvReader;
 use Nevay\OTelSDK\Configuration\Internal\Config\Node\BooleanNode;
 use Nevay\OTelSDK\Configuration\Internal\Config\Node\FloatNode;
@@ -8,11 +9,14 @@ use Nevay\OTelSDK\Configuration\Internal\Config\Node\IntegerNode;
 use Nevay\OTelSDK\Configuration\Internal\Config\Node\PrototypedArrayNode;
 use Nevay\OTelSDK\Configuration\Internal\Config\Node\VariableNode;
 use Symfony\Component\Config\Definition\ArrayNode;
+use Symfony\Component\Config\Definition\BaseNode;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Config\Definition\NodeInterface;
 use Symfony\Component\Config\Definition\ScalarNode;
 use function filter_var;
 use function is_array;
 use function is_string;
+use function sprintf;
 use const FILTER_FLAG_ALLOW_HEX;
 use const FILTER_FLAG_ALLOW_OCTAL;
 use const FILTER_NULL_ON_FAILURE;
@@ -63,10 +67,15 @@ final class SubstitutionNormalization implements Normalization {
                     => false,
             };
 
-            return $this->replaceEnvVariables($value, $resolveScalars);
+            try {
+                return $this->replaceEnvVariables($value, $resolveScalars);
+            } catch (InvalidArgumentException $e) {
+                throw new InvalidConfigurationException(sprintf('Invalid configuration for path "%s": %s', $node->getPath(), $e->getMessage()), $e->getCode(), $e);
+            }
         }
         if ($node instanceof VariableNode) {
-            return $this->replaceEnvVariablesRecursive($value);
+            $separator = (static fn(BaseNode $node) => $node->pathSeparator)->bindTo(null, BaseNode::class)($node);
+            return $this->replaceEnvVariablesRecursive($value, $node->getPath(), $separator);
         }
 
         return $value;
@@ -101,16 +110,20 @@ final class SubstitutionNormalization implements Normalization {
         };
     }
 
-    private function replaceEnvVariablesRecursive(mixed $value): mixed {
+    private function replaceEnvVariablesRecursive(mixed $value, string $path, string $pathSeparator): mixed {
         if (is_array($value)) {
             foreach ($value as $k => $v) {
-                if (($r = $this->replaceEnvVariablesRecursive($v)) !== $v) {
+                if (($r = $this->replaceEnvVariablesRecursive($v, $path . $pathSeparator . $k, $pathSeparator)) !== $v) {
                     $value[$k] = $r;
                 }
             }
         }
         if (is_string($value)) {
-            $value = $this->replaceEnvVariables($value);
+            try {
+                $value = $this->replaceEnvVariables($value);
+            } catch (InvalidArgumentException $e) {
+                throw new InvalidConfigurationException(sprintf('Invalid configuration for path "%s": %s', $path, $e->getMessage()), $e->getCode(), $e);
+            }
         }
 
         return $value;
