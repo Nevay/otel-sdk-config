@@ -7,6 +7,7 @@ use Nevay\OTelSDK\Configuration\Env\EnvReader;
 use Nevay\OTelSDK\Configuration\Env\EnvSourceReader;
 use function levenshtein;
 use function preg_match;
+use function str_contains;
 use function strcspn;
 use function strlen;
 use function strpos;
@@ -21,6 +22,10 @@ use function substr_count;
 final class Substitution {
 
     public static function process(string $s, EnvReader $envReader): string {
+        if (!str_contains($s, '$')) {
+            return $s;
+        }
+
         $r = '';
         $terminalSink = static function(string $s, int $i, int $n) use (&$r): void {
             $r .= substr($s, $i, $n - $i);
@@ -77,7 +82,7 @@ final class Substitution {
         }
 
         if ($s[$d + 1] === '-') {
-            return $envReader->read($envName) ?? substr($s, $d + 2, $n - $d- 2);
+            return $envReader->read($envName) ?? substr($s, $d + 2, $n - $d - 2);
         }
 
         if ($resolvePrefix) {
