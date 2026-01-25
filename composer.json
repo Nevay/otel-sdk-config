@@ -46,7 +46,6 @@
                 "Nevay\\OTelSDK\\Configuration\\Config\\Propagator\\TextMapPropagatorB3",
                 "Nevay\\OTelSDK\\Configuration\\Config\\Propagator\\TextMapPropagatorB3Multi",
                 "Nevay\\OTelSDK\\Configuration\\Config\\Propagator\\TextMapPropagatorBaggage",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Propagator\\TextMapPropagatorComposite",
                 "Nevay\\OTelSDK\\Configuration\\Config\\Propagator\\TextMapPropagatorJaeger",
                 "Nevay\\OTelSDK\\Configuration\\Config\\Propagator\\TextMapPropagatorTraceContext",
                 "Nevay\\OTelSDK\\Configuration\\Config\\ResponsePropagator\\ResponsePropagatorServerTiming",
