@@ -30,6 +30,7 @@
             "Nevay\\OTelSDK\\Configuration\\": ""
         },
         "files": [
+            "_register.php",
             "autoload.php"
         ]
     },
@@ -37,91 +38,9 @@
         "branch-alias": {
             "dev-main": "0.1.x-dev"
         },
-        "spi": {
-            "Nevay\\OTelSDK\\Configuration\\Env\\EnvSourceProvider": [
-                "Nevay\\OTelSDK\\Configuration\\Env\\SymfonyDotenvProvider",
-                "Nevay\\OTelSDK\\Configuration\\Env\\VlucasPhpdotenvProvider"
-            ],
-            "OpenTelemetry\\API\\Configuration\\Config\\ComponentProvider": [
-                "Nevay\\OTelSDK\\Configuration\\Config\\Propagator\\TextMapPropagatorB3",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Propagator\\TextMapPropagatorB3Multi",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Propagator\\TextMapPropagatorBaggage",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Propagator\\TextMapPropagatorJaeger",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Propagator\\TextMapPropagatorTraceContext",
-                "Nevay\\OTelSDK\\Configuration\\Config\\ResponsePropagator\\ResponsePropagatorServerTiming",
-                "Nevay\\OTelSDK\\Configuration\\Config\\ResponsePropagator\\ResponsePropagatorTraceResponse",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Resource\\ResourceDetectorComposer",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Resource\\ResourceDetectorContainer",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Resource\\ResourceDetectorDeployment",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Resource\\ResourceDetectorHost",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Resource\\ResourceDetectorProcess",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Resource\\ResourceDetectorService",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Trace\\ComposableSamplerAlwaysOff",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Trace\\ComposableSamplerAlwaysOn",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Trace\\ComposableSamplerParentThreshold",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Trace\\ComposableSamplerProbability",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Trace\\ComposableSamplerRuleBased",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Trace\\SamplerAlwaysOff",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Trace\\SamplerAlwaysOn",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Trace\\SamplerComposite",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Trace\\SamplerJaegerRemote",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Trace\\SamplerParentBased",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Trace\\SamplerProbability",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Trace\\SamplerTraceIdRatioBased",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Trace\\SpanExporterConsole",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Trace\\SpanExporterOtlpFile",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Trace\\SpanExporterOtlpGrpc",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Trace\\SpanExporterOtlpHttp",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Trace\\SpanProcessorBatch",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Trace\\SpanProcessorSimple",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Metrics\\AggregationBase2ExponentialBucketHistogram",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Metrics\\AggregationDefault",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Metrics\\AggregationDrop",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Metrics\\AggregationExplicitBucketHistogram",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Metrics\\AggregationLastValue",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Metrics\\AggregationSum",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Metrics\\MetricExporterConsole",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Metrics\\MetricExporterOtlpFile",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Metrics\\MetricExporterOtlpGrpc",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Metrics\\MetricExporterOtlpHttp",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Metrics\\MetricExporterPrometheus",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Metrics\\MetricReaderPeriodic",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Metrics\\MetricReaderPull",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Logs\\LogRecordExporterConsole",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Logs\\LogRecordExporterOtlpFile",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Logs\\LogRecordExporterOtlpGrpc",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Logs\\LogRecordExporterOtlpHttp",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Logs\\LogRecordProcessorBatch",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Logs\\LogRecordProcessorSimple",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Instrumentation\\InstrumentationConfigurationHttp",
-                "Nevay\\OTelSDK\\Configuration\\Config\\Instrumentation\\InstrumentationConfigurationPeer"
-            ],
-            "OpenTelemetry\\API\\Configuration\\ConfigEnv\\EnvComponentLoader": [
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Propagator\\TextMapPropagatorLoaderB3",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Propagator\\TextMapPropagatorLoaderB3Multi",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Propagator\\TextMapPropagatorLoaderBaggage",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Propagator\\TextMapPropagatorLoaderJaeger",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Propagator\\TextMapPropagatorLoaderTraceContext",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\ResponsePropagator\\ResponsePropagatorLoaderServerTiming",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\ResponsePropagator\\ResponsePropagatorLoaderTraceResponse",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SamplerLoaderAlwaysOff",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SamplerLoaderAlwaysOn",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SamplerLoaderJaegerRemote",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SamplerLoaderParentBasedAlwaysOff",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SamplerLoaderParentBasedAlwaysOn",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SamplerLoaderParentBasedJaegerRemote",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SamplerLoaderParentBasedTraceIdRatio",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SamplerLoaderTraceIdRatio",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SpanExporterLoaderConsole",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Trace\\SpanExporterLoaderOtlp",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Metrics\\ExemplarFilterLoaderAlwaysOff",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Metrics\\ExemplarFilterLoaderAlwaysOn",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Metrics\\ExemplarFilterLoaderTraceBased",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Metrics\\MetricExporterLoaderConsole",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Metrics\\MetricExporterLoaderOtlp",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Metrics\\MetricExporterLoaderPrometheus",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Logs\\LogRecordExporterLoaderConsole",
-                "Nevay\\OTelSDK\\Configuration\\ConfigEnv\\Logs\\LogRecordExporterLoaderOtlp"
+        "spi-config": {
+            "autoload-files": [
+                "_register.php"
             ]
         }
     }

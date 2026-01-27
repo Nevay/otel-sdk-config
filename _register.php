@@ -1,0 +1,93 @@
+<?php declare(strict_types=1);
+namespace Nevay\OTelSDK\Configuration;
+
+use Nevay\OTelSDK\Configuration\Env\EnvSourceProvider;
+use Nevay\SPI\ServiceLoader;
+use OpenTelemetry\API\Configuration\Config\ComponentProvider;
+use OpenTelemetry\API\Configuration\ConfigEnv\EnvComponentLoader;
+
+ServiceLoader::register(EnvSourceProvider::class, Env\SymfonyDotenvProvider::class);
+ServiceLoader::register(EnvSourceProvider::class, Env\VlucasPhpdotenvProvider::class);
+
+
+ServiceLoader::register(ComponentProvider::class, Config\Instrumentation\InstrumentationConfigurationHttp::class);
+ServiceLoader::register(ComponentProvider::class, Config\Instrumentation\InstrumentationConfigurationPeer::class);
+ServiceLoader::register(ComponentProvider::class, Config\Propagator\TextMapPropagatorB3::class);
+ServiceLoader::register(ComponentProvider::class, Config\Propagator\TextMapPropagatorB3Multi::class);
+ServiceLoader::register(ComponentProvider::class, Config\Propagator\TextMapPropagatorBaggage::class);
+ServiceLoader::register(ComponentProvider::class, Config\Propagator\TextMapPropagatorJaeger::class);
+ServiceLoader::register(ComponentProvider::class, Config\Propagator\TextMapPropagatorTraceContext::class);
+ServiceLoader::register(ComponentProvider::class, Config\ResponsePropagator\ResponsePropagatorServerTiming::class);
+ServiceLoader::register(ComponentProvider::class, Config\ResponsePropagator\ResponsePropagatorTraceResponse::class);
+
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Propagator\TextMapPropagatorLoaderB3::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Propagator\TextMapPropagatorLoaderB3Multi::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Propagator\TextMapPropagatorLoaderBaggage::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Propagator\TextMapPropagatorLoaderJaeger::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Propagator\TextMapPropagatorLoaderTraceContext::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\ResponsePropagator\ResponsePropagatorLoaderServerTiming::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\ResponsePropagator\ResponsePropagatorLoaderTraceResponse::class);
+
+
+ServiceLoader::register(ComponentProvider::class, Config\Resource\ResourceDetectorComposer::class);
+ServiceLoader::register(ComponentProvider::class, Config\Resource\ResourceDetectorContainer::class);
+ServiceLoader::register(ComponentProvider::class, Config\Resource\ResourceDetectorDeployment::class);
+ServiceLoader::register(ComponentProvider::class, Config\Resource\ResourceDetectorHost::class);
+ServiceLoader::register(ComponentProvider::class, Config\Resource\ResourceDetectorProcess::class);
+ServiceLoader::register(ComponentProvider::class, Config\Resource\ResourceDetectorService::class);
+ServiceLoader::register(ComponentProvider::class, Config\Trace\ComposableSamplerAlwaysOff::class);
+ServiceLoader::register(ComponentProvider::class, Config\Trace\ComposableSamplerAlwaysOn::class);
+ServiceLoader::register(ComponentProvider::class, Config\Trace\ComposableSamplerParentThreshold::class);
+ServiceLoader::register(ComponentProvider::class, Config\Trace\ComposableSamplerProbability::class);
+ServiceLoader::register(ComponentProvider::class, Config\Trace\ComposableSamplerRuleBased::class);
+ServiceLoader::register(ComponentProvider::class, Config\Trace\SamplerAlwaysOff::class);
+ServiceLoader::register(ComponentProvider::class, Config\Trace\SamplerAlwaysOn::class);
+ServiceLoader::register(ComponentProvider::class, Config\Trace\SamplerComposite::class);
+ServiceLoader::register(ComponentProvider::class, Config\Trace\SamplerJaegerRemote::class);
+ServiceLoader::register(ComponentProvider::class, Config\Trace\SamplerParentBased::class);
+ServiceLoader::register(ComponentProvider::class, Config\Trace\SamplerProbability::class);
+ServiceLoader::register(ComponentProvider::class, Config\Trace\SamplerTraceIdRatioBased::class);
+ServiceLoader::register(ComponentProvider::class, Config\Trace\SpanExporterConsole::class);
+ServiceLoader::register(ComponentProvider::class, Config\Trace\SpanExporterOtlpFile::class);
+ServiceLoader::register(ComponentProvider::class, Config\Trace\SpanExporterOtlpGrpc::class);
+ServiceLoader::register(ComponentProvider::class, Config\Trace\SpanExporterOtlpHttp::class);
+ServiceLoader::register(ComponentProvider::class, Config\Trace\SpanProcessorBatch::class);
+ServiceLoader::register(ComponentProvider::class, Config\Trace\SpanProcessorSimple::class);
+ServiceLoader::register(ComponentProvider::class, Config\Metrics\AggregationBase2ExponentialBucketHistogram::class);
+ServiceLoader::register(ComponentProvider::class, Config\Metrics\AggregationDefault::class);
+ServiceLoader::register(ComponentProvider::class, Config\Metrics\AggregationDrop::class);
+ServiceLoader::register(ComponentProvider::class, Config\Metrics\AggregationExplicitBucketHistogram::class);
+ServiceLoader::register(ComponentProvider::class, Config\Metrics\AggregationLastValue::class);
+ServiceLoader::register(ComponentProvider::class, Config\Metrics\AggregationSum::class);
+ServiceLoader::register(ComponentProvider::class, Config\Metrics\MetricExporterConsole::class);
+ServiceLoader::register(ComponentProvider::class, Config\Metrics\MetricExporterOtlpFile::class);
+ServiceLoader::register(ComponentProvider::class, Config\Metrics\MetricExporterOtlpGrpc::class);
+ServiceLoader::register(ComponentProvider::class, Config\Metrics\MetricExporterOtlpHttp::class);
+ServiceLoader::register(ComponentProvider::class, Config\Metrics\MetricExporterPrometheus::class);
+ServiceLoader::register(ComponentProvider::class, Config\Metrics\MetricReaderPeriodic::class);
+ServiceLoader::register(ComponentProvider::class, Config\Metrics\MetricReaderPull::class);
+ServiceLoader::register(ComponentProvider::class, Config\Logs\LogRecordExporterConsole::class);
+ServiceLoader::register(ComponentProvider::class, Config\Logs\LogRecordExporterOtlpFile::class);
+ServiceLoader::register(ComponentProvider::class, Config\Logs\LogRecordExporterOtlpGrpc::class);
+ServiceLoader::register(ComponentProvider::class, Config\Logs\LogRecordExporterOtlpHttp::class);
+ServiceLoader::register(ComponentProvider::class, Config\Logs\LogRecordProcessorBatch::class);
+ServiceLoader::register(ComponentProvider::class, Config\Logs\LogRecordProcessorSimple::class);
+
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Trace\SamplerLoaderAlwaysOff::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Trace\SamplerLoaderAlwaysOn::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Trace\SamplerLoaderJaegerRemote::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Trace\SamplerLoaderParentBasedAlwaysOff::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Trace\SamplerLoaderParentBasedAlwaysOn::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Trace\SamplerLoaderParentBasedJaegerRemote::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Trace\SamplerLoaderParentBasedTraceIdRatio::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Trace\SamplerLoaderTraceIdRatio::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Trace\SpanExporterLoaderConsole::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Trace\SpanExporterLoaderOtlp::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Metrics\ExemplarFilterLoaderAlwaysOff::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Metrics\ExemplarFilterLoaderAlwaysOn::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Metrics\ExemplarFilterLoaderTraceBased::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Metrics\MetricExporterLoaderConsole::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Metrics\MetricExporterLoaderOtlp::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Metrics\MetricExporterLoaderPrometheus::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Logs\LogRecordExporterLoaderConsole::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Logs\LogRecordExporterLoaderOtlp::class);
