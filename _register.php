@@ -15,7 +15,6 @@ ServiceLoader::register(ComponentProvider::class, Config\Instrumentation\Instrum
 ServiceLoader::register(ComponentProvider::class, Config\Propagator\TextMapPropagatorB3::class);
 ServiceLoader::register(ComponentProvider::class, Config\Propagator\TextMapPropagatorB3Multi::class);
 ServiceLoader::register(ComponentProvider::class, Config\Propagator\TextMapPropagatorBaggage::class);
-ServiceLoader::register(ComponentProvider::class, Config\Propagator\TextMapPropagatorJaeger::class);
 ServiceLoader::register(ComponentProvider::class, Config\Propagator\TextMapPropagatorTraceContext::class);
 ServiceLoader::register(ComponentProvider::class, Config\ResponsePropagator\ResponsePropagatorServerTiming::class);
 ServiceLoader::register(ComponentProvider::class, Config\ResponsePropagator\ResponsePropagatorTraceResponse::class);
@@ -23,7 +22,6 @@ ServiceLoader::register(ComponentProvider::class, Config\ResponsePropagator\Resp
 ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Propagator\TextMapPropagatorLoaderB3::class);
 ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Propagator\TextMapPropagatorLoaderB3Multi::class);
 ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Propagator\TextMapPropagatorLoaderBaggage::class);
-ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Propagator\TextMapPropagatorLoaderJaeger::class);
 ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Propagator\TextMapPropagatorLoaderTraceContext::class);
 ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\ResponsePropagator\ResponsePropagatorLoaderServerTiming::class);
 ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\ResponsePropagator\ResponsePropagatorLoaderTraceResponse::class);
