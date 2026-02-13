@@ -49,18 +49,14 @@ use OpenTelemetry\Context\Propagation\NoopResponsePropagator;
 use OpenTelemetry\Context\Propagation\NoopTextMapPropagator;
 use OpenTelemetry\Context\Propagation\ResponsePropagatorInterface;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
-use ReflectionEnumBackedCase;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeBuilder;
-use function array_column;
 use function array_key_exists;
 use function explode;
 use function is_array;
 use function is_string;
 use function rawurldecode;
 use function strcasecmp;
-use function strtolower;
-use function strtoupper;
 use function trim;
 
 final class OpenTelemetryConfiguration implements ComponentProvider {
@@ -69,7 +65,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      * @param array{
      *     file_format: string,
      *     disabled: bool,
-     *     log_level: string,
+     *     log_level: Severity,
      *     resource?: array{
      *         attributes?: non-empty-list<array{
      *             name: string,
@@ -160,7 +156,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *         "logger_configurator/development": array{
      *             default_config?: array{
      *                 disabled?: bool,
-     *                 minimum_severity?: int,
+     *                 minimum_severity?: Severity,
      *                 trace_based?: bool,
      *             },
      *             loggers: list<array{
@@ -184,9 +180,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $logLevel = $properties['log_level'];
 
         $logger = new Logger('otel');
-        $logger->pushHandler(new ErrorLogHandler(level: $logLevel));
+        $logger->pushHandler(new ErrorLogHandler(level: Util::severityToLogLevel($logLevel)));
         $logger->debug('Initializing OTelSDK from declarative config');
-        $severity = Severity::fromPsr3($logLevel)->value;
 
         $customization = $context->getExtension(Customization::class);
 
@@ -323,7 +318,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $builder = (new RuleConfiguratorBuilder())
             ->withRule($this->createLoggerConfigurator($properties['logger_provider']['logger_configurator/development']['default_config'] ?? []))
             ->withRule(static fn(LoggerConfig $config) => $config->enabled = false, filter: Diagnostics::isSelfDiagnostics(...))
-            ->withRule(static fn(LoggerConfig $config) => $config->minimumSeverity = $severity, filter: Diagnostics::isSelfDiagnostics(...));
+            ->withRule(static fn(LoggerConfig $config) => $config->minimumSeverity = $logLevel->value, filter: Diagnostics::isSelfDiagnostics(...));
 
         foreach ($properties['logger_provider']['logger_configurator/development']['loggers'] as $loggerConfigurator) {
             $builder->withRule($this->createLoggerConfigurator($loggerConfigurator['config']), name: $loggerConfigurator['name']);
@@ -500,7 +495,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
     /**
      * @param array{
      *     enabled?: bool,
-     *     minimum_severity?: int,
+     *     minimum_severity?: Severity,
      *     trace_based?: bool
      * } $properties
      * @return Closure(LoggerConfig): void
@@ -515,7 +510,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 $config->enabled = $enabled;
             }
             if ($minimumSeverity !== null) {
-                $config->minimumSeverity = $minimumSeverity;
+                $config->minimumSeverity = $minimumSeverity->value;
             }
             if ($traceBased !== null) {
                 $config->traceBased = $traceBased;
@@ -539,7 +534,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                     ->end()
                 ->end()
                 ->booleanNode('disabled')->defaultFalse()->end()
-                ->scalarNode('log_level')->defaultValue('info')->validate()->always(Util::ensureString())->end()->end()
+                ->enumNode('log_level')->defaultValue(Severity::INFO)->values(Util::severityValues())->validate()->always(Util::severityByName(...))->end()->end()
                 ->append($this->getResourceConfig($registry, $builder))
                 ->append($this->getAttributeLimitsConfig($builder))
                 ->append($this->getPropagatorConfig($registry, $builder, 'propagator', TextMapPropagatorInterface::class))
@@ -810,7 +805,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $node
             ->children()
                 ->booleanNode('enabled')->end()
-                ->enumNode('minimum_severity')->values(array_map(strtolower(...), array_column(Severity::cases(), 'name')))->validate()->always(static fn(string $severity): int => (new ReflectionEnumBackedCase(Severity::class, strtoupper($severity)))->getBackingValue())->end()->end()
+                ->enumNode('minimum_severity')->values(Util::severityValues())->validate()->always(Util::severityByName(...))->end()->end()
                 ->booleanNode('trace_based')->end()
             ->end()
         ;

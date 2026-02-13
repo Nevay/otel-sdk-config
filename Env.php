@@ -19,6 +19,7 @@ use Nevay\OTelSDK\Configuration\Env\ServerEnvSource;
 use Nevay\OTelSDK\Configuration\Internal\ConfigEnv\DebugEnvReader;
 use Nevay\OTelSDK\Configuration\Internal\ConfigEnv\EnvComponentLoaderRegistry;
 use Nevay\OTelSDK\Configuration\Internal\ConfigEnv\EnvResolver;
+use Nevay\OTelSDK\Configuration\Internal\Util;
 use Nevay\OTelSDK\Configuration\SelfDiagnostics\Diagnostics;
 use Nevay\OTelSDK\Logs\LoggerConfig;
 use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
@@ -70,12 +71,11 @@ final class Env {
             new PhpIniEnvSource(),
         ]);
 
-        $logLevel = (new EnvResolver($envReader))->string('OTEL_LOG_LEVEL') ?? 'info';
+        $logLevel = Util::severityByName((new EnvResolver($envReader))->enum('OTEL_LOG_LEVEL', Util::severityValues()) ?? 'info');
 
         $logger = new Logger('otel');
-        $logger->pushHandler(new ErrorLogHandler(level: $logLevel));
+        $logger->pushHandler(new ErrorLogHandler(level: Util::severityToLogLevel($logLevel)));
         $logger->debug('Initializing OTelSDK from env');
-        $severity = Severity::fromPsr3($logLevel)->value;
 
         $registry = new EnvComponentLoaderRegistry();
         foreach (ServiceLoader::load(EnvComponentLoader::class) as $loader) {
@@ -174,7 +174,7 @@ final class Env {
             ->toConfigurator());
         $loggerProviderBuilder->setLoggerConfigurator((new RuleConfiguratorBuilder())
             ->withRule(static fn(LoggerConfig $config) => $config->enabled = false, filter: Diagnostics::isSelfDiagnostics(...))
-            ->withRule(static fn(LoggerConfig $config) => $config->minimumSeverity = $severity, filter: Diagnostics::isSelfDiagnostics(...))
+            ->withRule(static fn(LoggerConfig $config) => $config->minimumSeverity = $logLevel->value, filter: Diagnostics::isSelfDiagnostics(...))
             ->toConfigurator());
 
         self::tracerProvider($tracerProviderBuilder, $env, $registry, $context);

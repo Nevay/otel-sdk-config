@@ -4,11 +4,15 @@ namespace Nevay\OTelSDK\Configuration\Internal;
 use Closure;
 use Composer\InstalledVersions;
 use InvalidArgumentException;
+use OpenTelemetry\API\Logs\Severity;
+use Psr\Log\LogLevel;
+use ReflectionEnumBackedCase;
 use Symfony\Component\Config\Exception\FileLocatorFileNotFoundException;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Filesystem\Path;
 use function array_column;
 use function array_filter;
+use function array_map;
 use function assert;
 use function class_exists;
 use function count;
@@ -16,12 +20,57 @@ use function explode;
 use function is_string;
 use function rawurldecode;
 use function sprintf;
+use function strtolower;
+use function strtoupper;
 use function trim;
 
 /**
  * @internal
  */
 final class Util {
+
+    public static function severityValues(): array {
+        return array_map(strtolower(...), array_column(Severity::cases(), 'name'));
+    }
+
+    public static function severityByName(string $name): Severity {
+        $severity = (new ReflectionEnumBackedCase(Severity::class, strtoupper($name)))->getValue();
+        assert($severity instanceof Severity);
+
+        return $severity;
+    }
+
+    /**
+     * @see Severity::fromPsr3()
+     */
+    public static function severityToLogLevel(Severity $severity): string {
+        return match ($severity) {
+            Severity::TRACE,
+            Severity::TRACE2,
+            Severity::TRACE3,
+            Severity::TRACE4,
+            Severity::DEBUG,
+            Severity::DEBUG2,
+            Severity::DEBUG3,
+            Severity::DEBUG4 => LogLevel::DEBUG,
+            Severity::INFO => LogLevel::INFO,
+            Severity::INFO2,
+            Severity::INFO3,
+            Severity::INFO4 => LogLevel::NOTICE,
+            Severity::WARN,
+            Severity::WARN2,
+            Severity::WARN3,
+            Severity::WARN4 => LogLevel::WARNING,
+            Severity::ERROR => LogLevel::ERROR,
+            Severity::ERROR2 => LogLevel::CRITICAL,
+            Severity::ERROR3,
+            Severity::ERROR4 => LogLevel::ALERT,
+            Severity::FATAL,
+            Severity::FATAL2,
+            Severity::FATAL3,
+            Severity::FATAL4 => LogLevel::EMERGENCY,
+        };
+    }
 
     public static function ensurePath(): Closure {
         return static function(mixed $value): ?string {
