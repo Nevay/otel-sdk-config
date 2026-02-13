@@ -19,7 +19,6 @@ use Nevay\OTelSDK\Configuration\Env\ServerEnvSource;
 use Nevay\OTelSDK\Configuration\Internal\ConfigEnv\DebugEnvReader;
 use Nevay\OTelSDK\Configuration\Internal\ConfigEnv\EnvComponentLoaderRegistry;
 use Nevay\OTelSDK\Configuration\Internal\ConfigEnv\EnvResolver;
-use Nevay\OTelSDK\Configuration\Internal\LoggerHandler;
 use Nevay\OTelSDK\Configuration\SelfDiagnostics\Diagnostics;
 use Nevay\OTelSDK\Logs\LoggerConfig;
 use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
@@ -64,6 +63,7 @@ final class Env {
 
     public static function load(
         ?EnvReader $envReader = null,
+        ?Customization $customization = null,
     ): ConfigurationResult {
         $envReader ??= new EnvSourceReader([
             new ServerEnvSource(),
@@ -85,23 +85,47 @@ final class Env {
         $env = new EnvResolver(new DebugEnvReader($envReader, $logger), $logger);
         $context = new Context(logger: $logger);
 
-        if ($env->bool('OTEL_SDK_DISABLED') ?? false) {
-            $propagator = self::propagator($env, $registry, $context);
-            $responsePropagator = self::responsePropagator($env, $registry, $context);
-            $configProperties = self::configProperties($env, $registry, $context);
+        $propagator = self::propagator($env, $registry, $context);
+        $responsePropagator = self::responsePropagator($env, $registry, $context);
+        $configProperties = self::configProperties($env, $registry, $context);
 
+        if ($env->bool('OTEL_SDK_DISABLED') ?? false) {
             $logger->debug('Initialized OTelSDK from env', ['disabled' => true]);
 
-            return new ConfigurationResult(
-                $propagator,
-                $responsePropagator,
-                new NoopTracerProvider(),
-                new NoopMeterProvider(),
-                new NoopLoggerProvider(),
-                $configProperties,
-                $logger,
+            $config = new ConfigurationResult(
+                propagator: $propagator,
+                responsePropagator: $responsePropagator,
+                tracerProvider: new NoopTracerProvider(),
+                meterProvider: new NoopMeterProvider(),
+                loggerProvider: new NoopLoggerProvider(),
+                configProperties: $configProperties,
             );
+            $customization?->onApiAvailable($config, $context);
+
+            return $config;
         }
+
+        $tracerProvider = TracerProviderBuilder::buildBase($logger);
+        $meterProvider = MeterProviderBuilder::buildBase($logger);
+        $loggerProvider = LoggerProviderBuilder::buildBase($logger);
+
+        $context = new Context(
+            tracerProvider: new SelfDiagnostics\TracerProvider($tracerProvider),
+            meterProvider: new SelfDiagnostics\MeterProvider($meterProvider),
+            loggerProvider: new SelfDiagnostics\LoggerProvider($loggerProvider),
+            logger: $logger,
+        );
+
+        $config = new ConfigurationResult(
+            propagator: $propagator,
+            responsePropagator: $responsePropagator,
+            tracerProvider: $tracerProvider,
+            meterProvider: $meterProvider,
+            loggerProvider: $loggerProvider,
+            configProperties: $configProperties,
+        );
+
+        $customization?->onApiAvailable($config, $context);
 
         $tracerProviderBuilder = new TracerProviderBuilder();
         $meterProviderBuilder = new MeterProviderBuilder();
@@ -133,6 +157,7 @@ final class Env {
         $tracerProviderBuilder->setResource($resource);
         $meterProviderBuilder->setResource($resource);
         $loggerProviderBuilder->setResource($resource);
+        $context = $context->withExtension($resource, Resource::class);
 
         $attributeCountLimit = $env->int('OTEL_ATTRIBUTE_COUNT_LIMIT');
         $attributeValueLengthLimit = $env->int('OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT');
@@ -152,43 +177,22 @@ final class Env {
             ->withRule(static fn(LoggerConfig $config) => $config->minimumSeverity = $severity, filter: Diagnostics::isSelfDiagnostics(...))
             ->toConfigurator());
 
-        $tracerProvider = TracerProviderBuilder::buildBase($logger);
-        $meterProvider = MeterProviderBuilder::buildBase($logger);
-        $loggerProvider = LoggerProviderBuilder::buildBase($logger);
-
-        $context = new Context(
-            tracerProvider: new SelfDiagnostics\TracerProvider($tracerProvider),
-            meterProvider: new SelfDiagnostics\MeterProvider($meterProvider),
-            loggerProvider: new SelfDiagnostics\LoggerProvider($loggerProvider),
-            logger: $logger,
-        );
-        $context = $context->withExtension($resource, Resource::class);
-
         self::tracerProvider($tracerProviderBuilder, $env, $registry, $context);
         self::meterProvider($meterProviderBuilder, $env, $registry, $context);
         self::loggerProvider($loggerProviderBuilder, $env, $registry, $context);
+
+        $customization?->customizeTracerProvider($tracerProviderBuilder, $context);
+        $customization?->customizeMeterProvider($meterProviderBuilder, $context);
+        $customization?->customizeLoggerProvider($loggerProviderBuilder, $context);
 
         $tracerProviderBuilder->copyStateInto($tracerProvider, $context);
         $meterProviderBuilder->copyStateInto($meterProvider, $context);
         $loggerProviderBuilder->copyStateInto($loggerProvider, $context);
 
-        $propagator = self::propagator($env, $registry, $context);
-        $responsePropagator = self::responsePropagator($env, $registry, $context);
-        $configProperties = self::configProperties($env, $registry, $context);
-
+        $customization?->onSdkAvailable($config, $context);
         $logger->debug('Initialized OTelSDK from env');
-        $logger = clone $logger;
-        $logger->pushHandler(new LoggerHandler($context->loggerProvider, level: $logLevel));
 
-        return new ConfigurationResult(
-            $propagator,
-            $responsePropagator,
-            $tracerProvider,
-            $meterProvider,
-            $loggerProvider,
-            $configProperties,
-            $logger,
-        );
+        return $config;
     }
 
     private static function propagator(EnvResolver $env, EnvComponentLoaderRegistry $registry, Context $context): TextMapPropagatorInterface {

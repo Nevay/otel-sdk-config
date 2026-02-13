@@ -12,8 +12,8 @@ use Nevay\OTelSDK\Common\Resource;
 use Nevay\OTelSDK\Common\ResourceDetector;
 use Nevay\OTelSDK\Common\Schema\StaticResourceTransformer;
 use Nevay\OTelSDK\Common\Schema\TransformationException;
+use Nevay\OTelSDK\Configuration\Customization;
 use Nevay\OTelSDK\Configuration\ConfigurationResult;
-use Nevay\OTelSDK\Configuration\Internal\LoggerHandler;
 use Nevay\OTelSDK\Configuration\Internal\Util;
 use Nevay\OTelSDK\Configuration\SelfDiagnostics;
 use Nevay\OTelSDK\Configuration\SelfDiagnostics\Diagnostics;
@@ -188,25 +188,51 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $logger->debug('Initializing OTelSDK from declarative config');
         $severity = Severity::fromPsr3($logLevel)->value;
 
+        $customization = $context->getExtension(Customization::class);
+
         $context = new Context(logger: $logger);
 
-        if ($properties['disabled']) {
-            $propagator = $this->createPropagator($properties['propagator'] ?? [], $context);
-            $responsePropagator = $this->createResponsePropagator($properties['response_propagator/development'] ?? [], $context);
-            $configProperties = $this->createConfigProperties($properties['instrumentation/development'], $context);
+        $propagator = $this->createPropagator($properties['propagator'] ?? [], $context);
+        $responsePropagator = $this->createResponsePropagator($properties['response_propagator/development'] ?? [], $context);
+        $configProperties = $this->createConfigProperties($properties['instrumentation/development'], $context);
 
+        if ($properties['disabled']) {
             $logger->debug('Initialized OTelSDK from declarative config', ['disabled' => true]);
 
-            return new ConfigurationResult(
-                $propagator,
-                $responsePropagator,
-                new NoopTracerProvider(),
-                new NoopMeterProvider(),
-                new NoopLoggerProvider(),
-                $configProperties,
-                $logger,
+            $config = new ConfigurationResult(
+                propagator: $propagator,
+                responsePropagator: $responsePropagator,
+                tracerProvider: new NoopTracerProvider(),
+                meterProvider: new NoopMeterProvider(),
+                loggerProvider: new NoopLoggerProvider(),
+                configProperties: $configProperties,
             );
+            $customization?->onApiAvailable($config, $context);
+
+            return $config;
         }
+
+        $tracerProvider = TracerProviderBuilder::buildBase($logger);
+        $meterProvider = MeterProviderBuilder::buildBase($logger);
+        $loggerProvider = LoggerProviderBuilder::buildBase($logger);
+
+        $context = new Context(
+            tracerProvider: new SelfDiagnostics\TracerProvider($tracerProvider),
+            meterProvider: new SelfDiagnostics\MeterProvider($meterProvider),
+            loggerProvider: new SelfDiagnostics\LoggerProvider($loggerProvider),
+            logger: $logger,
+        );
+
+        $config = new ConfigurationResult(
+            propagator: $propagator,
+            responsePropagator: $responsePropagator,
+            tracerProvider: $tracerProvider,
+            meterProvider: $meterProvider,
+            loggerProvider: $loggerProvider,
+            configProperties: $configProperties,
+        );
+
+        $customization?->onApiAvailable($config, $context);
 
         $tracerProviderBuilder = new TracerProviderBuilder();
         $meterProviderBuilder = new MeterProviderBuilder();
@@ -251,6 +277,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $tracerProviderBuilder->setResource($resource);
         $meterProviderBuilder->setResource($resource);
         $loggerProviderBuilder->setResource($resource);
+        $context = $context->withExtension($resource, Resource::class);
 
         $attributeCountLimit = $properties['attribute_limits']['attribute_count_limit'];
         $attributeValueLengthLimit = $properties['attribute_limits']['attribute_value_length_limit'];
@@ -279,8 +306,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             ->withRule($this->createTracerConfigurator($properties['tracer_provider']['tracer_configurator/development']['default_config'] ?? []))
             ->withRule(static fn(TracerConfig $config) => $config->enabled = false, filter: Diagnostics::isSelfDiagnostics(...));
 
-        foreach ($properties['tracer_provider']['tracer_configurator/development']['tracers'] as $config) {
-            $builder->withRule($this->createTracerConfigurator($config['config']), name: $config['name']);
+        foreach ($properties['tracer_provider']['tracer_configurator/development']['tracers'] as $tracerConfigurator) {
+            $builder->withRule($this->createTracerConfigurator($tracerConfigurator['config']), name: $tracerConfigurator['name']);
         }
         $tracerProviderBuilder->setTracerConfigurator($builder->toConfigurator());
 
@@ -288,8 +315,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             ->withRule($this->createMeterConfigurator($properties['meter_provider']['meter_configurator/development']['default_config'] ?? []))
             ->withRule(static fn(MeterConfig $config) => $config->enabled = false, filter: Diagnostics::isSelfDiagnostics(...));
 
-        foreach ($properties['meter_provider']['meter_configurator/development']['meters'] as $config) {
-            $builder->withRule($this->createMeterConfigurator($config['config']), name: $config['name']);
+        foreach ($properties['meter_provider']['meter_configurator/development']['meters'] as $meterConfigurator) {
+            $builder->withRule($this->createMeterConfigurator($meterConfigurator['config']), name: $meterConfigurator['name']);
         }
         $meterProviderBuilder->setMeterConfigurator($builder->toConfigurator());
 
@@ -298,24 +325,12 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             ->withRule(static fn(LoggerConfig $config) => $config->enabled = false, filter: Diagnostics::isSelfDiagnostics(...))
             ->withRule(static fn(LoggerConfig $config) => $config->minimumSeverity = $severity, filter: Diagnostics::isSelfDiagnostics(...));
 
-        foreach ($properties['logger_provider']['logger_configurator/development']['loggers'] as $config) {
-            $builder->withRule($this->createLoggerConfigurator($config['config']), name: $config['name']);
+        foreach ($properties['logger_provider']['logger_configurator/development']['loggers'] as $loggerConfigurator) {
+            $builder->withRule($this->createLoggerConfigurator($loggerConfigurator['config']), name: $loggerConfigurator['name']);
         }
         $loggerProviderBuilder->setLoggerConfigurator($builder->toConfigurator());
 
         // </editor-fold>
-
-        $tracerProvider = TracerProviderBuilder::buildBase($logger);
-        $meterProvider = MeterProviderBuilder::buildBase($logger);
-        $loggerProvider = LoggerProviderBuilder::buildBase($logger);
-
-        $context = new Context(
-            tracerProvider: new SelfDiagnostics\TracerProvider($tracerProvider),
-            meterProvider: new SelfDiagnostics\MeterProvider($meterProvider),
-            loggerProvider: new SelfDiagnostics\LoggerProvider($loggerProvider),
-            logger: $logger,
-        );
-        $context = $context->withExtension($resource, Resource::class);
 
         // <editor-fold desc="tracer_provider">
 
@@ -381,27 +396,18 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         // </editor-fold>
 
+        $customization?->customizeTracerProvider($tracerProviderBuilder, $context);
+        $customization?->customizeMeterProvider($meterProviderBuilder, $context);
+        $customization?->customizeLoggerProvider($loggerProviderBuilder, $context);
+
         $tracerProviderBuilder->copyStateInto($tracerProvider, $context);
         $meterProviderBuilder->copyStateInto($meterProvider, $context);
         $loggerProviderBuilder->copyStateInto($loggerProvider, $context);
 
-        $propagator = $this->createPropagator($properties['propagator'] ?? [], $context);
-        $responsePropagator = $this->createResponsePropagator($properties['response_propagator/development'] ?? [], $context);
-        $configProperties = $this->createConfigProperties($properties['instrumentation/development'], $context);
-
+        $customization?->onSdkAvailable($config, $context);
         $logger->debug('Initialized OTelSDK from declarative config');
-        $logger = clone $logger;
-        $logger->pushHandler(new LoggerHandler($context->loggerProvider, level: $logLevel));
 
-        return new ConfigurationResult(
-            $propagator,
-            $responsePropagator,
-            $tracerProvider,
-            $meterProvider,
-            $loggerProvider,
-            $configProperties,
-            $logger,
-        );
+        return $config;
     }
 
     /**

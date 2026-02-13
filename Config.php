@@ -25,8 +25,9 @@ final class Config {
      */
     public static function loadFromEnv(
         ?EnvReader $envReader = null,
+        ?Customization $customization = null,
     ): ConfigurationResult {
-        return Env::load($envReader);
+        return Env::load($envReader, $customization);
     }
 
     /**
@@ -48,10 +49,16 @@ final class Config {
         ?string $cacheFile = null,
         bool $debug = true,
         ?EnvReader $envReader = null,
+        ?Customization $customization = null,
     ): ConfigurationResult {
+        $context = new Context();
+        if ($customization) {
+            $context = $context->withExtension($customization, Customization::class);
+        }
+
         return self::factory($envReader)
             ->parseFile($configFile, $cacheFile, $debug)
-            ->create(new Context());
+            ->create($context);
     }
 
     /**
@@ -68,10 +75,16 @@ final class Config {
     public static function load(
         array $config,
         ?EnvReader $envReader = null,
+        ?Customization $customization = null,
     ): ConfigurationResult {
+        $context = new Context();
+        if ($customization) {
+            $context = $context->withExtension($customization, Customization::class);
+        }
+
         return self::factory($envReader)
             ->process([$config])
-            ->create(new Context());
+            ->create($context);
     }
 
     private static function factory(?EnvReader $envReader): ConfigurationFactory {
