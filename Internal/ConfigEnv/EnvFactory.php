@@ -1,5 +1,5 @@
 <?php declare(strict_types=1);
-namespace Nevay\OTelSDK\Configuration;
+namespace Nevay\OTelSDK\Configuration\Internal\ConfigEnv;
 
 use InvalidArgumentException;
 use Monolog\Handler\ErrorLogHandler;
@@ -12,14 +12,11 @@ use Nevay\OTelSDK\Common\Schema\TransformationException;
 use Nevay\OTelSDK\Configuration\ConfigEnv\Attributes\AssociateWithPullMetricReader;
 use Nevay\OTelSDK\Configuration\ConfigEnv\Attributes\AssociateWithSimpleLogRecordProcessor;
 use Nevay\OTelSDK\Configuration\ConfigEnv\Attributes\AssociateWithSimpleSpanProcessor;
+use Nevay\OTelSDK\Configuration\ConfigurationResult;
+use Nevay\OTelSDK\Configuration\Customization;
 use Nevay\OTelSDK\Configuration\Env\EnvReader;
-use Nevay\OTelSDK\Configuration\Env\EnvSourceReader;
-use Nevay\OTelSDK\Configuration\Env\PhpIniEnvSource;
-use Nevay\OTelSDK\Configuration\Env\ServerEnvSource;
-use Nevay\OTelSDK\Configuration\Internal\ConfigEnv\DebugEnvReader;
-use Nevay\OTelSDK\Configuration\Internal\ConfigEnv\EnvComponentLoaderRegistry;
-use Nevay\OTelSDK\Configuration\Internal\ConfigEnv\EnvResolver;
 use Nevay\OTelSDK\Configuration\Internal\Util;
+use Nevay\OTelSDK\Configuration\SelfDiagnostics;
 use Nevay\OTelSDK\Configuration\SelfDiagnostics\Diagnostics;
 use Nevay\OTelSDK\Logs\LoggerConfig;
 use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
@@ -42,13 +39,13 @@ use Nevay\OTelSDK\Trace\SpanProcessor\SimpleSpanProcessor;
 use Nevay\OTelSDK\Trace\TracerConfig;
 use Nevay\OTelSDK\Trace\TracerProviderBuilder;
 use Nevay\SPI\ServiceLoader;
+use OpenTelemetry\API\Configuration\Config\ComponentPlugin;
 use OpenTelemetry\API\Configuration\ConfigEnv\EnvComponentLoader;
 use OpenTelemetry\API\Configuration\ConfigProperties;
 use OpenTelemetry\API\Configuration\Context;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\ConfigurationRegistry;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\GeneralInstrumentationConfiguration;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\InstrumentationConfiguration;
-use OpenTelemetry\API\Logs\Severity;
 use OpenTelemetry\Context\Propagation\MultiResponsePropagator;
 use OpenTelemetry\Context\Propagation\MultiTextMapPropagator;
 use OpenTelemetry\Context\Propagation\ResponsePropagatorInterface;
@@ -59,17 +56,28 @@ use function strtolower;
 
 /**
  * @internal
+ *
+ * @implements ComponentPlugin<ConfigurationResult>
  */
-final class Env {
+final class EnvFactory implements ComponentPlugin {
 
-    public static function load(
-        ?EnvReader $envReader = null,
-        ?Customization $customization = null,
-    ): ConfigurationResult {
-        $envReader ??= new EnvSourceReader([
-            new ServerEnvSource(),
-            new PhpIniEnvSource(),
-        ]);
+    private readonly EnvComponentLoaderRegistry $registry;
+    private readonly EnvReader $envReader;
+
+    /**
+     * @param iterable<EnvComponentLoader> $envComponentLoaders
+     */
+    public function __construct(iterable $envComponentLoaders, EnvReader $envReader) {
+        $this->registry = new EnvComponentLoaderRegistry();
+        foreach ($envComponentLoaders as $envComponentLoader) {
+            $this->registry->register($envComponentLoader);
+        }
+        $this->envReader = $envReader;
+    }
+
+    public function create(Context $context): ConfigurationResult {
+        $registry = $this->registry;
+        $envReader = $this->envReader;
 
         $logLevel = Util::severityByName((new EnvResolver($envReader))->enum('OTEL_LOG_LEVEL', Util::severityValues()) ?? 'info');
 
@@ -77,10 +85,7 @@ final class Env {
         $logger->pushHandler(new ErrorLogHandler(level: Util::severityToLogLevel($logLevel)));
         $logger->debug('Initializing OTelSDK from env');
 
-        $registry = new EnvComponentLoaderRegistry();
-        foreach (ServiceLoader::load(EnvComponentLoader::class) as $loader) {
-            $registry->register($loader);
-        }
+        $customization = $context->getExtension(Customization::class);
 
         $env = new EnvResolver(new DebugEnvReader($envReader, $logger), $logger);
         $context = new Context(logger: $logger);

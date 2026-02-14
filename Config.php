@@ -8,8 +8,10 @@ use Nevay\OTelSDK\Configuration\Env\EnvSourceReader;
 use Nevay\OTelSDK\Configuration\Env\PhpIniEnvSource;
 use Nevay\OTelSDK\Configuration\Env\ServerEnvSource;
 use Nevay\OTelSDK\Configuration\Internal\Config\ConfigurationFactory;
+use Nevay\OTelSDK\Configuration\Internal\ConfigEnv\EnvFactory;
 use Nevay\SPI\ServiceLoader;
 use OpenTelemetry\API\Configuration\Config\ComponentProvider;
+use OpenTelemetry\API\Configuration\ConfigEnv\EnvComponentLoader;
 use OpenTelemetry\API\Configuration\Context;
 use WeakMap;
 
@@ -27,7 +29,8 @@ final class Config {
         ?EnvReader $envReader = null,
         ?Customization $customization = null,
     ): ConfigurationResult {
-        return Env::load($envReader, $customization);
+        return self::envFactory($envReader)
+            ->create(self::createContext($customization));
     }
 
     /**
@@ -51,14 +54,9 @@ final class Config {
         ?EnvReader $envReader = null,
         ?Customization $customization = null,
     ): ConfigurationResult {
-        $context = new Context();
-        if ($customization) {
-            $context = $context->withExtension($customization, Customization::class);
-        }
-
         return self::factory($envReader)
             ->parseFile($configFile, $cacheFile, $debug)
-            ->create($context);
+            ->create(self::createContext($customization));
     }
 
     /**
@@ -77,22 +75,22 @@ final class Config {
         ?EnvReader $envReader = null,
         ?Customization $customization = null,
     ): ConfigurationResult {
+        return self::factory($envReader)
+            ->process([$config])
+            ->create(self::createContext($customization));
+    }
+
+    private static function createContext(?Customization $customization): Context {
         $context = new Context();
         if ($customization) {
             $context = $context->withExtension($customization, Customization::class);
         }
 
-        return self::factory($envReader)
-            ->process([$config])
-            ->create($context);
+        return $context;
     }
 
     private static function factory(?EnvReader $envReader): ConfigurationFactory {
-        static $defaultEnvReader;
-        $envReader ??= $defaultEnvReader ??= new EnvSourceReader([
-            new ServerEnvSource(),
-            new PhpIniEnvSource(),
-        ]);
+        $envReader ??= self::defaultEnvReader();
 
         static $factories = new WeakMap();
         return $factories[$envReader] ??= new ConfigurationFactory(
@@ -100,5 +98,24 @@ final class Config {
             new OpenTelemetryConfiguration(),
             $envReader,
         );
+    }
+
+    private static function envFactory(?EnvReader $envReader): EnvFactory {
+        $envReader ??= self::defaultEnvReader();
+
+        static $factories = new WeakMap();
+        return $factories[$envReader] ??= new EnvFactory(
+            ServiceLoader::load(EnvComponentLoader::class),
+            $envReader,
+        );
+    }
+
+    private static function defaultEnvReader(): EnvReader {
+        static $defaultEnvReader = new EnvSourceReader([
+            new ServerEnvSource(),
+            new PhpIniEnvSource(),
+        ]);
+
+        return $defaultEnvReader;
     }
 }
