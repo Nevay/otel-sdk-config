@@ -37,7 +37,7 @@ use Throwable;
     try {
         if (($configFile = $env->string('OTEL_EXPERIMENTAL_CONFIG_FILE')) !== null) {
             Config::loadFile(Util::makePathAbsolute($configFile), envReader: $envReader, customization: $customization);
-        } elseif ($env->bool('OTEL_PHP_AUTOLOAD_ENABLED') !== false) {
+        } elseif ($env->bool('OTEL_PHP_AUTOLOAD_ENABLED')) {
             Config::loadFromEnv(envReader: $envReader, customization: $customization);
         }
     } catch (Throwable $e) {
