@@ -15,6 +15,8 @@ use Nevay\OTelSDK\Configuration\Env\ServerEnvSource;
 use Nevay\OTelSDK\Configuration\Internal\ConfigEnv\EnvResolver;
 use Nevay\OTelSDK\Configuration\Internal\Util;
 use Nevay\SPI\ServiceLoader;
+use OpenTelemetry\API\Instrumentation\AutoInstrumentation\HookManager;
+use OpenTelemetry\API\Instrumentation\Configurator;
 use Throwable;
 
 (static function(): void {
@@ -34,6 +36,7 @@ use Throwable;
         new RegisterShutdownHook(),
     );
 
+    $scope = HookManager::disable(Configurator::createNoop()->storeInContext())->activate();
     try {
         if (($configFile = $env->string('OTEL_EXPERIMENTAL_CONFIG_FILE')) !== null) {
             Config::loadFile(Util::makePathAbsolute($configFile), envReader: $envReader, customization: $customization);
@@ -44,5 +47,7 @@ use Throwable;
         $logger = new Logger('otel');
         $logger->pushHandler(new ErrorLogHandler());
         $logger->error('Error during OpenTelemetry initialization: {exception}', ['exception' => $e]);
+    } finally {
+        $scope->detach();
     }
 })();

@@ -9,6 +9,7 @@ use Nevay\OTelSDK\Trace\TracerProviderBuilder;
 use Nevay\SPI\ServiceLoader;
 use OpenTelemetry\API\Configuration\Context;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation;
+use OpenTelemetry\API\Instrumentation\AutoInstrumentation\HookManager;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\HookManagerInterface;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\Instrumentation;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\NoopHookManager;
@@ -35,13 +36,19 @@ final class RegisterAutoInstrumentations implements Customization {
             propagator: $config->propagator,
             responsePropagator: $config->responsePropagator,
         );
-        foreach ($this->instrumentations as $instrumentation) {
-            $context->logger->info('Registering instrumentation', ['instrumentation' => $instrumentation::class]);
-            try {
-                $instrumentation->register($this->hookManager, $config->configProperties, $instrumentationContext);
-            } catch (Throwable $e) {
-                $context->logger->error('Error during instrumentation registration', ['exception' => $e, 'instrumentation' => $instrumentation]);
+
+        $scope = HookManager::enable()->activate();
+        try {
+            foreach ($this->instrumentations as $instrumentation) {
+                $context->logger->info('Registering instrumentation', ['instrumentation' => $instrumentation::class]);
+                try {
+                    $instrumentation->register($this->hookManager, $config->configProperties, $instrumentationContext);
+                } catch (Throwable $e) {
+                    $context->logger->error('Error during instrumentation registration', ['exception' => $e, 'instrumentation' => $instrumentation]);
+                }
             }
+        } finally {
+            $scope->detach();
         }
     }
 
