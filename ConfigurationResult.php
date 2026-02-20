@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration;
 
+use Nevay\OTelSDK\Configuration\Distribution\DistributionProperties;
 use Nevay\OTelSDK\Logs\LoggerProviderInterface;
 use Nevay\OTelSDK\Metrics\MeterProviderInterface;
 use Nevay\OTelSDK\Trace\TracerProviderInterface;
@@ -17,6 +18,7 @@ final class ConfigurationResult {
     public readonly LoggerProviderInterface $loggerProvider;
 
     public readonly ConfigProperties $configProperties;
+    public readonly DistributionProperties $distributionProperties;
 
     /**
      * @internal
@@ -28,6 +30,7 @@ final class ConfigurationResult {
         MeterProviderInterface $meterProvider,
         LoggerProviderInterface $loggerProvider,
         ConfigProperties $configProperties,
+        DistributionProperties $distributionProperties,
     ) {
         $this->propagator = $propagator;
         $this->responsePropagator = $responsePropagator;
@@ -35,5 +38,6 @@ final class ConfigurationResult {
         $this->meterProvider = $meterProvider;
         $this->tracerProvider = $tracerProvider;
         $this->configProperties = $configProperties;
+        $this->distributionProperties = $distributionProperties;
     }
 }

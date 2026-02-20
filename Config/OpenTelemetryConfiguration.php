@@ -12,8 +12,11 @@ use Nevay\OTelSDK\Common\Resource;
 use Nevay\OTelSDK\Common\ResourceDetector;
 use Nevay\OTelSDK\Common\Schema\StaticResourceTransformer;
 use Nevay\OTelSDK\Common\Schema\TransformationException;
-use Nevay\OTelSDK\Configuration\Customization;
 use Nevay\OTelSDK\Configuration\ConfigurationResult;
+use Nevay\OTelSDK\Configuration\Customization;
+use Nevay\OTelSDK\Configuration\Distribution\DistributionConfiguration;
+use Nevay\OTelSDK\Configuration\Distribution\DistributionProperties;
+use Nevay\OTelSDK\Configuration\Distribution\DistributionRegistry;
 use Nevay\OTelSDK\Configuration\Internal\Util;
 use Nevay\OTelSDK\Configuration\SelfDiagnostics;
 use Nevay\OTelSDK\Configuration\SelfDiagnostics\Diagnostics;
@@ -174,6 +177,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *         php: list<ComponentPlugin<InstrumentationConfiguration>>,
      *         ...
      *     },
+     *     distribution: list<ComponentPlugin<DistributionConfiguration>>,
      * } $properties
      */
     public function createPlugin(array $properties, Context $context): ConfigurationResult {
@@ -190,6 +194,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $propagator = $this->createPropagator($properties['propagator'] ?? [], $context);
         $responsePropagator = $this->createResponsePropagator($properties['response_propagator/development'] ?? [], $context);
         $configProperties = $this->createConfigProperties($properties['instrumentation/development'], $context);
+        $distributionProperties = $this->createDistributionProperties($properties['distribution'], $context);
 
         if ($properties['disabled']) {
             $logger->debug('Initialized OTelSDK from declarative config', ['disabled' => true]);
@@ -201,6 +206,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 meterProvider: new NoopMeterProvider(),
                 loggerProvider: new NoopLoggerProvider(),
                 configProperties: $configProperties,
+                distributionProperties: $distributionProperties,
             );
             $customization?->onApiAvailable($config, $context);
 
@@ -225,6 +231,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             meterProvider: $meterProvider,
             loggerProvider: $loggerProvider,
             configProperties: $configProperties,
+            distributionProperties: $distributionProperties,
         );
 
         $customization?->onApiAvailable($config, $context);
@@ -461,6 +468,18 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
     }
 
     /**
+     * @param list<ComponentPlugin<DistributionConfiguration>> $properties
+     */
+    private function createDistributionProperties(array $properties, Context $context): DistributionProperties {
+        $distributionProperties = new DistributionRegistry();
+        foreach ($properties as $distribution) {
+            $distributionProperties->add($distribution->create($context));
+        }
+
+        return $distributionProperties;
+    }
+
+    /**
      * @param array{
      *     enabled?: bool,
      * } $properties
@@ -543,6 +562,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 ->append($this->getMeterProviderConfig($registry, $builder))
                 ->append($this->getLoggerProviderConfig($registry, $builder))
                 ->append($this->getInstrumentationConfig($registry, $builder))
+                ->append($registry->componentMap('distribution', DistributionConfiguration::class)->defaultValue([]))
             ->end();
 
         return $node;

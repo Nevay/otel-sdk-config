@@ -1,5 +1,5 @@
 <?php declare(strict_types=1);
-namespace Nevay\OTelSDK\Configuration\Internal\ConfigEnv;
+namespace Nevay\OTelSDK\Configuration\ConfigEnv;
 
 use InvalidArgumentException;
 use Monolog\Handler\ErrorLogHandler;
@@ -14,7 +14,13 @@ use Nevay\OTelSDK\Configuration\ConfigEnv\Attributes\AssociateWithSimpleLogRecor
 use Nevay\OTelSDK\Configuration\ConfigEnv\Attributes\AssociateWithSimpleSpanProcessor;
 use Nevay\OTelSDK\Configuration\ConfigurationResult;
 use Nevay\OTelSDK\Configuration\Customization;
+use Nevay\OTelSDK\Configuration\Distribution\DistributionConfiguration;
+use Nevay\OTelSDK\Configuration\Distribution\DistributionProperties;
+use Nevay\OTelSDK\Configuration\Distribution\DistributionRegistry;
 use Nevay\OTelSDK\Configuration\Env\EnvReader;
+use Nevay\OTelSDK\Configuration\Internal\ConfigEnv\DebugEnvReader;
+use Nevay\OTelSDK\Configuration\Internal\ConfigEnv\EnvComponentLoaderRegistry;
+use Nevay\OTelSDK\Configuration\Internal\ConfigEnv\EnvResolver;
 use Nevay\OTelSDK\Configuration\Internal\Util;
 use Nevay\OTelSDK\Configuration\SelfDiagnostics;
 use Nevay\OTelSDK\Configuration\SelfDiagnostics\Diagnostics;
@@ -59,7 +65,7 @@ use function strtolower;
  *
  * @implements ComponentPlugin<ConfigurationResult>
  */
-final class EnvFactory implements ComponentPlugin {
+final class EnvConfiguration implements ComponentPlugin {
 
     private readonly EnvComponentLoaderRegistry $registry;
     private readonly EnvReader $envReader;
@@ -93,6 +99,7 @@ final class EnvFactory implements ComponentPlugin {
         $propagator = self::propagator($env, $registry, $context);
         $responsePropagator = self::responsePropagator($env, $registry, $context);
         $configProperties = self::configProperties($env, $registry, $context);
+        $distributionProperties = self::distributionProperties($env, $registry, $context);
 
         if ($env->bool('OTEL_SDK_DISABLED') ?? false) {
             $logger->debug('Initialized OTelSDK from env', ['disabled' => true]);
@@ -104,6 +111,7 @@ final class EnvFactory implements ComponentPlugin {
                 meterProvider: new NoopMeterProvider(),
                 loggerProvider: new NoopLoggerProvider(),
                 configProperties: $configProperties,
+                distributionProperties: $distributionProperties,
             );
             $customization?->onApiAvailable($config, $context);
 
@@ -128,6 +136,7 @@ final class EnvFactory implements ComponentPlugin {
             meterProvider: $meterProvider,
             loggerProvider: $loggerProvider,
             configProperties: $configProperties,
+            distributionProperties: $distributionProperties,
         );
 
         $customization?->onApiAvailable($config, $context);
@@ -244,6 +253,15 @@ final class EnvFactory implements ComponentPlugin {
         }
 
         return $configProperties;
+    }
+
+    private static function distributionProperties(EnvResolver $env, EnvComponentLoaderRegistry $registry, Context $context): DistributionProperties {
+        $distributionProperties = new DistributionRegistry();
+        foreach ($registry->loadAll(DistributionConfiguration::class, $env, $context) as $distribution) {
+            $distributionProperties->add($distribution);
+        }
+
+        return $distributionProperties;
     }
 
     private static function tracerProvider(TracerProviderBuilder $tracerProviderBuilder, EnvResolver $env, EnvComponentLoaderRegistry $registry, Context $context): void {

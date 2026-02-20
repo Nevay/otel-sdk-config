@@ -40,7 +40,7 @@ final class ArrayNode extends \Symfony\Component\Config\Definition\ArrayNode imp
             $value = $normalization->applyToNode($this, $value);
         }
 
-        return parent::preNormalize($value);
+        return $value;
     }
 
     public function setDefaultValue(mixed $value): void {

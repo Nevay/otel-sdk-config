@@ -27,6 +27,7 @@ ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\ResponsePropagator\
 ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\ResponsePropagator\ResponsePropagatorLoaderTraceResponse::class);
 
 
+ServiceLoader::register(ComponentProvider::class, Config\Distribution\DistributionConfigurationOTelSDK::class);
 ServiceLoader::register(ComponentProvider::class, Config\Resource\ResourceDetectorComposer::class);
 ServiceLoader::register(ComponentProvider::class, Config\Resource\ResourceDetectorContainer::class);
 ServiceLoader::register(ComponentProvider::class, Config\Resource\ResourceDetectorDeployment::class);
