@@ -3,6 +3,7 @@ namespace Nevay\OTelSDK\Configuration\Config;
 
 use Closure;
 use Composer\Semver\Semver;
+use InvalidArgumentException;
 use Monolog\Handler\ErrorLogHandler;
 use Monolog\Logger;
 use Nevay\OTelSDK\Common\Attributes;
@@ -59,7 +60,9 @@ use function explode;
 use function is_array;
 use function is_string;
 use function rawurldecode;
+use function sprintf;
 use function strcasecmp;
+use function strstr;
 use function trim;
 
 final class OpenTelemetryConfiguration implements ComponentProvider {
@@ -545,10 +548,10 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             ->children()
                 ->scalarNode('file_format')
                     ->isRequired()
-                    ->example('1.0-rc.3')
+                    ->example('1.0')
                     ->validate()->always(Util::ensureString())->end()
                     ->validate()
-                        ->ifTrue(static fn(string $version): bool => !Semver::satisfies($version, '^1.0-rc.3 <=1.0-rc.3'))
+                        ->ifTrue(static fn(string $version): bool => !Semver::satisfies($version, '^1.0 <=1.0'))
                         ->thenInvalid('unsupported version')
                     ->end()
                 ->end()
@@ -838,7 +841,43 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $node
             ->addDefaultsIfNotSet()
             ->ignoreExtraKeys()
-            ->append($registry->componentMap('general', GeneralInstrumentationConfiguration::class))
+            ->append($registry->componentMap('general', GeneralInstrumentationConfiguration::class)
+                ->children()
+                    ->scalarNode('stability_opt_in_list')->validate()->always(Util::ensureString())->end()->end()
+                ->end()
+                ->beforeNormalization()
+                    ->ifArray()
+                    ->then(static function(array $value): array {
+                        if (!isset($value['stability_opt_in_list']) || !is_string($value['stability_opt_in_list']) || trim($value['stability_opt_in_list'], " \t") === '') {
+                            return $value;
+                        }
+
+                        foreach (explode(',', $value['stability_opt_in_list']) as $entry) {
+                            $name = rawurldecode(trim($entry, " \t"));
+                            $section = strstr($name, '/', true);
+                            if ($section === false) {
+                                $section = $name;
+                            }
+
+                            $dualEmit = match ($name) {
+                                $section => false,
+                                $section . '/dup' => true,
+                                default => throw new InvalidArgumentException(sprintf('Invalid value, expected either "%s" or "%s", got "%s"', $section, $section . '/dup', $name)),
+                            };
+
+                            $value[$section]['semconv'] ??= [
+                                'version' => 1,
+                                'experimental' => $dualEmit,
+                                'dual_emit' => $dualEmit,
+                            ];
+                        }
+
+                        unset($value['stability_opt_in_list']);
+
+                        return $value;
+                    })
+                ->end()
+            )
             ->append($registry->componentMap('php', InstrumentationConfiguration::class))
         ;
 
