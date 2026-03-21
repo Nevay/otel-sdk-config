@@ -37,6 +37,7 @@ use Nevay\OTelSDK\Trace\NoopTracerProvider;
 use Nevay\OTelSDK\Trace\Sampler;
 use Nevay\OTelSDK\Trace\SpanProcessor;
 use Nevay\OTelSDK\Trace\TracerConfig;
+use Nevay\OTelSDK\Trace\TracerProvider;
 use Nevay\OTelSDK\Trace\TracerProviderBuilder;
 use OpenTelemetry\API\Configuration\Config\ComponentPlugin;
 use OpenTelemetry\API\Configuration\Config\ComponentProvider;
@@ -216,7 +217,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             return $config;
         }
 
-        $tracerProvider = TracerProviderBuilder::buildBase($logger);
+        $tracerProvider = new TracerProvider();
         $meterProvider = MeterProviderBuilder::buildBase($logger);
         $loggerProvider = LoggerProviderBuilder::buildBase($logger);
 
@@ -405,7 +406,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $customization?->customizeMeterProvider($meterProviderBuilder, $context);
         $customization?->customizeLoggerProvider($loggerProviderBuilder, $context);
 
-        $tracerProviderBuilder->copyStateInto($tracerProvider, $context);
+        $tracerProviderBuilder->build($context, $tracerProvider);
         $meterProviderBuilder->copyStateInto($meterProvider, $context);
         $loggerProviderBuilder->copyStateInto($loggerProvider, $context);
 

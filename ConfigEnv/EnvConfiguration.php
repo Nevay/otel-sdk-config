@@ -43,6 +43,7 @@ use Nevay\OTelSDK\Trace\SpanExporter;
 use Nevay\OTelSDK\Trace\SpanProcessor\BatchSpanProcessor;
 use Nevay\OTelSDK\Trace\SpanProcessor\SimpleSpanProcessor;
 use Nevay\OTelSDK\Trace\TracerConfig;
+use Nevay\OTelSDK\Trace\TracerProvider;
 use Nevay\OTelSDK\Trace\TracerProviderBuilder;
 use Nevay\SPI\ServiceLoader;
 use OpenTelemetry\API\Configuration\Config\ComponentPlugin;
@@ -118,7 +119,7 @@ final class EnvConfiguration implements ComponentPlugin {
             return $config;
         }
 
-        $tracerProvider = TracerProviderBuilder::buildBase($logger);
+        $tracerProvider = new TracerProvider();
         $meterProvider = MeterProviderBuilder::buildBase($logger);
         $loggerProvider = LoggerProviderBuilder::buildBase($logger);
 
@@ -199,7 +200,7 @@ final class EnvConfiguration implements ComponentPlugin {
         $customization?->customizeMeterProvider($meterProviderBuilder, $context);
         $customization?->customizeLoggerProvider($loggerProviderBuilder, $context);
 
-        $tracerProviderBuilder->copyStateInto($tracerProvider, $context);
+        $tracerProviderBuilder->build($context, $tracerProvider);
         $meterProviderBuilder->copyStateInto($meterProvider, $context);
         $loggerProviderBuilder->copyStateInto($loggerProvider, $context);
 
