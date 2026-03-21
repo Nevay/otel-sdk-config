@@ -30,6 +30,7 @@ use Nevay\OTelSDK\Metrics\Aggregation;
 use Nevay\OTelSDK\Metrics\ExemplarFilter;
 use Nevay\OTelSDK\Metrics\InstrumentType;
 use Nevay\OTelSDK\Metrics\MeterConfig;
+use Nevay\OTelSDK\Metrics\MeterProvider;
 use Nevay\OTelSDK\Metrics\MeterProviderBuilder;
 use Nevay\OTelSDK\Metrics\MetricReader;
 use Nevay\OTelSDK\Metrics\NoopMeterProvider;
@@ -219,7 +220,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         }
 
         $tracerProvider = new TracerProvider();
-        $meterProvider = MeterProviderBuilder::buildBase($logger);
+        $meterProvider = new MeterProvider();
         $loggerProvider = new LoggerProvider();
 
         $context = new Context(
@@ -408,7 +409,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $customization?->customizeLoggerProvider($loggerProviderBuilder, $context);
 
         $tracerProviderBuilder->build($context, $tracerProvider);
-        $meterProviderBuilder->copyStateInto($meterProvider, $context);
+        $meterProviderBuilder->build($context, $meterProvider);
         $loggerProviderBuilder->build($context, $loggerProvider);
 
         $customization?->onSdkAvailable($config, $context);

@@ -33,6 +33,7 @@ use Nevay\OTelSDK\Logs\LogRecordProcessor\SimpleLogRecordProcessor;
 use Nevay\OTelSDK\Logs\NoopLoggerProvider;
 use Nevay\OTelSDK\Metrics\ExemplarFilter;
 use Nevay\OTelSDK\Metrics\MeterConfig;
+use Nevay\OTelSDK\Metrics\MeterProvider;
 use Nevay\OTelSDK\Metrics\MeterProviderBuilder;
 use Nevay\OTelSDK\Metrics\MetricExporter;
 use Nevay\OTelSDK\Metrics\MetricReader\PeriodicExportingMetricReader;
@@ -121,7 +122,7 @@ final class EnvConfiguration implements ComponentPlugin {
         }
 
         $tracerProvider = new TracerProvider();
-        $meterProvider = MeterProviderBuilder::buildBase($logger);
+        $meterProvider = new MeterProvider();
         $loggerProvider = new LoggerProvider();
 
         $context = new Context(
@@ -202,7 +203,7 @@ final class EnvConfiguration implements ComponentPlugin {
         $customization?->customizeLoggerProvider($loggerProviderBuilder, $context);
 
         $tracerProviderBuilder->build($context, $tracerProvider);
-        $meterProviderBuilder->copyStateInto($meterProvider, $context);
+        $meterProviderBuilder->build($context, $meterProvider);
         $loggerProviderBuilder->build($context, $loggerProvider);
 
         $customization?->onSdkAvailable($config, $context);
