@@ -6,7 +6,7 @@ interface DistributionProperties {
     /**
      * @template T of DistributionConfiguration
      * @param class-string<T> $distribution
-     * @return DistributionConfiguration|null
+     * @return T|null
      */
     public function getDistributionConfiguration(string $distribution): ?DistributionConfiguration;
 }
