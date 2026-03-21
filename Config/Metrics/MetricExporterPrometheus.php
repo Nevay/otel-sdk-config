@@ -32,12 +32,12 @@ final class MetricExporterPrometheus implements ComponentProvider {
      *     host: string,
      *     port: int,
      *     without_scope_info: bool,
-     *     without_target_info: bool,
+     *     "without_target_info/development": bool,
      *     with_resource_constant_labels: array{
      *         included: ?list<string>,
      *         excluded: ?list<string>,
      *     },
-     *     translation_strategy: 'underscore_escaping_with_suffixes'|'underscore_escaping_without_suffixes'|'no_utf8_escaping_with_suffixes'|'no_translation',
+     *     translation_strategy: 'underscore_escaping_with_suffixes'|'underscore_escaping_without_suffixes/development'|'no_utf8_escaping_with_suffixes/development'|'no_translation/development',
      * } $properties
      */
     public function createPlugin(array $properties, Context $context): MetricExporter {
@@ -60,16 +60,16 @@ final class MetricExporterPrometheus implements ComponentProvider {
         return new PrometheusMetricExporter(
             server: $server,
             withoutScopeInfo: $properties['without_scope_info'],
-            withoutTargetInfo: $properties['without_target_info'],
+            withoutTargetInfo: $properties['without_target_info/development'],
             withResourceConstantLabels: Attributes::filterKeys(
                 include: $properties['with_resource_constant_labels']['included'] ?? [],
                 exclude: $properties['with_resource_constant_labels']['excluded'] ?? [],
             ),
             translationStrategy: match ($properties['translation_strategy']) {
                 'underscore_escaping_with_suffixes' => TranslationStrategy::UnderscoreEscapingWithSuffixes,
-                'underscore_escaping_without_suffixes' => TranslationStrategy::UnderscoreEscapingWithoutSuffixes,
-                'no_utf8_escaping_with_suffixes' => TranslationStrategy::NoUTF8EscapingWithSuffixes,
-                'no_translation' => TranslationStrategy::NoTranslation,
+                'underscore_escaping_without_suffixes/development' => TranslationStrategy::UnderscoreEscapingWithoutSuffixes,
+                'no_utf8_escaping_with_suffixes/development' => TranslationStrategy::NoUTF8EscapingWithSuffixes,
+                'no_translation/development' => TranslationStrategy::NoTranslation,
             },
             logger: $context->logger,
         );
@@ -82,7 +82,7 @@ final class MetricExporterPrometheus implements ComponentProvider {
                 ->scalarNode('host')->defaultValue('localhost')->validate()->always(Util::ensureString())->end()->end()
                 ->integerNode('port')->defaultValue(9464)->end()
                 ->booleanNode('without_scope_info')->defaultFalse()->end()
-                ->booleanNode('without_target_info')->defaultFalse()->end()
+                ->booleanNode('without_target_info/development')->defaultFalse()->end()
                 ->arrayNode('with_resource_constant_labels')
                     ->children()
                         ->arrayNode('included')->defaultNull()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
@@ -93,9 +93,9 @@ final class MetricExporterPrometheus implements ComponentProvider {
                     ->defaultValue('underscore_escaping_with_suffixes')
                     ->values([
                         'underscore_escaping_with_suffixes',
-                        'underscore_escaping_without_suffixes',
-                        'no_utf8_escaping_with_suffixes',
-                        'no_translation',
+                        'underscore_escaping_without_suffixes/development',
+                        'no_utf8_escaping_with_suffixes/development',
+                        'no_translation/development',
                     ])
                 ->end()
             ->end()
