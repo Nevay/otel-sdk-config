@@ -25,6 +25,7 @@ use Nevay\OTelSDK\Configuration\Internal\Util;
 use Nevay\OTelSDK\Configuration\SelfDiagnostics;
 use Nevay\OTelSDK\Configuration\SelfDiagnostics\Diagnostics;
 use Nevay\OTelSDK\Logs\LoggerConfig;
+use Nevay\OTelSDK\Logs\LoggerProvider;
 use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
 use Nevay\OTelSDK\Logs\LogRecordExporter;
 use Nevay\OTelSDK\Logs\LogRecordProcessor\BatchLogRecordProcessor;
@@ -121,7 +122,7 @@ final class EnvConfiguration implements ComponentPlugin {
 
         $tracerProvider = new TracerProvider();
         $meterProvider = MeterProviderBuilder::buildBase($logger);
-        $loggerProvider = LoggerProviderBuilder::buildBase($logger);
+        $loggerProvider = new LoggerProvider();
 
         $context = new Context(
             tracerProvider: new SelfDiagnostics\TracerProvider($tracerProvider),
@@ -202,7 +203,7 @@ final class EnvConfiguration implements ComponentPlugin {
 
         $tracerProviderBuilder->build($context, $tracerProvider);
         $meterProviderBuilder->copyStateInto($meterProvider, $context);
-        $loggerProviderBuilder->copyStateInto($loggerProvider, $context);
+        $loggerProviderBuilder->build($context, $loggerProvider);
 
         $customization?->onSdkAvailable($config, $context);
         $logger->debug('Initialized OTelSDK from env');
