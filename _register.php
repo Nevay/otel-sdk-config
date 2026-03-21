@@ -11,7 +11,6 @@ ServiceLoader::register(EnvSourceProvider::class, Env\VlucasPhpdotenvProvider::c
 
 
 ServiceLoader::register(ComponentProvider::class, Config\Instrumentation\InstrumentationConfigurationHttp::class);
-ServiceLoader::register(ComponentProvider::class, Config\Instrumentation\InstrumentationConfigurationPeer::class);
 ServiceLoader::register(ComponentProvider::class, Config\Propagator\TextMapPropagatorB3::class);
 ServiceLoader::register(ComponentProvider::class, Config\Propagator\TextMapPropagatorB3Multi::class);
 ServiceLoader::register(ComponentProvider::class, Config\Propagator\TextMapPropagatorBaggage::class);
