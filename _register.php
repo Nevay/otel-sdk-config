@@ -51,6 +51,8 @@ ServiceLoader::register(ComponentProvider::class, Config\Trace\SpanExporterOtlpG
 ServiceLoader::register(ComponentProvider::class, Config\Trace\SpanExporterOtlpHttp::class);
 ServiceLoader::register(ComponentProvider::class, Config\Trace\SpanProcessorBatch::class);
 ServiceLoader::register(ComponentProvider::class, Config\Trace\SpanProcessorSimple::class);
+ServiceLoader::register(ComponentProvider::class, Config\Trace\SpanSuppressionStrategySemanticConvention::class);
+ServiceLoader::register(ComponentProvider::class, Config\Trace\SpanSuppressionStrategySpanKind::class);
 ServiceLoader::register(ComponentProvider::class, Config\Metrics\AggregationBase2ExponentialBucketHistogram::class);
 ServiceLoader::register(ComponentProvider::class, Config\Metrics\AggregationDefault::class);
 ServiceLoader::register(ComponentProvider::class, Config\Metrics\AggregationDrop::class);
@@ -71,6 +73,7 @@ ServiceLoader::register(ComponentProvider::class, Config\Logs\LogRecordExporterO
 ServiceLoader::register(ComponentProvider::class, Config\Logs\LogRecordProcessorBatch::class);
 ServiceLoader::register(ComponentProvider::class, Config\Logs\LogRecordProcessorSimple::class);
 
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Distribution\DistributionConfigurationLoaderOTelSDK::class);
 ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Trace\SamplerLoaderAlwaysOff::class);
 ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Trace\SamplerLoaderAlwaysOn::class);
 ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Trace\SamplerLoaderJaegerRemote::class);
@@ -81,6 +84,8 @@ ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Trace\SamplerLoader
 ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Trace\SamplerLoaderTraceIdRatio::class);
 ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Trace\SpanExporterLoaderConsole::class);
 ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Trace\SpanExporterLoaderOtlp::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Trace\SpanSuppressionStrategyLoaderSemanticConvention::class);
+ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Trace\SpanSuppressionStrategyLoaderSpanKind::class);
 ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Metrics\ExemplarFilterLoaderAlwaysOff::class);
 ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Metrics\ExemplarFilterLoaderAlwaysOn::class);
 ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Metrics\ExemplarFilterLoaderTraceBased::class);

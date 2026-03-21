@@ -17,6 +17,7 @@ use Nevay\OTelSDK\Configuration\Customization;
 use Nevay\OTelSDK\Configuration\Distribution\DistributionConfiguration;
 use Nevay\OTelSDK\Configuration\Distribution\DistributionProperties;
 use Nevay\OTelSDK\Configuration\Distribution\DistributionRegistry;
+use Nevay\OTelSDK\Configuration\Distribution\OTelSDKConfiguration;
 use Nevay\OTelSDK\Configuration\Env\EnvReader;
 use Nevay\OTelSDK\Configuration\Internal\ConfigEnv\DebugEnvReader;
 use Nevay\OTelSDK\Configuration\Internal\ConfigEnv\EnvComponentLoaderRegistry;
@@ -197,6 +198,13 @@ final class EnvConfiguration implements ComponentPlugin {
         self::tracerProvider($tracerProviderBuilder, $env, $registry, $context);
         self::meterProvider($meterProviderBuilder, $env, $registry, $context);
         self::loggerProvider($loggerProviderBuilder, $env, $registry, $context);
+
+        // <editor-fold desc="distribution">
+
+        $distributionConfiguration = $distributionProperties->getDistributionConfiguration(OTelSDKConfiguration::class) ?? new OTelSDKConfiguration();
+        $tracerProviderBuilder->setSuppressionStrategy($distributionConfiguration->spanSuppressionStrategy);
+
+        // </editor-fold>
 
         $customization?->customizeTracerProvider($tracerProviderBuilder, $context);
         $customization?->customizeMeterProvider($meterProviderBuilder, $context);

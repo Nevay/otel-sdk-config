@@ -18,6 +18,7 @@ use Nevay\OTelSDK\Configuration\Customization;
 use Nevay\OTelSDK\Configuration\Distribution\DistributionConfiguration;
 use Nevay\OTelSDK\Configuration\Distribution\DistributionProperties;
 use Nevay\OTelSDK\Configuration\Distribution\DistributionRegistry;
+use Nevay\OTelSDK\Configuration\Distribution\OTelSDKConfiguration;
 use Nevay\OTelSDK\Configuration\Internal\Util;
 use Nevay\OTelSDK\Configuration\SelfDiagnostics;
 use Nevay\OTelSDK\Configuration\SelfDiagnostics\Diagnostics;
@@ -401,6 +402,13 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         foreach ($properties['logger_provider']['processors'] as $processor) {
             $loggerProviderBuilder->addLogRecordProcessor($processor->create($context));
         }
+
+        // </editor-fold>
+
+        // <editor-fold desc="distribution">
+
+        $distributionConfiguration = $distributionProperties->getDistributionConfiguration(OTelSDKConfiguration::class) ?? new OTelSDKConfiguration();
+        $tracerProviderBuilder->setSuppressionStrategy($distributionConfiguration->spanSuppressionStrategy);
 
         // </editor-fold>
 
