@@ -2,7 +2,6 @@
 namespace Nevay\OTelSDK\Configuration\Config\Instrumentation;
 
 use Nevay\OTelSDK\Configuration\Internal\Util;
-use Nevay\OTelSDK\Configuration\Validation;
 use OpenTelemetry\API\Configuration\Config\ComponentProvider;
 use OpenTelemetry\API\Configuration\Config\ComponentProviderRegistry;
 use OpenTelemetry\API\Configuration\Context;
@@ -24,18 +23,21 @@ final class InstrumentationConfigurationHttp implements ComponentProvider {
         $node = $builder->arrayNode('http');
         $node
             ->children()
-                ->append($this->capturedHeaders('client', $builder))
-                ->append($this->capturedHeaders('server', $builder))
+                ->append($this->node('client', $builder))
+                ->append($this->node('server', $builder))
             ->end()
         ;
 
         return $node;
     }
 
-    private function capturedHeaders(string $name, NodeBuilder $builder): ArrayNodeDefinition {
+    private function node(string $name, NodeBuilder $builder): ArrayNodeDefinition {
         $node = $builder->arrayNode($name);
         $node
             ->children()
+                ->arrayNode('known_methods')
+                    ->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()
+                ->end()
                 ->arrayNode('request_captured_headers')
                     ->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()
                 ->end()
