@@ -6,12 +6,10 @@ use Nevay\OTelSDK\Configuration\ConfigurationResult;
 use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
 use Nevay\OTelSDK\Metrics\MeterProviderBuilder;
 use Nevay\OTelSDK\Trace\TracerProviderBuilder;
-use Nevay\SPI\ServiceLoader;
 use OpenTelemetry\API\Configuration\Context;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\HookManagerInterface;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\Instrumentation;
-use OpenTelemetry\API\Instrumentation\AutoInstrumentation\NoopHookManager;
 use Throwable;
 
 /**
@@ -19,13 +17,13 @@ use Throwable;
  */
 final class RegisterAutoInstrumentations implements Customization {
 
-    private readonly iterable $instrumentations;
-    private readonly HookManagerInterface $hookManager;
-
-    public function __construct(?iterable $instrumentations = null, ?HookManagerInterface $hookManager = null) {
-        $this->instrumentations = $instrumentations ?? ServiceLoader::load(Instrumentation::class);
-        $this->hookManager = $hookManager ?? ServiceLoader::load(HookManagerInterface::class)->getIterator()->current() ?? new NoopHookManager();
-    }
+    /**
+     * @param iterable<Instrumentation> $instrumentations
+     */
+    public function __construct(
+        private readonly iterable $instrumentations,
+        private readonly HookManagerInterface $hookManager,
+    ) {}
 
     public function onApiAvailable(ConfigurationResult $config, Context $context): void {
         $instrumentationContext = new AutoInstrumentation\Context(
