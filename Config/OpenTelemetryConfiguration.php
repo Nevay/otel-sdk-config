@@ -316,7 +316,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             ->withRule(static fn(TracerConfig $config) => $config->enabled = false, filter: Diagnostics::isSelfDiagnostics(...));
 
         foreach ($properties['tracer_provider']['tracer_configurator/development']['tracers'] as $tracerConfigurator) {
-            $builder->withRule($this->createTracerConfigurator($tracerConfigurator['config']), name: $tracerConfigurator['name']);
+            $builder->withRule($this->createTracerConfigurator($tracerConfigurator['config'] ?? []), name: $tracerConfigurator['name']);
         }
         $tracerProviderBuilder->setTracerConfigurator($builder->toConfigurator());
 
@@ -325,7 +325,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             ->withRule(static fn(MeterConfig $config) => $config->enabled = false, filter: Diagnostics::isSelfDiagnostics(...));
 
         foreach ($properties['meter_provider']['meter_configurator/development']['meters'] as $meterConfigurator) {
-            $builder->withRule($this->createMeterConfigurator($meterConfigurator['config']), name: $meterConfigurator['name']);
+            $builder->withRule($this->createMeterConfigurator($meterConfigurator['config'] ?? []), name: $meterConfigurator['name']);
         }
         $meterProviderBuilder->setMeterConfigurator($builder->toConfigurator());
 
@@ -335,7 +335,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             ->withRule(static fn(LoggerConfig $config) => $config->minimumSeverity = $logLevel->value, filter: Diagnostics::isSelfDiagnostics(...));
 
         foreach ($properties['logger_provider']['logger_configurator/development']['loggers'] as $loggerConfigurator) {
-            $builder->withRule($this->createLoggerConfigurator($loggerConfigurator['config']), name: $loggerConfigurator['name']);
+            $builder->withRule($this->createLoggerConfigurator($loggerConfigurator['config'] ?? []), name: $loggerConfigurator['name']);
         }
         $loggerProviderBuilder->setLoggerConfigurator($builder->toConfigurator());
 
