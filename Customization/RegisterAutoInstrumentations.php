@@ -10,6 +10,7 @@ use OpenTelemetry\API\Configuration\Context;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\HookManagerInterface;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\Instrumentation;
+use ReflectionParameter;
 use Throwable;
 
 /**
@@ -23,6 +24,7 @@ final class RegisterAutoInstrumentations implements Customization {
     public function __construct(
         private readonly iterable $instrumentations,
         private readonly HookManagerInterface $hookManager,
+        private readonly bool $skipGlobalInstrumentations = false,
     ) {}
 
     public function onApiAvailable(ConfigurationResult $config, Context $context): void {
@@ -35,6 +37,10 @@ final class RegisterAutoInstrumentations implements Customization {
         );
 
         foreach ($this->instrumentations as $instrumentation) {
+            if ($this->skipGlobalInstrumentations && self::isGlobalInstrumentation($instrumentation)) {
+                continue;
+            }
+
             $context->logger->info('Registering instrumentation', ['instrumentation' => $instrumentation::class]);
             try {
                 $instrumentation->register($this->hookManager, $config->configProperties, $instrumentationContext);
@@ -58,5 +64,11 @@ final class RegisterAutoInstrumentations implements Customization {
 
     public function customizeLoggerProvider(LoggerProviderBuilder $loggerProviderBuilder, Context $context): void {
         // no-op
+    }
+
+    private static function isGlobalInstrumentation(Instrumentation $instrumentation): bool {
+        $reflection = new ReflectionParameter($instrumentation->register(...), 0);
+
+        return $reflection->getType()?->allowsNull() ?? false;
     }
 }

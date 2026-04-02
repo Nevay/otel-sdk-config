@@ -40,7 +40,7 @@ use Throwable;
     $customization = new Customizations(
         new RegisterGlobals(),
         new RegisterAutoInstrumentations($instrumentations, $hookManager),
-        new SelfDiagnostics(new RegisterAutoInstrumentations($instrumentations, $sdkHookManager)),
+        new SelfDiagnostics(new RegisterAutoInstrumentations($instrumentations, $sdkHookManager, true)),
         new RegisterShutdownHook(),
     );
 
