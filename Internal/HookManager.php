@@ -35,7 +35,7 @@ final class HookManager implements HookManagerInterface {
 
     public function disable(?ContextInterface $context): ContextInterface {
         $context ??= Context::getCurrent();
-        return $context->with($this->contextKey, true);
+        return $context->with($this->contextKey, false);
     }
 
     private function bindHookScope(?Closure $closure, int $return): ?Closure {
