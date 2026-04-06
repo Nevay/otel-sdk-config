@@ -51,11 +51,12 @@ final class MetricExporterPrometheus implements ComponentProvider {
         $host = $properties['host'];
         $port = $properties['port'];
 
-        $address = Dns\resolve($host)[0]->getValue();
-        $server->expose(new InternetAddress(
-            address: $address,
-            port: $port,
-        ));
+        foreach (Dns\resolve($host) as $dnsRecord) {
+            $server->expose(new InternetAddress(
+                address: $dnsRecord->getValue(),
+                port: $port,
+            ));
+        }
 
         return new PrometheusMetricExporter(
             server: $server,

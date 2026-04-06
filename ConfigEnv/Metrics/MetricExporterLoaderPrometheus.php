@@ -36,11 +36,12 @@ final class MetricExporterLoaderPrometheus implements EnvComponentLoader {
         $host = $env->string('OTEL_EXPORTER_PROMETHEUS_HOST') ?? 'localhost';
         $port = $env->int('OTEL_EXPORTER_PROMETHEUS_PORT') ?? 9464;
 
-        $address = Dns\resolve($host)[0]->getValue();
-        $server->expose(new InternetAddress(
-            address: $address,
-            port: $port,
-        ));
+        foreach (Dns\resolve($host) as $dnsRecord) {
+            $server->expose(new InternetAddress(
+                address: $dnsRecord->getValue(),
+                port: $port,
+            ));
+        }
 
         return new PrometheusMetricExporter($server);
     }
