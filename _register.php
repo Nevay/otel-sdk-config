@@ -71,6 +71,7 @@ ServiceLoader::register(ComponentProvider::class, Config\Logs\LogRecordExporterO
 ServiceLoader::register(ComponentProvider::class, Config\Logs\LogRecordExporterOtlpGrpc::class);
 ServiceLoader::register(ComponentProvider::class, Config\Logs\LogRecordExporterOtlpHttp::class);
 ServiceLoader::register(ComponentProvider::class, Config\Logs\LogRecordProcessorBatch::class);
+ServiceLoader::register(ComponentProvider::class, Config\Logs\LogRecordProcessorEventToSpanEventBridge::class);
 ServiceLoader::register(ComponentProvider::class, Config\Logs\LogRecordProcessorSimple::class);
 
 ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Distribution\DistributionConfigurationLoaderOTelSDK::class);
