@@ -50,6 +50,7 @@ ServiceLoader::register(ComponentProvider::class, Config\Trace\SpanExporterOtlpF
 ServiceLoader::register(ComponentProvider::class, Config\Trace\SpanExporterOtlpGrpc::class);
 ServiceLoader::register(ComponentProvider::class, Config\Trace\SpanExporterOtlpHttp::class);
 ServiceLoader::register(ComponentProvider::class, Config\Trace\SpanProcessorBatch::class);
+ServiceLoader::register(ComponentProvider::class, Config\Trace\SpanProcessorCaptureCodeAttributes::class);
 ServiceLoader::register(ComponentProvider::class, Config\Trace\SpanProcessorSimple::class);
 ServiceLoader::register(ComponentProvider::class, Config\Trace\SpanSuppressionStrategySemanticConvention::class);
 ServiceLoader::register(ComponentProvider::class, Config\Trace\SpanSuppressionStrategySpanKind::class);
