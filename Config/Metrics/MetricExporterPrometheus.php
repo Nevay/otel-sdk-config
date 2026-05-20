@@ -31,9 +31,9 @@ final class MetricExporterPrometheus implements ComponentProvider {
      * @param array{
      *     host: string,
      *     port: int,
-     *     without_scope_info: bool,
-     *     "without_target_info/development": bool,
-     *     with_resource_constant_labels: array{
+     *     scope_info_enabled: bool,
+     *     "target_info_enabled/development": bool,
+     *     resource_constant_labels: array{
      *         included: ?list<string>,
      *         excluded: ?list<string>,
      *     },
@@ -60,11 +60,11 @@ final class MetricExporterPrometheus implements ComponentProvider {
 
         return new PrometheusMetricExporter(
             server: $server,
-            withoutScopeInfo: $properties['without_scope_info'],
-            withoutTargetInfo: $properties['without_target_info/development'],
-            withResourceConstantLabels: Attributes::filterKeys(
-                include: $properties['with_resource_constant_labels']['included'] ?? [],
-                exclude: $properties['with_resource_constant_labels']['excluded'] ?? [],
+            scopeInfoEnabled: !$properties['scope_info_enabled'],
+            targetInfoEnabled: $properties['target_info_enabled/development'],
+            resourceConstantLabels: Attributes::filterKeys(
+                include: $properties['resource_constant_labels']['included'] ?? [],
+                exclude: $properties['resource_constant_labels']['excluded'] ?? [],
             ),
             translationStrategy: match ($properties['translation_strategy']) {
                 'underscore_escaping_with_suffixes' => TranslationStrategy::UnderscoreEscapingWithSuffixes,
@@ -82,9 +82,9 @@ final class MetricExporterPrometheus implements ComponentProvider {
             ->children()
                 ->scalarNode('host')->defaultValue('localhost')->validate()->always(Util::ensureString())->end()->end()
                 ->integerNode('port')->defaultValue(9464)->end()
-                ->booleanNode('without_scope_info')->defaultFalse()->end()
-                ->booleanNode('without_target_info/development')->defaultFalse()->end()
-                ->arrayNode('with_resource_constant_labels')
+                ->booleanNode('scope_info_enabled')->defaultTrue()->end()
+                ->booleanNode('target_info_enabled/development')->defaultTrue()->end()
+                ->arrayNode('resource_constant_labels')
                     ->children()
                         ->arrayNode('included')->defaultNull()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
                         ->arrayNode('excluded')->defaultNull()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
