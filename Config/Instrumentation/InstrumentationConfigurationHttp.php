@@ -36,6 +36,7 @@ final class InstrumentationConfigurationHttp implements ComponentProvider {
         $node
             ->children()
                 ->arrayNode('known_methods')
+                    ->defaultNull()
                     ->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()
                 ->end()
                 ->arrayNode('request_captured_headers')
