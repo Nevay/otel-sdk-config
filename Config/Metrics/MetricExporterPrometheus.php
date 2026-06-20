@@ -60,7 +60,7 @@ final class MetricExporterPrometheus implements ComponentProvider {
 
         return new PrometheusMetricExporter(
             server: $server,
-            scopeInfoEnabled: !$properties['scope_info_enabled'],
+            scopeInfoEnabled: $properties['scope_info_enabled'],
             targetInfoEnabled: $properties['target_info_enabled/development'],
             resourceConstantLabels: Attributes::filterKeys(
                 include: $properties['resource_constant_labels']['included'] ?? [],
