@@ -36,6 +36,7 @@ use Nevay\OTelSDK\Metrics\MeterProviderBuilder;
 use Nevay\OTelSDK\Metrics\MetricReader;
 use Nevay\OTelSDK\Metrics\NoopMeterProvider;
 use Nevay\OTelSDK\Metrics\View;
+use Nevay\OTelSDK\Trace\IdGenerator;
 use Nevay\OTelSDK\Trace\NoopTracerProvider;
 use Nevay\OTelSDK\Trace\Sampler;
 use Nevay\OTelSDK\Trace\SpanProcessor;
@@ -110,17 +111,18 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *         },
      *         sampler: ?ComponentPlugin<Sampler>,
      *         processors: list<ComponentPlugin<SpanProcessor>>,
-     *          "tracer_configurator/development": array{
-     *              default_config?: array{
-     *                  disabled?: bool,
-     *              },
-     *              tracers: list<array{
-     *                  name: string,
-     *                  config: array{
-     *                      disabled?: ?bool,
-     *                  }
-     *              }>,
-     *          },
+     *         id_generator: ?ComponentPlugin<IdGenerator>,
+     *         "tracer_configurator/development": array{
+     *             default_config?: array{
+     *                 disabled?: bool,
+     *             },
+     *             tracers: list<array{
+     *                 name: string,
+     *                 config: array{
+     *                     disabled?: ?bool,
+     *                 },
+     *             }>,
+     *         },
      *     },
      *     meter_provider: array{
      *         views: list<array{
@@ -343,6 +345,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         // <editor-fold desc="tracer_provider">
 
+        $tracerProviderBuilder->setIdGenerator($properties['tracer_provider']['id_generator']?->create($context));
         $tracerProviderBuilder->setSampler($properties['tracer_provider']['sampler']?->create($context));
         foreach ($properties['tracer_provider']['processors'] as $processor) {
             $tracerProviderBuilder->addSpanProcessor($processor->create($context));
@@ -689,6 +692,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 ->end()
                 ->append($registry->component('sampler', Sampler::class))
                 ->append($registry->componentList('processors', SpanProcessor::class))
+                ->append($registry->component('id_generator', IdGenerator::class))
                 ->arrayNode('tracer_configurator/development')
                     ->addDefaultsIfNotSet()
                     ->children()

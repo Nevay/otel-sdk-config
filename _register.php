@@ -38,6 +38,7 @@ ServiceLoader::register(ComponentProvider::class, Config\Trace\ComposableSampler
 ServiceLoader::register(ComponentProvider::class, Config\Trace\ComposableSamplerParentThreshold::class);
 ServiceLoader::register(ComponentProvider::class, Config\Trace\ComposableSamplerProbability::class);
 ServiceLoader::register(ComponentProvider::class, Config\Trace\ComposableSamplerRuleBased::class);
+ServiceLoader::register(ComponentProvider::class, Config\Trace\IdGeneratorRandom::class);
 ServiceLoader::register(ComponentProvider::class, Config\Trace\SamplerAlwaysOff::class);
 ServiceLoader::register(ComponentProvider::class, Config\Trace\SamplerAlwaysOn::class);
 ServiceLoader::register(ComponentProvider::class, Config\Trace\SamplerComposite::class);
