@@ -23,6 +23,7 @@ final class MetricReaderPeriodic implements ComponentProvider {
      * @param array{
      *     interval: int<0, max>,
      *     timeout: int<0, max>,
+     *     "max_export_batch_size/development": ?int<1, max>,
      *     exporter: ComponentPlugin<MetricExporter>,
      *     producers: list<ComponentPlugin<MetricProducer>>,
      *     cardinality_limits: array{
@@ -42,6 +43,7 @@ final class MetricReaderPeriodic implements ComponentProvider {
             metricExporter: $properties['exporter']->create($context),
             exportIntervalMillis: $properties['interval'],
             exportTimeoutMillis: $properties['timeout'],
+            maxExportBatchSize: $properties['max_export_batch_size/development'],
             cardinalityLimits: new CardinalityLimitResolver(
                 default: $properties['cardinality_limits']['default'],
                 counter: $properties['cardinality_limits']['counter'],
@@ -66,6 +68,7 @@ final class MetricReaderPeriodic implements ComponentProvider {
             ->children()
                 ->integerNode('interval')->min(0)->defaultValue(60000)->end()
                 ->integerNode('timeout')->min(0)->defaultValue(30000)->end()
+                ->integerNode('max_export_batch_size/development')->min(1)->defaultNull()->end()
                 ->append($registry->component('exporter', MetricExporter::class)->isRequired())
                 ->append($registry->componentList('producers', MetricProducer::class))
                 ->arrayNode('cardinality_limits')
