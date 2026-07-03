@@ -49,7 +49,7 @@ use Throwable;
     $context = $sdkHookManager->enable($context);
     $scope = $context->activate();
     try {
-        if (($configFile = $env->string('OTEL_CONFIG_FILE') ?? $env->string('OTEL_EXPERIMENTAL_CONFIG_FILE')) !== null) {
+        if (($configFile = $env->string('OTEL_CONFIG_FILE')) !== null) {
             Config::loadFile(Util::makePathAbsolute($configFile), envReader: $envReader, customization: $customization);
         } elseif ($env->bool('OTEL_PHP_AUTOLOAD_ENABLED')) {
             Config::loadFromEnv(envReader: $envReader, customization: $customization);
