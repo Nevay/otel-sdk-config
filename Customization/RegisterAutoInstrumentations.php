@@ -1,16 +1,17 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\Customization;
 
-use Nevay\OTelSDK\Configuration\Customization;
 use Nevay\OTelSDK\Configuration\ConfigurationResult;
+use Nevay\OTelSDK\Configuration\Customization;
+use Nevay\OTelSDK\Configuration\Internal\HookCountingManager;
 use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
 use Nevay\OTelSDK\Metrics\MeterProviderBuilder;
 use Nevay\OTelSDK\Trace\TracerProviderBuilder;
-use OpenTelemetry\API\Configuration\Context;
+use OpenTelemetry\API\Configuration\ConfigProperties;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\HookManagerInterface;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\Instrumentation;
-use ReflectionParameter;
+use OpenTelemetry\Config\SDK\Configuration\Context;
 use Throwable;
 
 /**
@@ -37,7 +38,7 @@ final class RegisterAutoInstrumentations implements Customization {
         );
 
         foreach ($this->instrumentations as $instrumentation) {
-            if ($this->skipGlobalInstrumentations && self::isGlobalInstrumentation($instrumentation)) {
+            if ($this->skipGlobalInstrumentations && self::isGlobalInstrumentation($instrumentation, $config->configProperties)) {
                 continue;
             }
 
@@ -66,9 +67,10 @@ final class RegisterAutoInstrumentations implements Customization {
         // no-op
     }
 
-    private static function isGlobalInstrumentation(Instrumentation $instrumentation): bool {
-        $reflection = new ReflectionParameter($instrumentation->register(...), 0);
+    private static function isGlobalInstrumentation(Instrumentation $instrumentation, ConfigProperties $configProperties): bool {
+        $hookManager = new HookCountingManager();
+        $instrumentation->register($hookManager, $configProperties, new AutoInstrumentation\Context());
 
-        return $reflection->getType()?->allowsNull() ?? false;
+        return !$hookManager->hooks;
     }
 }
