@@ -206,8 +206,6 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $distributionProperties = $this->createDistributionProperties($properties['distribution'], $context);
 
         if ($properties['disabled']) {
-            $logger->debug('Initialized OTelSDK from declarative config', ['disabled' => true]);
-
             $config = new ConfigurationResult(
                 propagator: $propagator,
                 responsePropagator: $responsePropagator,
@@ -218,6 +216,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 distributionProperties: $distributionProperties,
             );
             $customization?->onApiAvailable($config, $context);
+
+            $logger->debug('Initialized OTelSDK from declarative config', ['disabled' => true]);
 
             return $config;
         }

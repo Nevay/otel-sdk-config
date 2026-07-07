@@ -106,8 +106,6 @@ final class EnvConfiguration implements ComponentPlugin {
         $distributionProperties = self::distributionProperties($env, $registry, $context);
 
         if ($env->bool('OTEL_SDK_DISABLED') ?? false) {
-            $logger->debug('Initialized OTelSDK from env', ['disabled' => true]);
-
             $config = new ConfigurationResult(
                 propagator: $propagator,
                 responsePropagator: $responsePropagator,
@@ -118,6 +116,8 @@ final class EnvConfiguration implements ComponentPlugin {
                 distributionProperties: $distributionProperties,
             );
             $customization?->onApiAvailable($config, $context);
+
+            $logger->debug('Initialized OTelSDK from env', ['disabled' => true]);
 
             return $config;
         }
