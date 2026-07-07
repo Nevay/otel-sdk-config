@@ -323,7 +323,11 @@ final class EnvConfiguration implements ComponentPlugin {
     }
 
     private static function meterProvider(MeterProviderBuilder $meterProviderBuilder, EnvResolver $env, EnvComponentLoaderRegistry $registry, Context $context): void {
-        $meterProviderBuilder->setExemplarFilter($registry->load(ExemplarFilter::class, $env->string('OTEL_METRICS_EXEMPLAR_FILTER') ?? 'trace_based', $env, $context));
+        $meterProviderBuilder->setExemplarFilter(match ($env->enum('OTEL_METRICS_EXEMPLAR_FILTER', ['trace_based', 'always_on', 'always_off']) ?? 'trace_based') {
+            'trace_based' => ExemplarFilter::TraceBased,
+            'always_on' => ExemplarFilter::AlwaysOn,
+            'always_off' => ExemplarFilter::AlwaysOff,
+        });
 
         foreach ($env->list('OTEL_METRICS_EXPORTER') ?? ['otlp'] as $exporterName) {
             if (!strcasecmp($exporterName, 'none')) {

@@ -89,9 +89,6 @@ ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Trace\SpanExporterL
 ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Trace\SpanExporterLoaderOtlp::class);
 ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Trace\SpanSuppressionStrategyLoaderSemanticConvention::class);
 ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Trace\SpanSuppressionStrategyLoaderSpanKind::class);
-ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Metrics\ExemplarFilterLoaderAlwaysOff::class);
-ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Metrics\ExemplarFilterLoaderAlwaysOn::class);
-ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Metrics\ExemplarFilterLoaderTraceBased::class);
 ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Metrics\MetricExporterLoaderConsole::class);
 ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Metrics\MetricExporterLoaderOtlp::class);
 ServiceLoader::register(EnvComponentLoader::class, ConfigEnv\Metrics\MetricExporterLoaderPrometheus::class);
