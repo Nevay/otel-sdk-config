@@ -256,11 +256,11 @@ final class EnvConfiguration implements ComponentPlugin {
 
     private static function configProperties(EnvResolver $env, EnvComponentLoaderRegistry $registry, Context $context): ConfigProperties {
         $configProperties = new ConfigurationRegistry();
-        foreach ($registry->loadAll(GeneralInstrumentationConfiguration::class, $env, $context) as $instrumentation) {
-            $configProperties->add($instrumentation);
+        foreach ($registry->listLoaders(GeneralInstrumentationConfiguration::class) as $name) {
+            $configProperties->add($registry->load(GeneralInstrumentationConfiguration::class, $name, $env, $context));
         }
-        foreach ($registry->loadAll(InstrumentationConfiguration::class, $env, $context) as $instrumentation) {
-            $configProperties->add($instrumentation);
+        foreach ($registry->listLoaders(InstrumentationConfiguration::class) as $name) {
+            $configProperties->add($registry->load(InstrumentationConfiguration::class, $name, $env, $context));
         }
 
         return $configProperties;
@@ -268,8 +268,8 @@ final class EnvConfiguration implements ComponentPlugin {
 
     private static function distributionProperties(EnvResolver $env, EnvComponentLoaderRegistry $registry, Context $context): DistributionProperties {
         $distributionProperties = new DistributionRegistry();
-        foreach ($registry->loadAll(DistributionConfiguration::class, $env, $context) as $distribution) {
-            $distributionProperties->add($distribution);
+        foreach ($registry->listLoaders(DistributionConfiguration::class) as $name) {
+            $distributionProperties->add($registry->load(DistributionConfiguration::class, $name, $env, $context));
         }
 
         return $distributionProperties;

@@ -62,9 +62,9 @@ final class EnvComponentLoaderRegistry implements \OpenTelemetry\API\Configurati
         return $loader->load($env, $this, $context);
     }
 
-    public function loadAll(string $type, EnvResolver $env, Context $context): iterable {
-        foreach ($this->loaders[$type] ?? [] as $loader) {
-            yield $loader->load($env, $this, $context);
+    public function listLoaders(string $type): iterable {
+        foreach ($this->loaders[$type] ?? [] as $name => $_) {
+            yield (string) $name;
         }
     }
 
