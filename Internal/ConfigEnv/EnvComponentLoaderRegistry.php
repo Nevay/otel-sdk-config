@@ -12,8 +12,10 @@ use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionType;
 use ReflectionUnionType;
+use function array_keys;
 use function array_map;
 use function implode;
+use function json_encode;
 use function sprintf;
 use function strtolower;
 
@@ -51,7 +53,8 @@ final class EnvComponentLoaderRegistry implements \OpenTelemetry\API\Configurati
 
     public function load(string $type, string $name, EnvResolver $env, Context $context): mixed {
         if (!$loader = $this->loaders[$type][$name] ?? $this->loaders[$type][strtolower($name)] ?? null) {
-            throw new InvalidArgumentException(sprintf('Loader for %s %s not found', $type, $name));
+            throw new InvalidArgumentException(sprintf('Component "%s" uses unknown loader "%s", available loaders are %s',
+                $type, $name, implode(', ', array_map(json_encode(...), array_keys($this->loaders[$type] ?? [])) ?: ['none'])));
         }
 
         $context->logger->debug('Loading component plugin "{loader}"', ['loader' => $loader::class]);
