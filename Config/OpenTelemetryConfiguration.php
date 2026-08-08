@@ -7,7 +7,6 @@ use InvalidArgumentException;
 use Monolog\Handler\ErrorLogHandler;
 use Monolog\Logger;
 use Nevay\OTelSDK\Common\Attributes;
-use Nevay\OTelSDK\Common\AttributesLimitingFactory;
 use Nevay\OTelSDK\Common\Configurator\RuleConfiguratorBuilder;
 use Nevay\OTelSDK\Common\Resource;
 use Nevay\OTelSDK\Common\ResourceDetector;
@@ -259,19 +258,14 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             $properties['resource']['schema_url'] ?? null,
         );
 
-        $attributesFactory = AttributesLimitingFactory::create(
-            attributeKeyFilter: Attributes::filterKeys(
-                include: $properties['resource']['detection/development']['attributes']['included'] ?? '*',
-                exclude: $properties['resource']['detection/development']['attributes']['excluded'] ?? [],
-            ),
+        $detectionFilter = Attributes::filterKeys(
+            include: $properties['resource']['detection/development']['attributes']['included'] ?? '*',
+            exclude: $properties['resource']['detection/development']['attributes']['excluded'] ?? [],
         );
         foreach ($properties['resource']['detection/development']['detectors'] ?? [] as $detector) {
             $detector = $detector->create(new Context(logger: $logger));
             $resource = $detector->getResource();
-            $resource = new Resource(
-                $attributesFactory->build($resource->attributes),
-                $resource->schemaUrl,
-            );
+            $resource = $resource->filterAttributes($detectionFilter);
 
             $resources[] = $resource;
         }

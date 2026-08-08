@@ -4,9 +4,6 @@ namespace Nevay\OTelSDK\Configuration\Customization;
 use Nevay\OTelSDK\Configuration\ConfigurationResult;
 use Nevay\OTelSDK\Configuration\Customization;
 use Nevay\OTelSDK\Configuration\Internal\HookCountingManager;
-use Nevay\OTelSDK\Logs\LoggerProviderBuilder;
-use Nevay\OTelSDK\Metrics\MeterProviderBuilder;
-use Nevay\OTelSDK\Trace\TracerProviderBuilder;
 use OpenTelemetry\API\Configuration\ConfigProperties;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\HookManagerInterface;
@@ -17,7 +14,7 @@ use Throwable;
 /**
  * @experimental
  */
-final class RegisterAutoInstrumentations implements Customization {
+final class RegisterAutoInstrumentations extends AbstractCustomization implements Customization {
 
     /**
      * @param iterable<Instrumentation> $instrumentations
@@ -49,22 +46,6 @@ final class RegisterAutoInstrumentations implements Customization {
                 $context->logger->error('Error during instrumentation registration', ['exception' => $e, 'instrumentation' => $instrumentation]);
             }
         }
-    }
-
-    public function onSdkAvailable(ConfigurationResult $config, Context $context): void {
-        // no-op
-    }
-
-    public function customizeTracerProvider(TracerProviderBuilder $tracerProviderBuilder, Context $context): void {
-        // no-op
-    }
-
-    public function customizeMeterProvider(MeterProviderBuilder $meterProviderBuilder, Context $context): void {
-        // no-op
-    }
-
-    public function customizeLoggerProvider(LoggerProviderBuilder $loggerProviderBuilder, Context $context): void {
-        // no-op
     }
 
     private static function isGlobalInstrumentation(Instrumentation $instrumentation, ConfigProperties $configProperties): bool {
