@@ -85,8 +85,10 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *         attributes_list?: ?string,
      *         schema_url?: ?string,
      *         "detection/development"?: array{
-     *             included?: non-empty-list<string>,
-     *             excluded?: non-empty-list<string>,
+     *             attributes: array{
+     *                 included: ?non-empty-list<string>,
+     *                 excluded: ?non-empty-list<string>,
+     *             },
      *             detectors?: non-empty-list<ComponentPlugin<ResourceDetector>>,
      *         },
      *     },
@@ -130,8 +132,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *                 name: ?string,
      *                 description: ?string,
      *                 attribute_keys: array{
-     *                     included: ?list<string>,
-     *                     excluded: ?list<string>,
+     *                     included: ?non-empty-list<string>,
+     *                     excluded: ?non-empty-list<string>,
      *                 },
      *                 aggregation: ?ComponentPlugin<Aggregation>,
      *                 aggregation_cardinality_limit: ?int<1,max>,
@@ -604,8 +606,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                     ->children()
                         ->arrayNode('attributes')
                             ->children()
-                                ->arrayNode('included')->requiresAtLeastOneElement()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
-                                ->arrayNode('excluded')->requiresAtLeastOneElement()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
+                                ->arrayNode('included')->defaultNull()->requiresAtLeastOneElement()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
+                                ->arrayNode('excluded')->defaultNull()->requiresAtLeastOneElement()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
                             ->end()
                         ->end()
                         ->append($registry->componentList('detectors', ResourceDetector::class)->requiresAtLeastOneElement())
@@ -739,8 +741,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                                     ->scalarNode('description')->defaultNull()->validate()->always(Util::ensureString())->end()->end()
                                     ->arrayNode('attribute_keys')
                                         ->children()
-                                            ->arrayNode('included')->defaultNull()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
-                                            ->arrayNode('excluded')->defaultNull()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
+                                            ->arrayNode('included')->defaultNull()->requiresAtLeastOneElement()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
+                                            ->arrayNode('excluded')->defaultNull()->requiresAtLeastOneElement()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
                                         ->end()
                                     ->end()
                                     ->append($registry->component('aggregation', Aggregation::class))
