@@ -35,6 +35,7 @@ use Nevay\OTelSDK\Metrics\MeterProviderBuilder;
 use Nevay\OTelSDK\Metrics\MetricReader;
 use Nevay\OTelSDK\Metrics\NoopMeterProvider;
 use Nevay\OTelSDK\Metrics\View;
+use Nevay\OTelSDK\Metrics\ViewMatchingMode;
 use Nevay\OTelSDK\Trace\IdGenerator;
 use Nevay\OTelSDK\Trace\NoopTracerProvider;
 use Nevay\OTelSDK\Trace\Sampler;
@@ -126,6 +127,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *         },
      *     },
      *     meter_provider: array{
+     *         "view_matching_mode/development": 'independent'|'composable',
      *         views: list<array{
      *             stream: array{
      *                 name: ?string,
@@ -351,6 +353,10 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         // <editor-fold desc="meter_provider">
 
+        $meterProviderBuilder->setViewMatchingMode(match ($properties['meter_provider']['view_matching_mode/development']) {
+            'independent' => ViewMatchingMode::Independent,
+            'composable' => ViewMatchingMode::Composable,
+        });
         foreach ($properties['meter_provider']['views'] as $view) {
             $meterProviderBuilder->addView(
                 view: new View(
@@ -725,6 +731,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $node
             ->addDefaultsIfNotSet()
             ->children()
+                ->enumNode('view_matching_mode/development')->values(['independent', 'composable'])->defaultValue('independent')->end()
                 ->arrayNode('views')
                     ->arrayPrototype()
                         ->children()
