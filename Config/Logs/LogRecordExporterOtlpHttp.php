@@ -18,6 +18,7 @@ use OpenTelemetry\API\Configuration\Config\ComponentProviderRegistry;
 use OpenTelemetry\API\Configuration\Context;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeBuilder;
+use const PHP_INT_MAX;
 
 /**
  * @implements ComponentProvider<LogRecordExporter>
@@ -42,6 +43,8 @@ final class LogRecordExporterOtlpHttp implements ComponentProvider {
      *     }>,
      *     headers_list: ?string,
      *     compression: 'gzip'|null,
+     *     max_request_size: int<0, max>,
+     *     max_response_size: int<1, max>,
      *     timeout: int<0, max>,
      *     encoding: 'protobuf'|'json',
      * } $properties
@@ -70,6 +73,8 @@ final class LogRecordExporterOtlpHttp implements ComponentProvider {
             compression: $properties['compression'],
             headers: Util::parseMapList($properties['headers'], $properties['headers_list']),
             timeout: $properties['timeout'] / 1e3,
+            maxRequestBodySize: $properties['max_request_size'] ?: PHP_INT_MAX,
+            maxResponseBodySize: $properties['max_response_size'],
             meterProvider: $context->meterProvider,
             logger: $context->logger,
         );
@@ -98,6 +103,8 @@ final class LogRecordExporterOtlpHttp implements ComponentProvider {
                 ->end()
                 ->scalarNode('headers_list')->defaultNull()->validate()->always(Util::ensureString())->end()->end()
                 ->enumNode('compression')->values(['gzip'])->defaultNull()->end()
+                ->integerNode('max_request_size')->min(0)->defaultValue(67108864)->end()
+                ->integerNode('max_response_size')->min(1)->defaultValue(4194304)->end()
                 ->integerNode('timeout')->min(0)->defaultValue(10000)->end()
                 ->enumNode('encoding')
                     ->values(['protobuf', 'json'])
