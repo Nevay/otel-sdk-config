@@ -94,6 +94,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *     },
      *     attribute_limits: array{
      *         attribute_value_length_limit: ?int<0, max>,
+     *         attribute_value_depth_limit: ?int<1, max>,
      *         attribute_count_limit: ?int<0, max>,
      *     },
      *     propagator?: array{
@@ -105,6 +106,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *     tracer_provider: array{
      *         limits: array{
      *             attribute_value_length_limit: ?int<0, max>,
+     *             attribute_value_depth_limit: ?int<1, max>,
      *             attribute_count_limit: ?int<0, max>,
      *             event_count_limit: int<0, max>,
      *             link_count_limit: int<0, max>,
@@ -166,6 +168,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *     logger_provider: array{
      *         limits: array{
      *             attribute_value_length_limit: ?int<0, max>,
+     *             attribute_value_depth_limit: ?int<1, max>,
      *             attribute_count_limit: int<0, max>,
      *         },
      *         processors: list<ComponentPlugin<LogRecordProcessor>>,
@@ -291,12 +294,14 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
 
         $attributeCountLimit = $properties['attribute_limits']['attribute_count_limit'];
         $attributeValueLengthLimit = $properties['attribute_limits']['attribute_value_length_limit'];
-        $tracerProviderBuilder->setAttributeLimits($attributeCountLimit, $attributeValueLengthLimit);
-        $loggerProviderBuilder->setAttributeLimits($attributeCountLimit, $attributeValueLengthLimit);
+        $attributeValueDepthLimit = $properties['attribute_limits']['attribute_value_depth_limit'];
+        $tracerProviderBuilder->setAttributeLimits($attributeCountLimit, $attributeValueLengthLimit, $attributeValueDepthLimit);
+        $loggerProviderBuilder->setAttributeLimits($attributeCountLimit, $attributeValueLengthLimit, $attributeValueDepthLimit);
 
         $tracerProviderBuilder->setSpanAttributeLimits(
             $properties['tracer_provider']['limits']['attribute_count_limit'],
             $properties['tracer_provider']['limits']['attribute_value_length_limit'],
+            $properties['tracer_provider']['limits']['attribute_value_depth_limit'],
         );
         $tracerProviderBuilder->setEventCountLimit($properties['tracer_provider']['limits']['event_count_limit']);
         $tracerProviderBuilder->setLinkCountLimit($properties['tracer_provider']['limits']['link_count_limit']);
@@ -405,6 +410,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $loggerProviderBuilder->setLogRecordAttributeLimits(
             $properties['logger_provider']['limits']['attribute_count_limit'],
             $properties['logger_provider']['limits']['attribute_value_length_limit'],
+            $properties['logger_provider']['limits']['attribute_value_depth_limit'],
         );
         foreach ($properties['logger_provider']['processors'] as $processor) {
             $loggerProviderBuilder->addLogRecordProcessor($processor->create($context));
@@ -627,6 +633,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             ->addDefaultsIfNotSet()
             ->children()
                 ->integerNode('attribute_value_length_limit')->min(0)->defaultNull()->end()
+                ->integerNode('attribute_value_depth_limit')->min(1)->defaultNull()->end()
                 ->integerNode('attribute_count_limit')->min(0)->defaultValue(128)->end()
             ->end();
 
@@ -687,6 +694,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                     ->addDefaultsIfNotSet()
                     ->children()
                         ->integerNode('attribute_value_length_limit')->min(0)->defaultNull()->end()
+                        ->integerNode('attribute_value_depth_limit')->min(1)->defaultNull()->end()
                         ->integerNode('attribute_count_limit')->min(0)->defaultNull()->end()
                         ->integerNode('event_count_limit')->min(0)->defaultValue(128)->end()
                         ->integerNode('link_count_limit')->min(0)->defaultValue(128)->end()
@@ -820,6 +828,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                     ->addDefaultsIfNotSet()
                     ->children()
                         ->integerNode('attribute_value_length_limit')->min(0)->defaultNull()->end()
+                        ->integerNode('attribute_value_depth_limit')->min(1)->defaultNull()->end()
                         ->integerNode('attribute_count_limit')->min(0)->defaultNull()->end()
                     ->end()
                 ->end()
