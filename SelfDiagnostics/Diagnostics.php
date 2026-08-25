@@ -8,7 +8,7 @@ use Nevay\OTelSDK\Common\InstrumentationScope;
  */
 final class Diagnostics {
 
-    private const SELF_DIAGNOSTICS_ATTRIBUTE = 'php.otel.sdk.self-diagnostics';
+    private const SELF_DIAGNOSTICS_ATTRIBUTE = 'php.otel.sdk.self_diagnostics';
 
     public static function markAsSelfDiagnostics(iterable $attributes): iterable {
         yield from $attributes;
