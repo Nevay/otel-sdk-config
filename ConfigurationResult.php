@@ -19,6 +19,7 @@ final class ConfigurationResult {
 
     public readonly ConfigProperties $configProperties;
     public readonly DistributionProperties $distributionProperties;
+    public array $keepAliveHandles = [];
 
     /**
      * @internal

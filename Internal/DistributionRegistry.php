@@ -1,9 +1,15 @@
 <?php declare(strict_types=1);
-namespace Nevay\OTelSDK\Configuration\Distribution;
+namespace Nevay\OTelSDK\Configuration\Internal;
 
+use Nevay\OTelSDK\Configuration\Distribution\DistributionConfiguration;
+use Nevay\OTelSDK\Configuration\Distribution\DistributionProperties;
+
+/**
+ * @internal
+ */
 final class DistributionRegistry implements DistributionProperties {
 
-    private array $distributionConfigurations = [];
+    public array $distributionConfigurations = [];
 
     public function add(DistributionConfiguration $distributionConfiguration): self {
         $this->distributionConfigurations[$distributionConfiguration::class] = $distributionConfiguration;

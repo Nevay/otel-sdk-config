@@ -17,8 +17,8 @@ final class ComponentPlugin implements \OpenTelemetry\API\Configuration\Config\C
      * @param ComponentProvider<T> $provider component provider used to create the component
      */
     public function __construct(
-        private readonly array $properties,
-        private readonly ComponentProvider $provider,
+        public readonly array $properties,
+        public readonly ComponentProvider $provider,
     ) {}
 
     public function create(Context $context): mixed {

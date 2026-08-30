@@ -9,6 +9,7 @@ use Nevay\OTelSDK\Configuration\Env\EnvSourceReader;
 use Nevay\OTelSDK\Configuration\Env\PhpIniEnvSource;
 use Nevay\OTelSDK\Configuration\Env\ServerEnvSource;
 use Nevay\OTelSDK\Configuration\Internal\Config\ConfigurationFactory;
+use Nevay\OTelSDK\Configuration\Internal\File\FileMetadata;
 use Nevay\SPI\ServiceLoader;
 use OpenTelemetry\API\Configuration\Config\ComponentProvider;
 use OpenTelemetry\API\Configuration\ConfigEnv\EnvComponentLoader;
@@ -56,7 +57,7 @@ final class Config {
     ): ConfigurationResult {
         return self::factory($envReader)
             ->parseFile($configFile, $cacheFile, $debug)
-            ->create(self::createContext($customization));
+            ->create(self::createContext($customization, new FileMetadata($configFile, $cacheFile, $debug, self::factory($envReader))));
     }
 
     /**
@@ -80,10 +81,13 @@ final class Config {
             ->create(self::createContext($customization));
     }
 
-    private static function createContext(?Customization $customization): Context {
+    private static function createContext(?Customization $customization, object ...$extensions): Context {
         $context = new Context();
         if ($customization) {
             $context = $context->withExtension($customization, Customization::class);
+        }
+        foreach ($extensions as $extension) {
+            $context = $context->withExtension($extension);
         }
 
         return $context;

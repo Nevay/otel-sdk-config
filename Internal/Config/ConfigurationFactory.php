@@ -65,7 +65,7 @@ final class ConfigurationFactory {
      * @param string|list<string> $file path(s) to parse
      * @param string|null $cacheFile path to cache parsed configuration to
      * @param bool $debug will check for cache freshness if debug mode enabled
-     * @return ComponentPlugin parsed component plugin
+     * @return ComponentPlugin<T> parsed component plugin
      * @throws Exception if loading of a configuration file fails for any reason
      * @throws InvalidConfigurationException if the configuration is invalid
      * @throws Throwable if a cache file is given and a non-serializable component provider is used

@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\Config;
 
+use Amp\Sync\LocalSemaphore;
 use Closure;
 use Composer\Semver\Semver;
 use InvalidArgumentException;
@@ -8,6 +9,7 @@ use Monolog\Handler\ErrorLogHandler;
 use Monolog\Logger;
 use Nevay\OTelSDK\Common\Attributes;
 use Nevay\OTelSDK\Common\Configurator\RuleConfiguratorBuilder;
+use Nevay\OTelSDK\Common\Internal\Export\Cancellations;
 use Nevay\OTelSDK\Common\Resource;
 use Nevay\OTelSDK\Common\ResourceDetector;
 use Nevay\OTelSDK\Common\Schema\StaticResourceTransformer;
@@ -16,8 +18,13 @@ use Nevay\OTelSDK\Configuration\ConfigurationResult;
 use Nevay\OTelSDK\Configuration\Customization;
 use Nevay\OTelSDK\Configuration\Distribution\DistributionConfiguration;
 use Nevay\OTelSDK\Configuration\Distribution\DistributionProperties;
-use Nevay\OTelSDK\Configuration\Distribution\DistributionRegistry;
 use Nevay\OTelSDK\Configuration\Distribution\OTelSDKConfiguration;
+use Nevay\OTelSDK\Configuration\Internal\Config\PersistentState;
+use Nevay\OTelSDK\Configuration\Internal\ConfigurationRegistry;
+use Nevay\OTelSDK\Configuration\Internal\DistributionRegistry;
+use Nevay\OTelSDK\Configuration\Internal\File\FileMetadata;
+use Nevay\OTelSDK\Configuration\Internal\ProxyResponsePropagator;
+use Nevay\OTelSDK\Configuration\Internal\ProxyTextMapPropagator;
 use Nevay\OTelSDK\Configuration\Internal\Util;
 use Nevay\OTelSDK\Configuration\SelfDiagnostics;
 use Nevay\OTelSDK\Configuration\SelfDiagnostics\Diagnostics;
@@ -46,9 +53,7 @@ use Nevay\OTelSDK\Trace\TracerProviderBuilder;
 use OpenTelemetry\API\Configuration\Config\ComponentPlugin;
 use OpenTelemetry\API\Configuration\Config\ComponentProvider;
 use OpenTelemetry\API\Configuration\Config\ComponentProviderRegistry;
-use OpenTelemetry\API\Configuration\ConfigProperties;
 use OpenTelemetry\API\Configuration\Context;
-use OpenTelemetry\API\Instrumentation\AutoInstrumentation\ConfigurationRegistry;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\GeneralInstrumentationConfiguration;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\InstrumentationConfiguration;
 use OpenTelemetry\API\Logs\Severity;
@@ -58,13 +63,21 @@ use OpenTelemetry\Context\Propagation\NoopResponsePropagator;
 use OpenTelemetry\Context\Propagation\NoopTextMapPropagator;
 use OpenTelemetry\Context\Propagation\ResponsePropagatorInterface;
 use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeBuilder;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+use Symfony\Component\Config\Exception\FileLocatorFileNotFoundException;
+use Throwable;
+use function Amp\Sync\synchronized;
 use function array_key_exists;
+use function bin2hex;
 use function explode;
+use function hash;
 use function is_array;
 use function is_string;
 use function rawurldecode;
+use function serialize;
 use function sprintf;
 use function strcasecmp;
 use function strstr;
@@ -199,34 +212,53 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
     public function createPlugin(array $properties, Context $context): ConfigurationResult {
         $logLevel = $properties['log_level'];
 
+        $errorHandler = new ErrorLogHandler(level: Util::severityToLogLevel($logLevel));
+
         $logger = new Logger('otel');
-        $logger->pushHandler(new ErrorLogHandler(level: Util::severityToLogLevel($logLevel)));
+        $logger->pushHandler($errorHandler);
         $logger->debug('Initializing OTelSDK from declarative config');
 
+        $configFile = $context->getExtension(FileMetadata::class);
         $customization = $context->getExtension(Customization::class);
 
         $context = new Context(logger: $logger);
 
-        $propagator = $this->createPropagator($properties['propagator'] ?? [], $context);
-        $responsePropagator = $this->createResponsePropagator($properties['response_propagator/development'] ?? [], $context);
-        $configProperties = $this->createConfigProperties($properties['instrumentation/development'], $context);
-        $distributionProperties = $this->createDistributionProperties($properties['distribution'], $context);
+        $propagator = new ProxyTextMapPropagator();
+        $responsePropagator = new ProxyResponsePropagator();
+        $configurationProperties = new ConfigurationRegistry();
+        $distributionProperties = new DistributionRegistry();
 
-        if ($properties['disabled']) {
-            $config = new ConfigurationResult(
-                propagator: $propagator,
-                responsePropagator: $responsePropagator,
-                tracerProvider: new NoopTracerProvider(),
-                meterProvider: new NoopMeterProvider(),
-                loggerProvider: new NoopLoggerProvider(),
-                configProperties: $configProperties,
-                distributionProperties: $distributionProperties,
-            );
-            $customization?->onApiAvailable($config, $context);
+        $this->updateApi(
+            $propagator,
+            $responsePropagator,
+            $configurationProperties,
+            $distributionProperties,
+            $properties,
+            $context,
+        );
 
-            $logger->debug('Initialized OTelSDK from declarative config', ['disabled' => true]);
+        $watcher = $distributionProperties->getDistributionConfiguration(OTelSDKConfiguration::class)?->watcher;
 
-            return $config;
+        if (!($watcher && $configFile)) {
+            $propagator = $propagator->propagator;
+            $responsePropagator = $responsePropagator->propagator;
+
+            if ($properties['disabled']) {
+                $config = new ConfigurationResult(
+                    propagator: $propagator,
+                    responsePropagator: $responsePropagator,
+                    tracerProvider: new NoopTracerProvider(),
+                    meterProvider: new NoopMeterProvider(),
+                    loggerProvider: new NoopLoggerProvider(),
+                    configProperties: $configurationProperties,
+                    distributionProperties: $distributionProperties,
+                );
+                $customization?->onApiAvailable($config, $context);
+
+                $logger->debug('Initialized OTelSDK from declarative config', ['disabled' => true]);
+
+                return $config;
+            }
         }
 
         $tracerProvider = new TracerProvider();
@@ -240,21 +272,165 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             logger: $logger,
         );
 
+        $tracerProvider->initSelfDiagnostics($context);
+        $meterProvider->initSelfDiagnostics($context);
+        $loggerProvider->initSelfDiagnostics($context);
+
         $config = new ConfigurationResult(
             propagator: $propagator,
             responsePropagator: $responsePropagator,
             tracerProvider: $tracerProvider,
             meterProvider: $meterProvider,
             loggerProvider: $loggerProvider,
-            configProperties: $configProperties,
+            configProperties: $configurationProperties,
             distributionProperties: $distributionProperties,
         );
 
         $customization?->onApiAvailable($config, $context);
 
+        $persistent = PersistentState::load([], []);
+        if ($watcher && $configFile) {
+            $hash = hash('xxh128', serialize($properties), true);
+
+            $persistent->updatePath($properties, 'tracer_provider', 'sampler');
+            $persistent->updatePath($properties, 'tracer_provider', 'processors');
+            $persistent->updatePath($properties, 'tracer_provider', 'id_generator');
+            $persistent->updatePath($properties, 'meter_provider', 'readers');
+            $persistent->updatePath($properties, 'logger_provider', 'processors');
+        }
+
+        $this->updateSdk(
+            $tracerProvider,
+            $meterProvider,
+            $loggerProvider,
+            $logger,
+            $properties,
+            $context,
+            $customization,
+            $distributionProperties,
+        );
+
+        $customization?->onSdkAvailable($config, $context);
+        $logger->debug('Initialized OTelSDK from declarative config');
+
+        if ($watcher && $configFile) {
+            [$hashes, $instances] = $persistent->export();
+            $callback = function() use (&$hashes, &$instances, &$hash, $configFile, $configurationProperties, $distributionProperties, $propagator, $responsePropagator, $tracerProvider, $meterProvider, $loggerProvider, $errorHandler, $logger, $context, $customization): void {
+                try {
+                    $properties = $configFile->parse();
+                } catch (FileLocatorFileNotFoundException | InvalidConfigurationException $e) {
+                    $logger->error('Exception when reloading OTelSDK declarative config', ['exception' => $e]);
+                    return;
+                }
+                $_hash = hash('xxh128', serialize($properties), true);
+
+                if ($hash === $_hash) {
+                    return;
+                }
+
+                $distributionConfiguration = $distributionProperties->getDistributionConfiguration(OTelSDKConfiguration::class) ?? new OTelSDKConfiguration();
+
+                $logLevel = $properties['log_level'];
+                $errorHandler->setLevel(Util::severityToLogLevel($logLevel));
+
+                $logger->info('Reloading OTelSDK declarative config', ['path' => $configFile->configFile, 'hash' => bin2hex($hash)]);
+
+                $hash = $_hash;
+
+                $persistent = PersistentState::load($hashes, $instances);
+                $persistent->updatePath($properties, 'tracer_provider', 'sampler');
+                $persistent->updatePath($properties, 'tracer_provider', 'processors');
+                $persistent->updatePath($properties, 'tracer_provider', 'id_generator');
+                $persistent->updatePath($properties, 'meter_provider', 'readers');
+                $persistent->updatePath($properties, 'logger_provider', 'processors');
+                $persistent->shutdown(Cancellations::withTimeout($distributionConfiguration->shutdownTimeout), static fn(object $o): bool => $o instanceof MetricReader\PullMetricReader);
+
+                try {
+                    $this->updateApi(
+                        $propagator,
+                        $responsePropagator,
+                        $configurationProperties,
+                        $distributionProperties,
+                        $properties,
+                        $context,
+                    );
+                    $this->updateSdk(
+                        $tracerProvider,
+                        $meterProvider,
+                        $loggerProvider,
+                        $logger,
+                        $properties,
+                        $context,
+                        $customization,
+                        $distributionProperties,
+                    );
+                } catch (Throwable $e) {
+                    $logger->error('Exception when reloading OTelSDK declarative config, components may be partially shutdown', ['exception' => $e]);
+                    return;
+                }
+
+                $persistent->shutdown(Cancellations::withTimeout($distributionConfiguration->shutdownTimeout));
+                [$hashes, $instances] = $persistent->export();
+            };
+
+            $logger->info('Watching OTelSDK declarative config', ['path' => $configFile->configFile, 'hash' => bin2hex($hash)]);
+            $semaphore = new LocalSemaphore(1);
+            foreach ((array) $configFile->configFile as $path) {
+                $config->keepAliveHandles[] = $watcher->watch($path, synchronized(...), $semaphore, $callback);
+            }
+
+            synchronized($semaphore, $callback); // ensure that we capture changes that occurred before we started watching the config file
+        }
+
+        return $config;
+    }
+
+    private function updateApi(
+        ProxyTextMapPropagator $propagator,
+        ProxyResponsePropagator $responsePropagator,
+        ConfigurationRegistry $configurationProperties,
+        DistributionRegistry $distributionProperties,
+        array $properties,
+        Context $context,
+    ): void {
+        $propagator->propagator = $this->createPropagator($properties['propagator'] ?? [], $context);
+        $responsePropagator->propagator = $this->createResponsePropagator($properties['response_propagator/development'] ?? [], $context);
+
+        $configurationProperties->configurations = $this->createConfigProperties($properties['instrumentation/development'], $context)->configurations;
+        $distributionProperties->distributionConfigurations = $this->createDistributionProperties($properties['distribution'], $context)->distributionConfigurations;
+    }
+
+    private function updateSdk(
+        TracerProvider $tracerProvider,
+        MeterProvider $meterProvider,
+        LoggerProvider $loggerProvider,
+        LoggerInterface $logger,
+        array $properties,
+        Context $context,
+        ?Customization $customization,
+        DistributionProperties $distributionProperties,
+    ): void {
+        $logLevel = $properties['log_level'];
+
         $tracerProviderBuilder = new TracerProviderBuilder();
         $meterProviderBuilder = new MeterProviderBuilder();
         $loggerProviderBuilder = new LoggerProviderBuilder();
+
+        if ($properties['disabled']) {
+            $configurator = (new RuleConfiguratorBuilder())
+                ->withRule(static fn(TracerConfig|MeterConfig|LoggerConfig $config) => $config->enabled = false)
+                ->toConfigurator();
+
+            $tracerProviderBuilder->setTracerConfigurator($configurator);
+            $meterProviderBuilder->setMeterConfigurator($configurator);
+            $loggerProviderBuilder->setLoggerConfigurator($configurator);
+
+            $tracerProviderBuilder->build(null, $tracerProvider);
+            $meterProviderBuilder->build(null, $meterProvider);
+            $loggerProviderBuilder->build(null, $loggerProvider);
+
+            return;
+        }
 
         // <editor-fold desc="resource and attribute_limits">
 
@@ -429,14 +605,9 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $customization?->customizeMeterProvider($meterProviderBuilder, $context);
         $customization?->customizeLoggerProvider($loggerProviderBuilder, $context);
 
-        $tracerProviderBuilder->build($context, $tracerProvider);
-        $meterProviderBuilder->build($context, $meterProvider);
-        $loggerProviderBuilder->build($context, $loggerProvider);
-
-        $customization?->onSdkAvailable($config, $context);
-        $logger->debug('Initialized OTelSDK from declarative config');
-
-        return $config;
+        $tracerProviderBuilder->build(null, $tracerProvider);
+        $meterProviderBuilder->build(null, $meterProvider);
+        $loggerProviderBuilder->build(null, $loggerProvider);
     }
 
     /**
@@ -482,7 +653,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *     ...
      * } $properties
      */
-    private function createConfigProperties(array $properties, Context $context): ConfigProperties {
+    private function createConfigProperties(array $properties, Context $context): ConfigurationRegistry {
         $configProperties = new ConfigurationRegistry();
         foreach ($properties['general'] ?? [] as $instrumentation) {
             $configProperties->add($instrumentation->create($context));
@@ -497,7 +668,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
     /**
      * @param list<ComponentPlugin<DistributionConfiguration>> $properties
      */
-    private function createDistributionProperties(array $properties, Context $context): DistributionProperties {
+    private function createDistributionProperties(array $properties, Context $context): DistributionRegistry {
         $distributionProperties = new DistributionRegistry();
         foreach ($properties as $distribution) {
             $distributionProperties->add($distribution->create($context));
