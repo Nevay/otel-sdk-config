@@ -299,7 +299,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             $persistent->updatePath($properties, 'logger_provider', 'processors');
         }
 
-        $this->updateSdk(
+        $context = $this->updateSdk(
             $tracerProvider,
             $meterProvider,
             $loggerProvider,
@@ -409,7 +409,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         Context $context,
         ?Customization $customization,
         DistributionProperties $distributionProperties,
-    ): void {
+    ): Context {
         $logLevel = $properties['log_level'];
 
         $tracerProviderBuilder = new TracerProviderBuilder();
@@ -429,7 +429,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             $meterProviderBuilder->build(null, $meterProvider);
             $loggerProviderBuilder->build(null, $loggerProvider);
 
-            return;
+            return $context;
         }
 
         // <editor-fold desc="resource and attribute_limits">
@@ -608,6 +608,8 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $tracerProviderBuilder->build(null, $tracerProvider);
         $meterProviderBuilder->build(null, $meterProvider);
         $loggerProviderBuilder->build(null, $loggerProvider);
+
+        return $context;
     }
 
     /**
