@@ -45,7 +45,6 @@ final class MetricExporterPrometheus implements ComponentProvider {
             $context->logger,
             new UnreferencedServerSocketFactory(),
             new SocketClientFactory($context->logger),
-            allowedMethods: ['GET'],
         );
 
         $host = $properties['host'];

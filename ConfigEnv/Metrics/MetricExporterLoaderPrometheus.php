@@ -30,7 +30,6 @@ final class MetricExporterLoaderPrometheus implements EnvComponentLoader {
             $context->logger,
             new UnreferencedServerSocketFactory(),
             new SocketClientFactory($context->logger),
-            allowedMethods: ['GET'],
         );
 
         $host = $env->string('OTEL_EXPORTER_PROMETHEUS_HOST') ?? 'localhost';
