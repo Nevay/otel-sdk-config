@@ -174,7 +174,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *                 name: string,
      *                 config: array{
      *                     disabled?: ?bool,
-     *                 }
+     *                 },
      *             }>,
      *         },
      *     },
@@ -197,7 +197,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
      *                     disabled?: ?bool,
      *                     minimum_severity?: ?int,
      *                     trace_based?: ?bool,
-     *                 }
+     *                 },
      *             }>,
      *         },
      *     },
@@ -217,6 +217,13 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $logger = new Logger('otel');
         $logger->pushHandler($errorHandler);
         $logger->debug('Initializing OTelSDK from declarative config');
+
+        if (!Semver::satisfies($properties['file_format'], '^1.0 <=1.1')) {
+            $logger->warning('OTelSDK config file_format specifies a higher version than implemented; newly added features may not be supported', [
+                'file_format' => $properties['file_format'],
+                'supported' => '1.1',
+            ]);
+        }
 
         $configFile = $context->getExtension(FileMetadata::class);
         $customization = $context->getExtension(Customization::class);
@@ -745,10 +752,10 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             ->children()
                 ->scalarNode('file_format')
                     ->isRequired()
-                    ->example('1.0')
+                    ->example('1.1')
                     ->validate()->always(Util::ensureString())->end()
                     ->validate()
-                        ->ifTrue(static fn(string $version): bool => !Semver::satisfies($version, '^1.0 <=1.1'))
+                        ->ifTrue(static fn(string $version): bool => !Semver::satisfies($version, '^1.0'))
                         ->thenInvalid('unsupported version %s')
                     ->end()
                 ->end()
