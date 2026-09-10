@@ -478,9 +478,12 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $attributeCountLimit = $properties['attribute_limits']['attribute_count_limit'];
         $attributeValueLengthLimit = $properties['attribute_limits']['attribute_value_length_limit'];
         $attributeValueDepthLimit = $properties['attribute_limits']['attribute_value_depth_limit'];
-        $tracerProviderBuilder->setAttributeLimits($attributeCountLimit, $attributeValueLengthLimit, $attributeValueDepthLimit);
-        $loggerProviderBuilder->setAttributeLimits($attributeCountLimit, $attributeValueLengthLimit, $attributeValueDepthLimit);
 
+        // </editor-fold>
+
+        // <editor-fold desc="tracer_provider">
+
+        $tracerProviderBuilder->setAttributeLimits($attributeCountLimit, $attributeValueLengthLimit, $attributeValueDepthLimit);
         $tracerProviderBuilder->setSpanAttributeLimits(
             $properties['tracer_provider']['limits']['attribute_count_limit'],
             $properties['tracer_provider']['limits']['attribute_value_length_limit'],
@@ -491,52 +494,19 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $tracerProviderBuilder->setEventAttributeLimits($properties['tracer_provider']['limits']['event_attribute_count_limit']);
         $tracerProviderBuilder->setLinkAttributeLimits($properties['tracer_provider']['limits']['link_attribute_count_limit']);
 
-        $loggerProviderBuilder->setLogRecordAttributeLimits(
-            $properties['logger_provider']['limits']['attribute_count_limit'],
-            $properties['logger_provider']['limits']['attribute_value_length_limit'],
-        );
-
-        // </editor-fold>
-
-        // <editor-fold desc="configurator">
-
-        $builder = (new RuleConfiguratorBuilder())
-            ->withRule($this->createTracerConfigurator($properties['tracer_provider']['tracer_configurator/development']['default_config'] ?? []))
-            ->withRule(static fn(TracerConfig $config) => $config->enabled = false, filter: Diagnostics::isSelfDiagnostics(...));
-
-        foreach ($properties['tracer_provider']['tracer_configurator/development']['tracers'] as $tracerConfigurator) {
-            $builder->withRule($this->createTracerConfigurator($tracerConfigurator['config'] ?? []), name: $tracerConfigurator['name']);
-        }
-        $tracerProviderBuilder->setTracerConfigurator($builder->toConfigurator());
-
-        $builder = (new RuleConfiguratorBuilder())
-            ->withRule($this->createMeterConfigurator($properties['meter_provider']['meter_configurator/development']['default_config'] ?? []))
-            ->withRule(static fn(MeterConfig $config) => $config->enabled = false, filter: Diagnostics::isSelfDiagnostics(...));
-
-        foreach ($properties['meter_provider']['meter_configurator/development']['meters'] as $meterConfigurator) {
-            $builder->withRule($this->createMeterConfigurator($meterConfigurator['config'] ?? []), name: $meterConfigurator['name']);
-        }
-        $meterProviderBuilder->setMeterConfigurator($builder->toConfigurator());
-
-        $builder = (new RuleConfiguratorBuilder())
-            ->withRule($this->createLoggerConfigurator($properties['logger_provider']['logger_configurator/development']['default_config'] ?? []))
-            ->withRule(static fn(LoggerConfig $config) => $config->enabled = false, filter: Diagnostics::isSelfDiagnostics(...))
-            ->withRule(static fn(LoggerConfig $config) => $config->minimumSeverity = $logLevel->value, filter: Diagnostics::isSelfDiagnostics(...));
-
-        foreach ($properties['logger_provider']['logger_configurator/development']['loggers'] as $loggerConfigurator) {
-            $builder->withRule($this->createLoggerConfigurator($loggerConfigurator['config'] ?? []), name: $loggerConfigurator['name']);
-        }
-        $loggerProviderBuilder->setLoggerConfigurator($builder->toConfigurator());
-
-        // </editor-fold>
-
-        // <editor-fold desc="tracer_provider">
-
         $tracerProviderBuilder->setIdGenerator($properties['tracer_provider']['id_generator']?->create($context));
         $tracerProviderBuilder->setSampler($properties['tracer_provider']['sampler']?->create($context));
         foreach ($properties['tracer_provider']['processors'] as $processor) {
             $tracerProviderBuilder->addSpanProcessor($processor->create($context));
         }
+
+        $builder = (new RuleConfiguratorBuilder())
+            ->withRule($this->createTracerConfigurator($properties['tracer_provider']['tracer_configurator/development']['default_config'] ?? []))
+            ->withRule(static fn(TracerConfig $config) => $config->enabled = false, filter: Diagnostics::isSelfDiagnostics(...));
+        foreach ($properties['tracer_provider']['tracer_configurator/development']['tracers'] as $tracerConfigurator) {
+            $builder->withRule($this->createTracerConfigurator($tracerConfigurator['config'] ?? []), name: $tracerConfigurator['name']);
+        }
+        $tracerProviderBuilder->setTracerConfigurator($builder->toConfigurator());
 
         // </editor-fold>
 
@@ -586,10 +556,19 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             'always_off' => ExemplarFilter::AlwaysOff,
         });
 
+        $builder = (new RuleConfiguratorBuilder())
+            ->withRule($this->createMeterConfigurator($properties['meter_provider']['meter_configurator/development']['default_config'] ?? []))
+            ->withRule(static fn(MeterConfig $config) => $config->enabled = false, filter: Diagnostics::isSelfDiagnostics(...));
+        foreach ($properties['meter_provider']['meter_configurator/development']['meters'] as $meterConfigurator) {
+            $builder->withRule($this->createMeterConfigurator($meterConfigurator['config'] ?? []), name: $meterConfigurator['name']);
+        }
+        $meterProviderBuilder->setMeterConfigurator($builder->toConfigurator());
+
         // </editor-fold>
 
         // <editor-fold desc="logger_provider">
 
+        $loggerProviderBuilder->setAttributeLimits($attributeCountLimit, $attributeValueLengthLimit, $attributeValueDepthLimit);
         $loggerProviderBuilder->setLogRecordAttributeLimits(
             $properties['logger_provider']['limits']['attribute_count_limit'],
             $properties['logger_provider']['limits']['attribute_value_length_limit'],
@@ -598,6 +577,15 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         foreach ($properties['logger_provider']['processors'] as $processor) {
             $loggerProviderBuilder->addLogRecordProcessor($processor->create($context));
         }
+
+        $builder = (new RuleConfiguratorBuilder())
+            ->withRule($this->createLoggerConfigurator($properties['logger_provider']['logger_configurator/development']['default_config'] ?? []))
+            ->withRule(static fn(LoggerConfig $config) => $config->enabled = false, filter: Diagnostics::isSelfDiagnostics(...))
+            ->withRule(static fn(LoggerConfig $config) => $config->minimumSeverity = $logLevel->value, filter: Diagnostics::isSelfDiagnostics(...));
+        foreach ($properties['logger_provider']['logger_configurator/development']['loggers'] as $loggerConfigurator) {
+            $builder->withRule($this->createLoggerConfigurator($loggerConfigurator['config'] ?? []), name: $loggerConfigurator['name']);
+        }
+        $loggerProviderBuilder->setLoggerConfigurator($builder->toConfigurator());
 
         // </editor-fold>
 
