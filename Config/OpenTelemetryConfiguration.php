@@ -218,10 +218,10 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $logger->pushHandler($errorHandler);
         $logger->debug('Initializing OTelSDK from declarative config');
 
-        if (!Semver::satisfies($properties['file_format'], '^1.0 <=1.1')) {
+        if (!Semver::satisfies($properties['file_format'], '^1.0 <=1.2')) {
             $logger->warning('OTelSDK config file_format specifies a higher version than implemented; newly added features may not be supported', [
                 'file_format' => $properties['file_format'],
-                'supported' => '1.1',
+                'supported' => '1.2',
             ]);
         }
 
