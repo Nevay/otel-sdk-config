@@ -32,6 +32,7 @@ ServiceLoader::register(ComponentProvider::class, Config\Distribution\FileWatche
 ServiceLoader::register(ComponentProvider::class, Config\Resource\ResourceDetectorComposer::class);
 ServiceLoader::register(ComponentProvider::class, Config\Resource\ResourceDetectorContainer::class);
 ServiceLoader::register(ComponentProvider::class, Config\Resource\ResourceDetectorDeployment::class);
+ServiceLoader::register(ComponentProvider::class, Config\Resource\ResourceDetectorEnv::class);
 ServiceLoader::register(ComponentProvider::class, Config\Resource\ResourceDetectorHost::class);
 ServiceLoader::register(ComponentProvider::class, Config\Resource\ResourceDetectorProcess::class);
 ServiceLoader::register(ComponentProvider::class, Config\Resource\ResourceDetectorService::class);
