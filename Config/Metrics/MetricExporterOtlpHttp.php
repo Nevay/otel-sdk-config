@@ -62,7 +62,7 @@ final class MetricExporterOtlpHttp implements ComponentProvider {
             $tlsContext = $tlsContext->withCertificate(new Certificate($clientCertificate, $properties['tls']['key_file']));
         }
         if ($certificate = $properties['tls']['ca_file']) {
-            $tlsContext = $tlsContext->withCaPath($certificate);
+            $tlsContext = $tlsContext->withCaFile($certificate);
         }
 
         $client = (new HttpClientBuilder())

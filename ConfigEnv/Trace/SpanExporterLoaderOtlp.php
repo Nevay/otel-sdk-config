@@ -37,7 +37,7 @@ final class SpanExporterLoaderOtlp implements EnvComponentLoader {
             ));
         }
         if ($certificate = $env->string('OTEL_EXPORTER_OTLP_TRACES_CERTIFICATE') ?? $env->string('OTEL_EXPORTER_OTLP_CERTIFICATE')) {
-            $tlsContext = $tlsContext->withCaPath(Util::makePathAbsolute($certificate));
+            $tlsContext = $tlsContext->withCaFile(Util::makePathAbsolute($certificate));
         }
 
         $client = (new HttpClientBuilder())

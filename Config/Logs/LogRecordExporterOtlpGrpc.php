@@ -56,7 +56,7 @@ final class LogRecordExporterOtlpGrpc implements ComponentProvider {
             $tlsContext = $tlsContext->withCertificate(new Certificate($clientCertificate, $properties['tls']['key_file']));
         }
         if ($certificate = $properties['tls']['ca_file']) {
-            $tlsContext = $tlsContext->withCaPath($certificate);
+            $tlsContext = $tlsContext->withCaFile($certificate);
         }
 
         if (parse_url($properties['endpoint'], PHP_URL_SCHEME) === null) {
