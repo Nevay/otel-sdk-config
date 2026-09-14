@@ -23,7 +23,9 @@ use OpenTelemetry\API\Configuration\ConfigEnv\EnvComponentLoader;
 use OpenTelemetry\API\Configuration\ConfigEnv\EnvComponentLoaderRegistry;
 use OpenTelemetry\API\Configuration\ConfigEnv\EnvResolver;
 use OpenTelemetry\API\Configuration\Context;
+use function parse_url;
 use function strtolower;
+use const PHP_URL_SCHEME;
 
 /**
  * @implements EnvComponentLoader<MetricExporter>
@@ -56,6 +58,9 @@ final class MetricExporterLoaderOtlp implements EnvComponentLoader {
             'http/json' => ProtobufFormat::Json,
             'grpc' => null,
         };
+        $endpoint = $format
+            ? $env->string('OTEL_EXPORTER_OTLP_METRICS_ENDPOINT') ?? ($env->string('OTEL_EXPORTER_OTLP_ENDPOINT') ?? 'http://localhost:4318') . '/v1/metrics'
+            : $env->string('OTEL_EXPORTER_OTLP_METRICS_ENDPOINT') ?? $env->string('OTEL_EXPORTER_OTLP_ENDPOINT') ?? 'http://localhost:4317';
         $compression = $env->string('OTEL_EXPORTER_OTLP_METRICS_COMPRESSION') ?? $env->string('OTEL_EXPORTER_OTLP_COMPRESSION');
         $headers = $env->map('OTEL_EXPORTER_OTLP_METRICS_HEADERS') ?? $env->map('OTEL_EXPORTER_OTLP_HEADERS') ?? [];
         $timeout = ($env->int('OTEL_EXPORTER_OTLP_METRICS_TIMEOUT') ?? $env->int('OTEL_EXPORTER_OTLP_TIMEOUT') ?? 10000) / 1e3;
@@ -69,10 +74,19 @@ final class MetricExporterLoaderOtlp implements EnvComponentLoader {
             'base2_exponential_bucket_histogram' => new Base2ExponentialBucketHistogramAggregation(),
         });
 
+        if (!$format && parse_url($endpoint, PHP_URL_SCHEME) === null) {
+            $insecure = $env->bool('OTEL_EXPORTER_OTLP_METRICS_INSECURE') ?? $env->bool('OTEL_EXPORTER_OTLP_INSECURE') ?? false;
+            $scheme = $insecure
+                ? 'http'
+                : 'https';
+
+            $endpoint = $scheme . '://' . $endpoint;
+        }
+
         return $format
             ? new OtlpHttpMetricExporter(
                 client: $client,
-                endpoint: Uri\Http::new($env->string('OTEL_EXPORTER_OTLP_METRICS_ENDPOINT') ?? ($env->string('OTEL_EXPORTER_OTLP_ENDPOINT') ?? 'http://localhost:4318') . '/v1/metrics'),
+                endpoint: Uri\Http::new($endpoint),
                 format: $format,
                 compression: $compression,
                 headers: $headers,
@@ -84,7 +98,7 @@ final class MetricExporterLoaderOtlp implements EnvComponentLoader {
             )
             : new OtlpGrpcMetricExporter(
                 client: $client,
-                endpoint: Uri\Http::new($env->string('OTEL_EXPORTER_OTLP_METRICS_ENDPOINT') ?? $env->string('OTEL_EXPORTER_OTLP_ENDPOINT') ?? 'http://localhost:4317'),
+                endpoint: Uri\Http::new($endpoint),
                 compression: $compression,
                 headers: $headers,
                 timeout: $timeout,

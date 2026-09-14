@@ -18,6 +18,8 @@ use OpenTelemetry\API\Configuration\ConfigEnv\EnvComponentLoader;
 use OpenTelemetry\API\Configuration\ConfigEnv\EnvComponentLoaderRegistry;
 use OpenTelemetry\API\Configuration\ConfigEnv\EnvResolver;
 use OpenTelemetry\API\Configuration\Context;
+use function parse_url;
+use const PHP_URL_SCHEME;
 
 /**
  * @implements EnvComponentLoader<LogRecordExporter>
@@ -50,14 +52,26 @@ final class LogRecordExporterLoaderOtlp implements EnvComponentLoader {
             'http/json' => ProtobufFormat::Json,
             'grpc' => null,
         };
+        $endpoint = $format
+            ? $env->string('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT') ?? ($env->string('OTEL_EXPORTER_OTLP_ENDPOINT') ?? 'http://localhost:4318') . '/v1/logs'
+            : $env->string('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT') ?? $env->string('OTEL_EXPORTER_OTLP_ENDPOINT') ?? 'http://localhost:4317';
         $compression = $env->string('OTEL_EXPORTER_OTLP_LOGS_COMPRESSION') ?? $env->string('OTEL_EXPORTER_OTLP_COMPRESSION');
         $headers = $env->map('OTEL_EXPORTER_OTLP_LOGS_HEADERS') ?? $env->map('OTEL_EXPORTER_OTLP_HEADERS') ?? [];
         $timeout = ($env->int('OTEL_EXPORTER_OTLP_LOGS_TIMEOUT') ?? $env->int('OTEL_EXPORTER_OTLP_TIMEOUT') ?? 10000) / 1e3;
 
+        if (!$format && parse_url($endpoint, PHP_URL_SCHEME) === null) {
+            $insecure = $env->bool('OTEL_EXPORTER_OTLP_LOGS_INSECURE') ?? $env->bool('OTEL_EXPORTER_OTLP_INSECURE') ?? false;
+            $scheme = $insecure
+                ? 'http'
+                : 'https';
+
+            $endpoint = $scheme . '://' . $endpoint;
+        }
+
         return $format
             ? new OtlpHttpLogRecordExporter(
                 client: $client,
-                endpoint: Uri\Http::new($env->string('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT') ?? ($env->string('OTEL_EXPORTER_OTLP_ENDPOINT') ?? 'http://localhost:4318') . '/v1/logs'),
+                endpoint: Uri\Http::new($endpoint),
                 format: $format,
                 compression: $compression,
                 headers: $headers,
@@ -67,7 +81,7 @@ final class LogRecordExporterLoaderOtlp implements EnvComponentLoader {
             )
             : new OtlpGrpcLogRecordExporter(
                 client: $client,
-                endpoint: Uri\Http::new($env->string('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT') ?? $env->string('OTEL_EXPORTER_OTLP_ENDPOINT') ?? 'http://localhost:4317'),
+                endpoint: Uri\Http::new($endpoint),
                 compression: $compression,
                 headers: $headers,
                 timeout: $timeout,
