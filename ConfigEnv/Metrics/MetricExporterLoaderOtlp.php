@@ -64,12 +64,12 @@ final class MetricExporterLoaderOtlp implements EnvComponentLoader {
         $compression = $env->string('OTEL_EXPORTER_OTLP_METRICS_COMPRESSION') ?? $env->string('OTEL_EXPORTER_OTLP_COMPRESSION');
         $headers = $env->map('OTEL_EXPORTER_OTLP_METRICS_HEADERS') ?? $env->map('OTEL_EXPORTER_OTLP_HEADERS') ?? [];
         $timeout = ($env->int('OTEL_EXPORTER_OTLP_METRICS_TIMEOUT') ?? $env->int('OTEL_EXPORTER_OTLP_TIMEOUT') ?? 10000) / 1e3;
-        $temporalityResolver = match (strtolower($env->string('OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE') ?? 'cumulative')) {
+        $temporalityResolver = match ($env->enum('OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE', ['cumulative', 'delta', 'lowmemory']) ?? 'cumulative') {
             'cumulative' => OtlpTemporality::Cumulative,
             'delta' => OtlpTemporality::Delta,
             'lowmemory' => OtlpTemporality::LowMemory,
         };
-        $aggregation = (new DefaultAggregation())->with(InstrumentType::Histogram, match ($env->string('OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION') ?? 'explicit_bucket_histogram') {
+        $aggregation = (new DefaultAggregation())->with(InstrumentType::Histogram, match ($env->enum('OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION', ['explicit_bucket_histogram', 'base2_exponential_bucket_histogram']) ?? 'explicit_bucket_histogram') {
             'explicit_bucket_histogram' => new ExplicitBucketHistogramAggregation(),
             'base2_exponential_bucket_histogram' => new Base2ExponentialBucketHistogramAggregation(),
         });

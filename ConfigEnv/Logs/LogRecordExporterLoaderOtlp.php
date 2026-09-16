@@ -47,7 +47,7 @@ final class LogRecordExporterLoaderOtlp implements EnvComponentLoader {
             ->usingPool(new UnlimitedConnectionPool(new DefaultConnectionFactory(connectContext: (new ConnectContext())->withTlsContext($tlsContext))))
             ->build();
 
-        $format = match ($env->string('OTEL_EXPORTER_OTLP_LOGS_PROTOCOL') ?? $env->string('OTEL_EXPORTER_OTLP_PROTOCOL') ?? 'http/protobuf') {
+        $format = match ($env->enum('OTEL_EXPORTER_OTLP_LOGS_PROTOCOL', ['http/protobuf', 'http/json', 'grpc']) ?? $env->enum('OTEL_EXPORTER_OTLP_PROTOCOL', ['http/protobuf', 'http/json', 'grpc']) ?? 'http/protobuf') {
             'http/protobuf' => ProtobufFormat::Protobuf,
             'http/json' => ProtobufFormat::Json,
             'grpc' => null,

@@ -20,7 +20,7 @@ final class DistributionConfigurationLoaderOTelSDK implements EnvComponentLoader
 
         return new OTelSDKConfiguration(
             shutdownTimeout: $env->numeric('OTEL_PHP_SHUTDOWN_TIMEOUT'),
-            spanSuppressionStrategy: match ($spanSuppressionStrategyName) {
+            spanSuppressionStrategy: match (strtolower($spanSuppressionStrategyName)) {
                 'none' => new NoopSuppressionStrategy(),
                 default => $registry->load(SpanSuppressionStrategy::class, $spanSuppressionStrategyName, $env, $context),
             },
