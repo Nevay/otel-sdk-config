@@ -2,7 +2,7 @@
 namespace Nevay\OTelSDK\Configuration\Customization;
 
 use Amp\CancelledException;
-use Amp\TimeoutCancellation;
+use Nevay\OTelSDK\Common\Internal\Export\Cancellations;
 use Nevay\OTelSDK\Common\Provider;
 use Nevay\OTelSDK\Common\Provider\MultiProvider;
 use Nevay\OTelSDK\Configuration\ConfigurationResult;
@@ -31,12 +31,7 @@ final class RegisterShutdownHook extends AbstractCustomization implements Custom
             register_shutdown_function(...),
             static function(Provider $provider, DistributionProperties $distributionProperties, LoggerInterface $logger): void {
                 $distribution = $distributionProperties->getDistributionConfiguration(OTelSDKConfiguration::class) ?? new OTelSDKConfiguration();
-                $timeout = $distribution->shutdownTimeout;
-
-                $cancellation = null;
-                if ($timeout !== null) {
-                    $cancellation = new TimeoutCancellation($timeout);
-                }
+                $cancellation = Cancellations::withTimeout($distribution->shutdownTimeout);
 
                 try {
                     $provider->shutdown($cancellation);

@@ -20,14 +20,14 @@ final class DistributionConfigurationOTelSDK implements ComponentProvider {
 
     /**
      * @param array{
-     *     shutdown_timeout: ?float,
+     *     shutdown_timeout: int,
      *     "span_suppression_strategy/development": ?ComponentPlugin<SpanSuppressionStrategy>,
      *     "watcher/development": ?ComponentPlugin<FileWatcher>
      * } $properties
      */
     public function createPlugin(array $properties, Context $context): DistributionConfiguration {
         return new OTelSDKConfiguration(
-            shutdownTimeout: $properties['shutdown_timeout'],
+            shutdownTimeout: $properties['shutdown_timeout'] / 1e3,
             spanSuppressionStrategy: $properties['span_suppression_strategy/development']?->create($context) ?? new NoopSuppressionStrategy(),
             watcher: $properties['watcher/development']?->create($context),
         );
@@ -37,7 +37,7 @@ final class DistributionConfigurationOTelSDK implements ComponentProvider {
         $node = $builder->arrayNode('tbachert/otel-sdk');
         $node
             ->children()
-                ->floatNode('shutdown_timeout')->min(0)->defaultNull()->end()
+                ->integerNode('shutdown_timeout')->min(0)->defaultValue(0)->end()
                 ->append($registry->component('span_suppression_strategy/development', SpanSuppressionStrategy::class))
                 ->append($registry->component('watcher/development', FileWatcher::class))
             ->end()

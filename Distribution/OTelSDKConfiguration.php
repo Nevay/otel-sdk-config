@@ -8,7 +8,7 @@ use Nevay\OTelSDK\Trace\SpanSuppressionStrategy;
 final class OTelSDKConfiguration implements DistributionConfiguration {
 
     public function __construct(
-        public readonly ?float $shutdownTimeout = null,
+        public readonly float $shutdownTimeout = 0.,
         public readonly SpanSuppressionStrategy $spanSuppressionStrategy = new NoopSuppressionStrategy(),
         public readonly ?FileWatcher $watcher = null,
     ) {}
