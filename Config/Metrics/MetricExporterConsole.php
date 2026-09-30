@@ -25,7 +25,7 @@ final class MetricExporterConsole implements ComponentProvider {
 
     /**
      * @param array{
-     *     temporality_preference: 'cumulative'|'delta'|'lowmemory',
+     *     temporality_preference: 'cumulative'|'delta'|'low_memory',
      *     default_histogram_aggregation: 'explicit_bucket_histogram'|'base2_exponential_bucket_histogram',
      * } $properties
      */
@@ -35,7 +35,7 @@ final class MetricExporterConsole implements ComponentProvider {
             temporalityResolver: match ($properties['temporality_preference']) {
                 'cumulative' => OtlpTemporality::Cumulative,
                 'delta' => OtlpTemporality::Delta,
-                'lowmemory' => OtlpTemporality::LowMemory,
+                'low_memory' => OtlpTemporality::LowMemory,
             },
             aggregation: (new DefaultAggregation())->with(InstrumentType::Histogram, match ($properties['default_histogram_aggregation']) {
                 'explicit_bucket_histogram' => new ExplicitBucketHistogramAggregation(),
@@ -51,7 +51,7 @@ final class MetricExporterConsole implements ComponentProvider {
         $node
             ->children()
                 ->enumNode('temporality_preference')
-                    ->values(['cumulative', 'delta', 'lowmemory'])
+                    ->values(['cumulative', 'delta', 'low_memory'])
                     ->defaultValue('cumulative')
                 ->end()
                 ->enumNode('default_histogram_aggregation')
