@@ -11,15 +11,15 @@ final class ConfigurationRegistry implements ConfigProperties {
 
     public array $configurations = [];
 
-    public function add(InstrumentationConfiguration $configuration): self {
-        $this->configurations[$configuration::class] = $configuration;
+    public function add(InstrumentationConfiguration $configuration, ?string $name = null): self {
+        $this->configurations[$name ?? $configuration::class] = $configuration;
 
         return $this;
     }
 
     /**
      * @template C of InstrumentationConfiguration
-     * @param class-string<C> $id
+     * @param class-string<C>|string $id
      * @return C|null
      */
     public function get(string $id): ?InstrumentationConfiguration {

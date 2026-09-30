@@ -10,7 +10,13 @@ ServiceLoader::register(EnvSourceProvider::class, Env\SymfonyDotenvProvider::cla
 ServiceLoader::register(EnvSourceProvider::class, Env\VlucasPhpdotenvProvider::class);
 
 
+ServiceLoader::register(ComponentProvider::class, Config\Instrumentation\InstrumentationConfigurationCode::class);
+ServiceLoader::register(ComponentProvider::class, Config\Instrumentation\InstrumentationConfigurationDb::class);
+ServiceLoader::register(ComponentProvider::class, Config\Instrumentation\InstrumentationConfigurationGenAi::class);
 ServiceLoader::register(ComponentProvider::class, Config\Instrumentation\InstrumentationConfigurationHttp::class);
+ServiceLoader::register(ComponentProvider::class, Config\Instrumentation\InstrumentationConfigurationMessaging::class);
+ServiceLoader::register(ComponentProvider::class, Config\Instrumentation\InstrumentationConfigurationRpc::class);
+ServiceLoader::register(ComponentProvider::class, Config\Instrumentation\InstrumentationConfigurationSanitization::class);
 ServiceLoader::register(ComponentProvider::class, Config\Propagator\TextMapPropagatorB3::class);
 ServiceLoader::register(ComponentProvider::class, Config\Propagator\TextMapPropagatorB3Multi::class);
 ServiceLoader::register(ComponentProvider::class, Config\Propagator\TextMapPropagatorBaggage::class);

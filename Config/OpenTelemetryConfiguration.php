@@ -19,6 +19,7 @@ use Nevay\OTelSDK\Configuration\Customization;
 use Nevay\OTelSDK\Configuration\Distribution\DistributionConfiguration;
 use Nevay\OTelSDK\Configuration\Distribution\DistributionProperties;
 use Nevay\OTelSDK\Configuration\Distribution\OTelSDKConfiguration;
+use Nevay\OTelSDK\Configuration\Internal\Config\ArrayInstrumentationConfiguration;
 use Nevay\OTelSDK\Configuration\Internal\Config\PersistentState;
 use Nevay\OTelSDK\Configuration\Internal\ConfigurationRegistry;
 use Nevay\OTelSDK\Configuration\Internal\DistributionRegistry;
@@ -653,7 +654,10 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
     private function createConfigProperties(array $properties, Context $context): ConfigurationRegistry {
         $configProperties = new ConfigurationRegistry();
         foreach ($properties['general'] ?? [] as $instrumentation) {
-            $configProperties->add($instrumentation->create($context));
+            $instrumentation = $instrumentation->create($context);
+            $instrumentation instanceof ArrayInstrumentationConfiguration
+                ? $configProperties->add($instrumentation, $instrumentation->name)
+                : $configProperties->add($instrumentation);
         }
         foreach ($properties['php'] ?? [] as $instrumentation) {
             $configProperties->add($instrumentation->create($context));
@@ -1050,6 +1054,10 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                             return $value;
                         }
 
+                        static $sectionMap = [
+                            'database' => 'db',
+                        ];
+
                         foreach (explode(',', $value['stability_opt_in_list']) as $entry) {
                             $name = rawurldecode(trim($entry, " \t"));
                             $section = strstr($name, '/', true);
@@ -1063,9 +1071,9 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                                 default => throw new InvalidArgumentException(sprintf('Invalid value, expected either "%s" or "%s", got "%s"', $section, $section . '/dup', $name)),
                             };
 
+                            $section = $sectionMap[$section] ?? $section;
+
                             $value[$section]['semconv'] ??= [
-                                'version' => 1,
-                                'experimental' => $dualEmit,
                                 'dual_emit' => $dualEmit,
                             ];
                         }
