@@ -453,7 +453,12 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
             exclude: $properties['resource']['detection/development']['attributes']['excluded'] ?? [],
         );
         foreach ($properties['resource']['detection/development']['detectors'] ?? [] as $detector) {
-            $detector = $detector->create(new Context(logger: $logger));
+            try {
+                $detector = $detector->create(new Context(logger: $logger));
+            } catch (InvalidArgumentException $e) {
+                $logger->warning('Failed loading resource detector: {exception}', ['exception' => $e]);
+                continue;
+            }
             $resource = $detector->getResource();
             $resource = $resource->filterAttributes($detectionFilter);
 
@@ -790,7 +795,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                                 ->arrayNode('excluded')->defaultNull()->requiresAtLeastOneElement()->scalarPrototype()->validate()->always(Util::ensureString())->end()->end()->end()
                             ->end()
                         ->end()
-                        ->append($registry->componentList('detectors', ResourceDetector::class)->requiresAtLeastOneElement())
+                        ->append($registry->componentList('detectors', ResourceDetector::class, graceful: true)->requiresAtLeastOneElement())
                     ->end()
                 ->end()
                 ->scalarNode('schema_url')->validate()->always(Util::ensureString())->end()->end()

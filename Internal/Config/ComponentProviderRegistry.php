@@ -3,7 +3,9 @@ namespace Nevay\OTelSDK\Configuration\Internal\Config;
 
 use InvalidArgumentException;
 use LogicException;
+use Nevay\OTelSDK\Configuration\Internal\Config;
 use Nevay\OTelSDK\Configuration\Internal\Util;
+use OpenTelemetry\API\Configuration\Config\ComponentPlugin;
 use OpenTelemetry\API\Configuration\Config\ComponentProvider;
 use ReflectionIntersectionType;
 use ReflectionMethod;
@@ -61,30 +63,30 @@ final class ComponentProviderRegistry implements \OpenTelemetry\API\Configuratio
         $this->resources = $resources;
     }
 
-    public function component(string $name, string $type): NodeDefinition {
+    public function component(string $name, string $type, bool $graceful = false): NodeDefinition {
         $node = $this->builder->arrayNode($name);
         $node->defaultNull();
-        $this->applyToArrayNode($node, $type);
+        $this->applyToArrayNode($node, $type, $graceful);
 
         return $node;
     }
 
-    public function componentList(string $name, string $type): ArrayNodeDefinition {
+    public function componentList(string $name, string $type, bool $graceful = false): ArrayNodeDefinition {
         $node = $this->builder->arrayNode($name);
-        $this->applyToArrayNode($node->arrayPrototype(), $type);
+        $this->applyToArrayNode($node->arrayPrototype(), $type, $graceful);
 
         return $node;
     }
 
-    public function componentMap(string $name, string $type): ArrayNodeDefinition {
+    public function componentMap(string $name, string $type, bool $graceful = false): ArrayNodeDefinition {
         $node = $this->builder->arrayNode($name);
         $node->info(sprintf('Component "%s"', $type));
         $node->performNoDeepMerging();
         $node->ignoreExtraKeys(false);
-        $node->validate()->always(function(?array $value) use ($type): array {
+        $node->validate()->always(function(?array $value) use ($type, $graceful): array {
             $plugins = [];
             foreach ($value ?? [] as $name => $config) {
-                $plugins[] = $this->process($type, $name, [$config]);
+                $plugins[] = $this->process($type, $name, [$config], $graceful);
             }
 
             return $plugins;
@@ -93,13 +95,13 @@ final class ComponentProviderRegistry implements \OpenTelemetry\API\Configuratio
         return $node;
     }
 
-    public function componentNames(string $name, string $type): ArrayNodeDefinition {
+    public function componentNames(string $name, string $type, bool $graceful = false): ArrayNodeDefinition {
         $node = $this->builder->arrayNode($name);
         $node->scalarPrototype()->validate()->always(Util::ensureString())->end()->end();
-        $node->validate()->always(function(?array $value) use ($type): array {
+        $node->validate()->always(function(?array $value) use ($type, $graceful): array {
             $plugins = [];
             foreach ($value ?? [] as $name) {
-                $plugins[] = $this->process($type, $name, []);
+                $plugins[] = $this->process($type, $name, [], $graceful);
             }
 
             return $plugins;
@@ -108,22 +110,26 @@ final class ComponentProviderRegistry implements \OpenTelemetry\API\Configuratio
         return $node;
     }
 
-    private function applyToArrayNode(ArrayNodeDefinition $node, string $type): void {
+    private function applyToArrayNode(ArrayNodeDefinition $node, string $type, bool $graceful = false): void {
         $node->info(sprintf('Component "%s"', $type));
         $node->performNoDeepMerging();
         $node->ignoreExtraKeys(false);
-        $node->validate()->always(function(?array $value) use ($type): ComponentPlugin {
+        $node->validate()->always(function(?array $value) use ($type, $graceful): ComponentPlugin {
             if (!$value || count($value) !== 1) {
                 throw new InvalidArgumentException(sprintf('Component "%s" must have exactly one provider defined, got %s',
                     $type, implode(', ', array_map(json_encode(...), array_keys($value ?? [])) ?: ['none'])));
             }
 
-            return $this->process($type, array_key_first($value), $value);
+            return $this->process($type, array_key_first($value), $value, $graceful);
         });
     }
 
-    private function process(string $type, string $name, mixed $configs): ComponentPlugin {
+    private function process(string $type, string $name, mixed $configs, bool $graceful = false): ComponentPlugin {
         if (!$provider = $this->providers[$type][$name] ?? null) {
+            if ($graceful) {
+                return new UnknownComponentPlugin($type, $name, array_keys($this->providers[$type] ?? []));
+            }
+
             throw new InvalidArgumentException(sprintf('Component "%s" uses unknown provider "%s", available providers are %s',
                 $type, $name, implode(', ', array_map(json_encode(...), array_keys($this->providers[$type] ?? [])) ?: ['none'])));
         }
@@ -144,7 +150,7 @@ final class ComponentProviderRegistry implements \OpenTelemetry\API\Configuratio
 
         $this->resources?->addClassResource($provider);
 
-        return new ComponentPlugin($componentConfig, $provider->componentProvider);
+        return new Config\ComponentPlugin($componentConfig, $provider->componentProvider);
     }
 
     private static function loadName(NodeDefinition $node): string {
