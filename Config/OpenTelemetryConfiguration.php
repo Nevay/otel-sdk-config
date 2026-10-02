@@ -787,7 +787,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                         ->children()
                             ->scalarNode('name')->isRequired()->validate()->always(Util::ensureString())->end()->end()
                             ->variableNode('value')->isRequired()->end()
-                            ->scalarNode('type')->validate()->always(Util::ensureString())->end()->end()
+                            ->enumNode('type')->defaultNull()->values(['string', 'bool', 'int', 'double', 'string_array', 'bool_array', 'int_array', 'double_array'])->end()
                         ->end()
                     ->end()
                 ->end()
