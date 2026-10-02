@@ -219,12 +219,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         $logger->pushHandler($errorHandler);
         $logger->debug('Initializing OTelSDK from declarative config');
 
-        if (!Semver::satisfies($properties['file_format'], '^1.0 <=1.2')) {
-            $logger->warning('OTelSDK config file_format specifies a higher version than implemented; newly added features may not be supported', [
-                'file_format' => $properties['file_format'],
-                'supported' => '1.2',
-            ]);
-        }
+        self::verifyFileFormatVersion($properties, $logger);
 
         $configFile = $context->getExtension(FileMetadata::class);
         $customization = $context->getExtension(Customization::class);
@@ -342,6 +337,7 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
                 $errorHandler->setLevel(Util::severityToLogLevel($logLevel));
 
                 $logger->info('Reloading OTelSDK declarative config', ['path' => $configFile->configFile, 'hash' => bin2hex($hash)]);
+                self::verifyFileFormatVersion($properties, $logger);
 
                 $hash = $_hash;
 
@@ -391,6 +387,15 @@ final class OpenTelemetryConfiguration implements ComponentProvider {
         }
 
         return $config;
+    }
+
+    private static function verifyFileFormatVersion(array $properties, LoggerInterface $logger): void {
+        if (!Semver::satisfies($properties['file_format'], '^1.0 <=1.2')) {
+            $logger->warning('OTelSDK config file_format specifies a higher version than implemented; newly added features may not be supported', [
+                'file_format' => $properties['file_format'],
+                'supported' => '1.2',
+            ]);
+        }
     }
 
     private function updateApi(
