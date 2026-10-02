@@ -31,7 +31,7 @@ final class SamplerProbability implements ComponentProvider {
         $node = $builder->arrayNode('probability/development');
         $node
             ->children()
-                ->floatNode('ratio')->min(0)->max(1)->isRequired()->end()
+                ->floatNode('ratio')->min(0)->max(1)->defaultValue(1.)->end()
             ->end()
         ;
 
