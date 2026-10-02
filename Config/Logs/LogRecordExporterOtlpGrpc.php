@@ -44,7 +44,7 @@ final class LogRecordExporterOtlpGrpc implements ComponentProvider {
      *         value: string,
      *     }>,
      *     headers_list: ?string,
-     *     compression: 'gzip'|null,
+     *     compression: 'gzip'|'none'|null,
      *     max_request_size: int<0, max>,
      *     max_response_size: int<1, max>,
      *     timeout: int<0, max>,
@@ -75,7 +75,10 @@ final class LogRecordExporterOtlpGrpc implements ComponentProvider {
         return new OtlpGrpcLogRecordExporter(
             client: $client,
             endpoint: Uri\Http::new($properties['endpoint']),
-            compression: $properties['compression'],
+            compression: match ($properties['compression']) {
+                'gzip' => 'gzip',
+                'none', null => null,
+            },
             headers: Util::parseMapList($properties['headers'], $properties['headers_list']),
             timeout: $properties['timeout'] / 1e3,
             maxRequestBodySize: $properties['max_request_size'] ?: PHP_INT_MAX,
@@ -108,7 +111,7 @@ final class LogRecordExporterOtlpGrpc implements ComponentProvider {
                     ->end()
                 ->end()
                 ->scalarNode('headers_list')->defaultNull()->validate()->always(Util::ensureString())->end()->end()
-                ->enumNode('compression')->values(['gzip'])->defaultNull()->end()
+                ->enumNode('compression')->values(['gzip', 'none'])->defaultNull()->end()
                 ->integerNode('max_request_size')->min(0)->defaultValue(67108864)->end()
                 ->integerNode('max_response_size')->min(1)->defaultValue(4194304)->end()
                 ->integerNode('timeout')->min(0)->defaultValue(10000)->end()
