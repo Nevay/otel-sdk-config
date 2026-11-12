@@ -2,6 +2,7 @@
 namespace Nevay\OTelSDK\Configuration\Config\Instrumentation;
 
 use Nevay\OTelSDK\Configuration\Internal\Util;
+use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use OpenTelemetry\API\Configuration\Config\ComponentProvider;
 use OpenTelemetry\API\Configuration\Config\ComponentProviderRegistry;
 use OpenTelemetry\API\Configuration\Context;
@@ -13,6 +14,7 @@ use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 /**
  * @implements ComponentProvider<GeneralInstrumentationConfiguration>
  */
+#[PackageDependency('open-telemetry/api', '<1.11')]
 final class InstrumentationConfigurationHttp implements ComponentProvider {
 
     public function createPlugin(array $properties, Context $context): GeneralInstrumentationConfiguration {

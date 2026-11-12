@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace Nevay\OTelSDK\Configuration\Config\Propagator;
 
+use Nevay\SPI\ServiceProviderDependency\PackageDependency;
 use OpenTelemetry\API\Configuration\Config\ComponentProvider;
 use OpenTelemetry\API\Configuration\Config\ComponentProviderRegistry;
 use OpenTelemetry\API\Configuration\Context;
@@ -12,6 +13,7 @@ use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 /**
  * @implements ComponentProvider<TextMapPropagatorInterface>
  */
+#[PackageDependency('open-telemetry/api', '<1.11')]
 final class TextMapPropagatorTraceContext implements ComponentProvider {
 
     /**
