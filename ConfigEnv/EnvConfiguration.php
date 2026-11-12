@@ -386,7 +386,7 @@ final class EnvConfiguration implements ComponentPlugin {
                 : new BatchLogRecordProcessor(
                     logRecordExporter: $exporter,
                     maxQueueSize: $env->int('OTEL_BLRP_MAX_QUEUE_SIZE') ?? 2048,
-                    scheduledDelayMillis: $env->int('OTEL_BLRP_SCHEDULE_DELAY') ?? 5000,
+                    scheduledDelayMillis: $env->int('OTEL_BLRP_SCHEDULE_DELAY') ?? 1000,
                     exportTimeoutMillis: $env->int('OTEL_BLRP_EXPORT_TIMEOUT') ?? 30000,
                     maxExportBatchSize: $env->int('OTEL_BLRP_MAX_EXPORT_BATCH_SIZE') ?? 512,
                     tracerProvider: $context->tracerProvider,
