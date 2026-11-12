@@ -13,7 +13,7 @@ use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 /**
  * @implements ComponentProvider<TextMapPropagatorInterface>
  */
-#[PackageDependency('open-telemetry/extension-propagator-b3', '^1.0.1')]
+#[PackageDependency('open-telemetry/extension-propagator-b3', '^1.0.1 <1.3')]
 final class TextMapPropagatorB3 implements ComponentProvider {
 
     /**
