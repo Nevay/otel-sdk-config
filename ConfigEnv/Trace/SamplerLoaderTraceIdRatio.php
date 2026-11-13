@@ -14,7 +14,7 @@ use OpenTelemetry\API\Configuration\Context;
 final class SamplerLoaderTraceIdRatio implements EnvComponentLoader {
 
     public function load(EnvResolver $env, EnvComponentLoaderRegistry $registry, Context $context): Sampler {
-        return new TraceIdRatioBasedSampler($env->numeric('OTEL_TRACES_SAMPLER_ARG', max: 1) ?? 1.);
+        return new TraceIdRatioBasedSampler($env->numeric('OTEL_TRACES_SAMPLER_ARG', max: 1) ?? 1., logger: $context->logger);
     }
 
     public function name(): string {

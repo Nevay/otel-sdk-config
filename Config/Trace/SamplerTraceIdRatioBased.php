@@ -20,7 +20,7 @@ final class SamplerTraceIdRatioBased implements ComponentProvider {
      * } $properties
      */
     public function createPlugin(array $properties, Context $context): Sampler {
-        return new TraceIdRatioBasedSampler($properties['ratio']);
+        return new TraceIdRatioBasedSampler($properties['ratio'], logger: $context->logger);
     }
 
     public function getConfig(ComponentProviderRegistry $registry, NodeBuilder $builder): ArrayNodeDefinition {
