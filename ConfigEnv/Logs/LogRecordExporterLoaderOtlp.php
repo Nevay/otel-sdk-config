@@ -44,7 +44,6 @@ final class LogRecordExporterLoaderOtlp implements EnvComponentLoader {
 
         $client = (new HttpClientBuilder())
             ->retry(0)
-            ->skipAutomaticCompression()
             ->usingPool(new UnlimitedConnectionPool(new DefaultConnectionFactory(connectContext: (new ConnectContext())->withTlsContext($tlsContext))))
             ->build();
 
