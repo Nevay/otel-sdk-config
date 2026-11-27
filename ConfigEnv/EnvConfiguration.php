@@ -353,6 +353,7 @@ final class EnvConfiguration implements ComponentPlugin {
                     metricExporter: $exporter,
                     exportIntervalMillis: $env->int('OTEL_METRIC_EXPORT_INTERVAL') ?? 60000,
                     exportTimeoutMillis: $env->int('OTEL_METRIC_EXPORT_TIMEOUT') ?? 30000,
+                    maxExportBatchSize: $env->int('OTEL_METRIC_EXPORT_MAX_BATCH_SIZE', min: 1),
                     tracerProvider: $context->tracerProvider,
                     meterProvider: $context->meterProvider,
                     logger: $context->logger,
